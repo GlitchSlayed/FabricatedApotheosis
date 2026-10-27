@@ -1,89 +1,75 @@
-# Vanilla Overlap Analysis — 26.1.2 vs 26.3
+# Vanilla Overlap & Custom Attribute Audit
 
 ## 1. Overview & Methodology
 
-This document tracks overlap analysis between upstream Apotheosis (26.1.2 NeoForge) and vanilla Minecraft (26.1.2 vs 26.3), evaluated using the verified local reference trees (`reference/26.1.2client.jar` and `reference/26.3client.jar`).
+This audit compares vanilla Minecraft (26.1.2, 26.2, and 26.3) against all custom attributes registered in upstream **Apothic Attributes 3.1.0** (`ALObjects.java`).
 
-Per `AGENTS.md` instructions, every ported feature is audited against vanilla 26.3 and Fabric API capabilities to prevent unnecessary duplication, prevent regressions, and enforce clean architecture.
-
----
-
-## 2. Attributes System Overlap
-
-### 2.1 Mining Speed Attribute
-- **Upstream Implementation**: `apothic_attributes:mining_speed` provided a custom attribute modifier for block break speed.
-- **Vanilla 26.1.2 & 26.3 Evaluation**:
-  - `net.minecraft.world.entity.ai.attributes.Attributes.MINING_EFFICIENCY` (`minecraft:mining_efficiency`) is a standard vanilla attribute.
-  - `net.minecraft.world.entity.ai.attributes.Attributes.SUBMERGED_MINING_SPEED` (`minecraft:submerged_mining_speed`) natively handles underwater break speed.
-- **Decision**: **REPLACE / EXCLUDE**.
-  - Do NOT port `apothic_attributes:mining_speed`.
-  - All upstream modifiers, gems, and enchants granting mining speed must be mapped directly to vanilla `minecraft:mining_efficiency`.
-
-### 2.2 New Vanilla 26.3 Attributes
-Vanilla 26.3 added 5 new attributes not present in 26.1.2:
-1. `Attributes.AIR_DRAG_MODIFIER`
-2. `Attributes.BELOW_NAME_DISTANCE`
-3. `Attributes.BOUNCINESS`
-4. `Attributes.FRICTION_MODIFIER`
-5. `Attributes.NAME_TAG_DISTANCE`
-
-- **Decision**: **ADAPT**.
-  - Review any Apothic movement or physics modifiers (e.g. friction, bounce, or step height) to ensure they integrate with rather than duplicate these new vanilla 26.3 holders.
+Each attribute is evaluated for:
+1. Native vanilla equivalents in 26.3.
+2. NeoForge-specific dependencies (`PercentageAttribute`, `BooleanAttribute`).
+3. Mathematical semantics (ranges, operations, units).
+4. Keep / Replace / Adapt decision.
+5. Persistent migration and regression test requirements.
 
 ---
 
-## 3. Spawners & Mob Mechanics Overlap
+## 2. Complete Custom Attribute Audit Table
 
-### 3.1 BaseSpawner & SpawnerBlockEntity API Changes
-- **Vanilla Comparison Findings**:
-  - In 26.1.2, `BaseSpawner` relied primarily on `setEntityId(EntityType<?>, Level, RandomSource, BlockPos)`.
-  - In 26.3, `BaseSpawner` and `SpawnerBlockEntity` added:
-    - `setEntityData(TypedEntityData<EntityType<?>>, Level, RandomSource, BlockPos)`
-    - `public static final EntityProcessor SET_DISPLAY_ENTITY_ID`
-    - `private static final int SPAWNER_ENTITY_ID`
-- **Behavioral Impact**:
-  - Vanilla 26.3 moved towards strictly typed entity data components (`TypedEntityData`).
-- **Decision**: **ADAPT**.
-  - Spawner modifiers that change the spawn egg or mob type must use `setEntityData` with `TypedEntityData` to maintain compatibility with 26.3 entity serialization.
-  - Mixin targets on `BaseSpawner.serverTick` and `BaseSpawner.clientTick` must respect the new `SET_DISPLAY_ENTITY_ID` processor.
-
-### 3.2 Spawner Silk Touch & Persistence
-- **Vanilla 26.3 Behavior**:
-  - Spawners drop experience points and break without dropping an item when mined, even with Silk Touch.
-- **Decision**: **KEEP (MOD FEATURE)**.
-  - Apothic Spawners' silk-touch capture and modifier persistence is a core gameplay feature not present in vanilla.
-  - Implement silk-touch drop via loot table conditions (`minecraft:match_tool` with silk touch predicate) and block drops mixin.
-  - Persist modifiers using vanilla `DataComponents.CUSTOM_DATA` / custom component registration.
-
----
-
-## 4. Item Components & Tooltip Systems
-
-### 4.1 Data Components Expansion
-- **Vanilla 26.1.2**: 112 `DataComponentType` registrations.
-- **Vanilla 26.3**: 124 `DataComponentType` registrations (+12 components).
-- **New Components in 26.3**:
-  - `COOKING_FUEL` & `BREWING_FUEL`: Natively define fuel items and burn durations without requiring custom registry hacks.
-  - `COMPOSTABLE`: Replaces legacy ComposterBlock table injections.
-  - `ATTACK_ANIMATION` & `INTERACT_ANIMATION`: Natively customize weapon/item swing animations.
-  - `MOB_VISIBILITY`: Controls mob detection ranges on armor/items.
-- **Decision**: **ADAPT / REPLACE**.
-  - Replace any legacy Placebo custom fuel or composter hooks with the standard 26.3 `DataComponents.COOKING_FUEL` and `DataComponents.COMPOSTABLE`.
-  - Use `ATTACK_ANIMATION` and `INTERACT_ANIMATION` for custom tool rendering instead of client tick hacks.
-
-### 4.2 Tooltip Display
-- **Vanilla 26.3**: Tooltips are governed by `net.minecraft.world.item.component.TooltipDisplay` and `Item.TooltipContext`.
-- **Decision**: **ADAPT**.
-  - Apothic tooltips (showing spawner stat deltas, enchantment info, attribute formatting) must hook into `Item.appendHoverText` using the new `TooltipDisplay` / `TooltipContext` parameters.
+| Field Name | Registry Identifier | Type & Default | Range | Units / Semantics | Vanilla 26.3 Equivalent | Equivalence Finding | Action | Migration & Regression Test |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `ARMOR_PIERCE` | `apothic_attributes:armor_pierce` | Ranged (0.0) | [0.0, 1000.0] | Flat armor points ignored in damage | None | None in vanilla | **KEEP** | Persist as attribute; test damage vs armored targets |
+| `ARMOR_SHRED` | `apothic_attributes:armor_shred` | Percentage (0.0) | [0.0, 2.0] | Percentage of target armor ignored | None | None in vanilla | **KEEP** | Persist as attribute; test proportional reduction |
+| `ARROW_DAMAGE` | `apothic_attributes:arrow_damage` | Percentage (1.0) | [0.0, 10.0] | Multiplier on fired projectile base damage | None | Vanilla uses enchantment/item tags | **KEEP** | Modifies arrow entity on launch; test bow & crossbow |
+| `ARROW_VELOCITY` | `apothic_attributes:arrow_velocity` | Percentage (1.0) | [0.0, 10.0] | Multiplier on arrow launch velocity | None | None in vanilla | **KEEP** | Hook projectile launch delta; test trajectory |
+| `COLD_DAMAGE` | `apothic_attributes:cold_damage` | Ranged (0.0) | [0.0, 1000.0] | Flat magic damage with slow effect | None | None in vanilla | **KEEP** | Combat event injection; verify frost particles & slowness |
+| `CRIT_CHANCE` | `apothic_attributes:crit_chance` | Percentage (0.05) | [0.0, 10.0] | % chance of critical strike (independent of jump) | None | Vanilla criticals are state-driven (falling) | **KEEP** | Player attack hook; test random roll vs jump critical |
+| `CRIT_DAMAGE` | `apothic_attributes:crit_damage` | Percentage (1.5) | [1.0, 100.0] | Multiplier on critical strike damage | None | Vanilla jump crit is fixed 1.5x | **KEEP** | Hook attack damage calculation; test crit scaling |
+| `CURRENT_HP_DAMAGE` | `apothic_attributes:current_hp_damage`| Percentage (0.0) | [0.0, 1.0] | % of target current health as bonus damage | None | None in vanilla | **KEEP** | Test diminishing return as mob health decreases |
+| `DODGE_CHANCE` | `apothic_attributes:dodge_chance` | Percentage (0.0) | [0.0, 1.0] | % chance to negate incoming melee attack | None | None in vanilla | **KEEP** | LivingDamageEvent hook; test zero-damage cancellation |
+| `DRAW_SPEED` | `apothic_attributes:draw_speed` | Percentage (1.0) | [0.0, 4.0] | Multiplier on bow/crossbow charge speed | None | Vanilla uses Quick Charge enchantment | **KEEP** | Hook item use tick; test charge completion duration |
+| `EXPERIENCE_GAINED` | `apothic_attributes:experience_gained`| Percentage (1.0) | [0.0, 1000.0] | Multiplier on dropped experience orbs | None | None in vanilla | **KEEP** | Hook XP orb spawning on mob death & ore break |
+| `FIRE_DAMAGE` | `apothic_attributes:fire_damage` | Ranged (0.0) | [0.0, 1000.0] | Flat magic damage that sets target ablaze | None | Vanilla Fire Aspect is fixed duration | **KEEP** | Hook damage dealing; test fire ticks + magic damage |
+| `GHOST_HEALTH` | `apothic_attributes:ghost_health` | Ranged (0.0) | [0.0, 1000.0] | Temporary regenerating health pool | None | None in vanilla | **KEEP** | Custom health tracker; test regeneration out of combat |
+| `HEALING_RECEIVED` | `apothic_attributes:healing_received` | Percentage (1.0) | [0.0, 1000.0] | Multiplier on all incoming healing | None | None in vanilla | **KEEP** | Hook `LivingEntity.heal()`; test potions, food, regen |
+| `LIFE_STEAL` | `apothic_attributes:life_steal` | Percentage (0.0) | [0.0, 10.0] | % of dealt physical damage healed to attacker | None | None in vanilla | **KEEP** | Hook melee damage; test heal attacker on successful hit |
+| `OVERHEAL` | `apothic_attributes:overheal` | Percentage (0.0) | [0.0, 10.0] | % of dealt damage converted to absorption hearts | None | Absorption is effect-driven | **KEEP** | Convert to absorption up to 50% max HP |
+| `PROJECTILE_DAMAGE` | `apothic_attributes:projectile_damage`| Percentage (1.0) | [0.0, 10.0] | Multiplier on generic incoming projectile damage| None | None in vanilla | **KEEP** | Hook damage source checks for Projectile |
+| `PROT_PIERCE` | `apothic_attributes:prot_pierce` | Ranged (0.0) | [0.0, 34.0] | Flat reduction to enchantment protection | None | None in vanilla | **KEEP** | Hook `CombatRules.getDamageAfterMagicAbsorb` |
+| `PROT_SHRED` | `apothic_attributes:prot_shred` | Percentage (0.0) | [0.0, 0.90] | Proportional reduction to protection enchant | None | None in vanilla | **KEEP** | Hook protection calculation in `CombatRules` |
+| `ELYTRA_FLIGHT` | `apothic_attributes:elytra_flight` | Boolean (false) | [0.0, 1.0] | Enables elytra gliding without wearing elytra | None | Requires chestplate with Elytra tag | **ADAPT** | Implement via standard `RangedAttribute(0.0, 0.0, 1.0)` |
+| `COOLDOWN_REDUCTION`| `apothic_attributes:cooldown_reduction`| Percentage (0.0) | [-10.0, 0.95] | Multiplicative reduction to item/spell cooldowns| None | None in vanilla | **KEEP** | Hook item cooldown tracker; test cooldown duration |
 
 ---
 
-## 5. Summary Matrix of Keep / Replace / Adapt Decisions
+## 3. Mining Speed Attribute Confirmation
 
-| Component / Feature | Action | Vanilla / Platform Equivalent | Rationale |
-| :--- | :--- | :--- | :--- |
-| `apothic_attributes:mining_speed` | **REPLACE** | `Attributes.MINING_EFFICIENCY` | Redundant; already provided by vanilla |
-| Spawner Mob Modification | **ADAPT** | `BaseSpawner.setEntityData` | Updated to 26.3 `TypedEntityData` API |
-| Spawner Silk Touch Drops | **KEEP** | Custom Loot Table + Mixin | Core mod feature not in vanilla |
-| Custom Fuels / Composting | **REPLACE** | `DataComponents.COOKING_FUEL` / `COMPOSTABLE` | Native in 26.3 |
-| Spawner Tooltip Deltas | **ADAPT** | `Item.appendHoverText` with `TooltipDisplay` | Compatible with 26.3 tooltip system |
+- **Upstream Verification**: In earlier versions of Apotheosis, `apothic_attributes:mining_speed` existed as a custom attribute.
+- **Audit Result**: Verified that `mining_speed` has been **completely removed** from upstream `Apothic-Attributes 3.1.0`.
+- **Vanilla Comparison**: Both Minecraft 26.1.2 and 26.3 natively include:
+  - `net.minecraft.world.entity.ai.attributes.Attributes.MINING_EFFICIENCY` (`minecraft:mining_efficiency`)
+  - `net.minecraft.world.entity.ai.attributes.Attributes.SUBMERGED_MINING_SPEED` (`minecraft:submerged_mining_speed`)
+- **Strict Rule Enforcement**: `mining_speed` will NOT be created. Any references in loot, tooltips, or gems must target vanilla `minecraft:mining_efficiency`.
+
+---
+
+## 4. NeoForge Type Adaptations for Fabric
+
+Upstream relies on NeoForge helper classes:
+- `net.neoforged.neoforge.common.PercentageAttribute`
+- `net.neoforged.neoforge.common.BooleanAttribute`
+
+**Fabric Implementation**:
+- Vanilla `RangedAttribute` handles min, max, and base values identically.
+- On Fabric, percentage formatting is handled in client-side tooltip formatters (`AttributeHelper.formatValue()`) without requiring non-standard attribute class hierarchies.
+- `BooleanAttribute` is implemented as `new RangedAttribute(name, 0.0, 0.0, 1.0)` where `>= 1.0` is true.
+
+---
+
+## 5. Persistent Data & Component Migration
+
+1. **ItemStack Attribute Modifiers**:
+   - Upstream uses Minecraft's data component `DataComponents.ATTRIBUTE_MODIFIERS`.
+   - Modifiers saved under `apothic_attributes:*` namespace retain their persistent `Identifier` keys.
+2. **Entity Persistent Data**:
+   - `Overheal` and `GhostHealth` store auxiliary damage data in entity NBT.
+   - On Fabric, migrate entity NBT storage to Fabric Data Attachment API for clean world save synchronization.

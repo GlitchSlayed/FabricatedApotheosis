@@ -4,7 +4,7 @@
 
 - **Status**: Accepted
 - **Context**: Upstream Apotheosis in NeoForge was distributed as separate jars (Apotheosis, Placebo, Apothic Attributes, Apothic Enchanting, Apothic Spawners). Managing multi-jar dependencies on modern Fabric creates fragmentation and installation complexity.
-- **Decision**: Deliver a single combined mod distributable (`FabricatedApotheosis`) on Minecraft 26.3 Fabric that bundles Apotheosis, approved Placebo subsets, Apothic Attributes, Apothic Enchanting, and Apothic Spawners into a single cohesive artifact under one mod ID.
+- **Decision**: Deliver a single combined mod distributable (`fabricated-apotheosis`) on Minecraft 26.3 Fabric that bundles Apotheosis, approved Placebo subsets, Apothic Attributes, Apothic Enchanting, and Apothic Spawners into a single cohesive artifact under mod ID `apotheosis`.
 - **Consequences**: Simplified player setup, streamlined classpaths, unified configuration screen via YACL.
 
 ---
@@ -38,3 +38,39 @@
   - All gameplay logic, spawner ticks, item consumption, and NBT/component writes must be server-authoritative.
   - Client-side code (YACL config screens, tooltips, particle effects, RenderPearl GPU abstractions) must remain strictly segregated in the client source set and never be referenced by dedicated server runtime classes.
 - **Consequences**: Guarantees dedicated server stability and multiplayer parity.
+
+---
+
+## ADR-005: Scope Boundary on Gateways to Eternity
+
+- **Status**: Accepted
+- **Context**: Gateways to Eternity is an optional boss wave mod with 43 Java classes, custom entity rendering, and complex state management.
+- **Decision**: Exclude Gateways to Eternity from the initial core 1-JAR port. Maintain conditional integration hooks (`PlatformHelper.isModLoaded("gateways")`) so that if Gateways is ported separately, compatibility works immediately.
+- **Consequences**: Reduces initial porting surface, prevents timeline bloat, and keeps the core Apotheosis experience focused.
+
+---
+
+## ADR-006: Documentation & Chronicle of Shadows Licensing Separation
+
+- **Status**: Accepted
+- **Context**: The Chronicle of Shadows is authored in Patchouli's book format. Patchouli is licensed under CC-BY-NC-SA 3.0.
+- **Decision**: Do not shade or flatten Patchouli into the combined mod JAR. Treat Patchouli as an external optional integration. The book JSON assets remain in `assets/apotheosis/patchouli_books/` and activate automatically when Patchouli Fabric is present.
+- **Consequences**: Avoids license contamination across the MIT-licensed Apotheosis codebase.
+
+---
+
+## ADR-007: YACL Packaging without Shading
+
+- **Status**: Accepted
+- **Context**: YetAnotherConfigLib is licensed under LGPL-3.0 and must not be flattened or have its metadata stripped.
+- **Decision**: Consume YACL as an external dependency or through Fabric's standard Jar-in-Jar (`include`) mechanism, preserving YACL's distinct `fabric.mod.json`, manifest, and license.
+- **Consequences**: Ensures full compliance with LGPL-3.0 and avoids classloader conflicts with other mods using YACL.
+
+---
+
+## ADR-008: Loom Split Environment Source Sets
+
+- **Status**: Accepted
+- **Context**: Mixing client-only UI code (such as YACL screens and rendering) with common logic risks `ClassNotFoundException` on dedicated servers.
+- **Decision**: Use Fabric Loom's `splitEnvironmentSourceSets()` with `src/main` (common) and `src/client` (client-only).
+- **Consequences**: Compiler enforces that common code cannot import client classes, completely preventing dedicated-server crashes.

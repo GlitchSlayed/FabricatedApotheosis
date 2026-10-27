@@ -1,132 +1,179 @@
-# Handoff Report — Milestone: Prompt 1 Discovery & Reference Baseline
+# Handoff Report — Milestone 1: Discovery, Architecture & Working Skeleton
 
-## 1. Executive Summary
+## 1. Current Repository Tree
 
-Milestone **Prompt 1** has been executed in full compliance with `AGENTS.md` and user instructions:
-- Applied and merged persistent project instructions into `AGENTS.md` and synchronized `Agents.md`.
-- Maintained existing local reference trees in `Refrences/` in read-only condition and established canonical symlink `reference -> Refrences`.
-- Configured `.gitignore` to strictly exclude all reference trees, build outputs, and IDE caches from Git.
-- Created `docs/REFERENCE_INDEX.md` detailing the layout, hashes, build identities, MojMap mappings, client/server coverage, search tooling, and uncertainties.
-- Executed vanilla comparison between Minecraft 26.1.2 and 26.3 using local reference trees (`javap` bytecode disassembler).
-- Documented findings in `docs/UPSTREAM_LOCK.md`, `docs/DEPENDENCY_MATRIX.md`, `docs/VANILLA_OVERLAP.md`, `docs/FEATURE_PARITY.md`, `docs/DECISIONS.md`, `docs/STATUS.md`, and this report.
-
----
-
-## 2. REFERENCE_INDEX Findings
-
-Detailed findings from inspecting the local reference trees in `Refrences/` (aliased as `reference/`):
-
-### 2.1 File Catalog & Checksums
-- **Minecraft 26.1.2 Client JAR**:
-  - Path: `reference/26.1.2client.jar` (`Refrences/26.1.2client.jar`)
-  - Size: 38,113,927 bytes
-  - SHA-256: `b1b3158572666445eff01e82fad8c7de2e4953db6d354f311730d77a8359d0b0`
-  - Total entries: 30,675 (10,682 `.class`, 13,616 `.json`, 10,669 assets, 8,777 data)
-- **Minecraft 26.3 Client JAR**:
-  - Path: `reference/26.3client.jar` (`Refrences/26.3client.jar`)
-  - Size: 41,483,720 bytes
-  - SHA-256: `4508d006323f24fa02876310c192d739af56516eb259000ac50f0909a68c9a2d`
-  - Total entries: 34,227 (11,383 `.class`, 15,699 `.json`, 11,813 assets, 10,449 data)
-- **Extracted 26.3 Class Subset**:
-  - Path: `reference/net/` (`Refrences/net/`)
-  - 525 `.class` files extracted directly from `26.3client.jar` (covering `advancements`, `world/item`, `world/level/BaseSpawner.class`, and `world/level/block` with `entity`).
-  - Byte-identical SHA-256 verified against `26.3client.jar`.
-- **Fabric Documentation & Examples**:
-  - Path: `reference/fabric-docs-main/` (`Refrences/fabric-docs-main/`)
-  - Reference mod implementations for Loom, split environment source sets, gametests, and access wideners.
-
-### 2.2 Verified Version & Build Identifiers
-- **Minecraft 26.1.2**: World Version `4790`, Protocol `775`, Build Date `2026-04-09T10:11:03+00:00`, Java 25 (`java-runtime-epsilon`), Stable release.
-- **Minecraft 26.3**: World Version `5023`, Protocol `777`, Build Date `2026-09-15T11:20:48+00:00`, Java 25 (`java-runtime-epsilon`), Stable release.
-
-### 2.3 Mappings & Provenance
-- Built with **Mojang Official Mappings (MojMap)**.
-- Packages follow `net.minecraft.*` and `com.mojang.*`.
-- Method and field names are de-obfuscated standard Mojang identifiers (`serverTick`, `spawnDelay`, `Attributes.MINING_EFFICIENCY`).
-
-### 2.4 Client & Server Coverage
-- Client JARs bundle both the client rendering/UI subsystem and the integrated server engine (`net.minecraft.server.*`, `MinecraftServer.class`, `ServerLevel.class`, all world and gameplay logic).
-- Standalone dedicated server launcher (`net.minecraft.server.Main`) is absent from client jars, but all server logic is present.
-
-### 2.5 Limitations & Uncertainties
-- Reference JARs contain compiled Java 25 bytecode (`.class`), not decompiled `.java` source files.
-- NeoForge-specific patches and event classes are not present in vanilla jars; upstream mod behavior depending on NeoForge hooks must be referenced from upstream mod sources and mapped to Fabric API equivalents.
-
----
-
-## 3. Vanilla Comparison Findings (26.1.2 vs 26.3)
-
-Using local `javap` inspection of both reference JARs:
-
-1. **Spawner Architecture**:
-   - `BaseSpawner` in 26.3 introduced `setEntityData(TypedEntityData<EntityType<?>>, Level, RandomSource, BlockPos)` and `SET_DISPLAY_ENTITY_ID` (`EntityProcessor`), adapting from the legacy `setEntityId` method.
-   - `SpawnerBlockEntity` added corresponding `setEntityData` method.
-   - Porting decision: Modifiers altering entity types must target `TypedEntityData`.
-2. **Attributes System**:
-   - 26.1.2 has 37 attributes; 26.3 has 42 attributes (+5 attributes: `AIR_DRAG_MODIFIER`, `BELOW_NAME_DISTANCE`, `BOUNCINESS`, `FRICTION_MODIFIER`, `NAME_TAG_DISTANCE`).
-   - Vanilla natively provides `Attributes.MINING_EFFICIENCY` and `Attributes.SUBMERGED_MINING_SPEED`.
-   - Porting decision: Obsolete custom `apothic_attributes:mining_speed` attribute is confirmed unnecessary and completely removed in favor of vanilla `MINING_EFFICIENCY`.
-3. **Data Components**:
-   - Expanded from 112 to 124 components in 26.3.
-   - Includes native fuel definitions (`COOKING_FUEL`, `BREWING_FUEL`), compostability (`COMPOSTABLE`), and weapon animation overrides (`ATTACK_ANIMATION`, `INTERACT_ANIMATION`).
-   - Porting decision: Replace legacy Placebo hooks with native 26.3 DataComponents.
-4. **Tooltips**:
-   - Governed by `TooltipDisplay` and `Item.TooltipContext` in 26.3.
-   - Porting decision: Adapt item tooltips to use 26.3 hover text parameters.
+```text
+FabricatedApotheosis/
+├── .github/workflows/build.yml
+├── .gitignore
+├── AGENTS.md
+├── Agents.md -> AGENTS.md
+├── build.gradle
+├── gradle.properties
+├── settings.gradle
+├── gradlew
+├── gradlew.bat
+├── gradle/wrapper/
+│   ├── gradle-wrapper.jar
+│   └── gradle-wrapper.properties
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── DECISIONS.md
+│   ├── DEPENDENCY_MATRIX.md
+│   ├── FEATURE_PARITY.md
+│   ├── HANDOFF_REPORT.md
+│   ├── PORTING_SURFACE.md
+│   ├── REFERENCE_INDEX.md
+│   ├── STATUS.md
+│   ├── TEST_PLAN.md
+│   ├── UPSTREAM_LOCK.md
+│   └── VANILLA_OVERLAP.md
+├── reference -> Refrences (symlink, excluded from git)
+├── Refrences/ (read-only reference jars and classes, excluded from git)
+├── upstream/ (cloned upstream 26.1.2 sources, excluded from git)
+└── src/
+    ├── main/
+    │   ├── java/dev/shadowsoffire/apotheosis/
+    │   │   ├── Apotheosis.java
+    │   │   ├── adventure/AdventureModule.java
+    │   │   ├── attributes/AttributesModule.java
+    │   │   ├── config/ApotheosisConfig.java
+    │   │   ├── docs/DocsSupport.java
+    │   │   ├── enchanting/EnchantingModule.java
+    │   │   ├── integrations/IntegrationsModule.java
+    │   │   ├── placebo/PlaceboSupport.java
+    │   │   ├── platform/PlatformHelper.java
+    │   │   └── spawners/SpawnersModule.java
+    │   └── resources/
+    │       ├── apotheosis.mixins.json
+    │       └── fabric.mod.json
+    └── client/
+        ├── java/dev/shadowsoffire/apotheosis/client/
+        │   ├── ApotheosisClient.java
+        │   └── config/ApotheosisConfigScreen.java
+        └── resources/
+            └── apotheosis.client.mixins.json
+```
 
 ---
 
-## 4. Repository & Artifact Hygiene
+## 2. Pinned Upstream Versions and Commit SHAs
 
-- Initialized Git repository on `main` branch.
-- Created `.gitignore` excluding `Refrences/`, `reference`, `build/`, `.gradle/`, and IDE metadata.
-- Ensured reference trees remain read-only without modifying any original files.
-- Configured exclusion policies so Gradle builds and distribution archives will not bundle reference sources or classes.
-
----
-
-## 5. Changed Files
-
-| File | Action | Description |
-| :--- | :--- | :--- |
-| `.gitignore` | Created | Ignores reference trees, build outputs, and caches |
-| `AGENTS.md` | Created / Merged | Consolidated project instructions and persistent reference rules |
-| `Agents.md` | Symlinked | Links to `AGENTS.md` for dual filename compatibility |
-| `reference` | Symlinked | Canonical link pointing to `Refrences/` without mutating original files |
-| `docs/REFERENCE_INDEX.md` | Created | Detailed index of reference trees, paths, hashes, commands, and coverage |
-| `docs/UPSTREAM_LOCK.md` | Created | Pins upstream 26.1.2 NeoForge and target 26.3 Fabric baselines |
-| `docs/DEPENDENCY_MATRIX.md` | Created | Approved ecosystem modules and third-party dependencies |
-| `docs/VANILLA_OVERLAP.md` | Created | Deep vanilla comparison (26.1.2 vs 26.3) and keep/replace/adapt decisions |
-| `docs/FEATURE_PARITY.md` | Created | Feature status matrix for all modules |
-| `docs/DECISIONS.md` | Created | Architecture Decision Records (ADRs 001 - 004) |
-| `docs/STATUS.md` | Created | Roadmap and milestone progress tracking |
-| `docs/HANDOFF_REPORT.md` | Created | Milestone completion report and findings summary |
+All repos pinned on the `26.1` stable branch targeting Minecraft 26.1.2 NeoForge:
+- **Apotheosis**: `f2e76862ed9f4dcdf19c25400dc3d5478a46dd74` (v9.1.0)
+- **Placebo**: `8fcfa1e6e947e8f0f12044ad31ce4bef2145982a` (v10.0.2)
+- **Apothic-Attributes**: `44d0a8316fcb7965c26e8ff7eda341830ca63023` (v3.1.0)
+- **Apothic-Enchanting**: `4d167fd44222058819fa70bf99fbc3ab38220e34` (v2.1.0)
+- **Apothic-Spawners**: `a5401df4a80b833b297c398f88a5718bdd47c02a` (v2.0.1)
+- **GatewaysToEternity**: `73aa0726c998214a180df1e2981ef1752ddb56e9` (v6.0.2)
+- **Patchouli**: `4f94b07bbd287f2e208a7ea90b0ca066e54f738c` (tag `release-26.1-94-beta`)
+- **YetAnotherConfigLib**: `3.9.6+26.3-fabric` (Modrinth / isXander Maven)
 
 ---
 
-## 6. Verification Results
+## 3. Exact Build & Toolchain Versions
 
-| Check | Tool / Method | Outcome |
-| :--- | :--- | :--- |
-| Git Exclusion Check | `git status` | Pass: `Refrences/` and `reference` excluded from git tracking |
-| Reference File Check | `sha256sum`, `unzip -l`, `python3` | Pass: Checksums and structure verified for both JARs and class trees |
-| Version Verification | `version.json` extraction | Pass: 26.1.2 (build 2026-04-09) and 26.3 (build 2026-09-15) confirmed |
-| Bytecode Inspection | `javap -p -cp <jar>` | Pass: Verified class structures, attributes, and spawner method changes |
-| Reference Integrity | Filesystem checks | Pass: No reference files edited, moved, or deleted |
-
----
-
-## 7. Remaining Limitations
-
-- Upstream Apotheosis mod source code (Java source of Apotheosis, Apothic Spawners, etc.) is not yet checked into this workspace; it will be introduced during the subsequent implementation milestones.
-- Reference JARs contain compiled `.class` files rather than `.java` source code, requiring `javap` or Loom remapped sources for inspection.
+- **Minecraft**: `26.3`
+- **Java**: Java 25 (`25.0.4.1`, OpenJDK 64-Bit Server VM)
+- **Gradle**: `9.5.1` (Wrapper) / `9.8.2` (Host)
+- **Fabric Loom**: `1.17.21` (`1.17-SNAPSHOT`)
+- **Fabric Loader**: `0.19.5`
+- **Fabric API**: `0.161.0+26.3`
+- **YACL**: `3.9.6+26.3-fabric`
 
 ---
 
-## 8. Next Concrete Implementation Task
+## 4. Build and Launch Commands
 
-**Prompt 2**: Initialize the Minecraft 26.3 Fabric Gradle build environment:
-1. Configure `build.gradle`, `settings.gradle`, and `gradle.properties` targeting Minecraft 26.3, Fabric Loader, Fabric API, and YACL.
-2. Configure Loom environment split source sets (`main` and `client`).
-3. Create the mod entrypoints and base metadata (`fabric.mod.json`).
-4. Verify project compilation and execution of `./gradlew build`.
+```bash
+# Build mod JAR and sources JAR
+./gradlew build
+
+# Launch dedicated server in development environment
+./gradlew runServer --args="--nogui"
+
+# Launch client with YACL config screen support
+./gradlew runClient
+```
+
+---
+
+## 5. Commands Actually Executed & Results
+
+1. `git clone --depth 1 --branch 26.1 <repos>`: Successfully fetched all 6 upstream source repositories into `upstream/`.
+2. `./gradlew build`: **PASS** (27s). Compiled common and client split source sets with Java 25, validated resource expanding, and generated `build/libs/fabricated-apotheosis-1.0.0-alpha.1.jar` (16.7 KB).
+3. `./gradlew runServer --args="--nogui"`: **PASS** (16s). Successfully loaded Fabric Loader 0.19.5, 67 mod dependencies, initialized `ApotheosisConfig` writing `apotheosis.json`, generated world, loaded 100% spawn chunks, listened on `:25565`, and completed clean world save upon `stop`.
+4. `./gradlew runClient`: Task initialized; began downloading Minecraft client sound/texture assets from Mojang.
+5. Verification summary:
+   - **Compilation**: **VERIFIED**
+   - **Dedicated-Server Launch**: **VERIFIED**
+   - **Client Launch**: **IN PROGRESS** (Asset download initialized; client classes compiled and verified in JAR).
+
+---
+
+## 6. Packaging Decision & External Dependencies
+
+- **Single Ecosystem Distributable**: All modules (`apotheosis`, `attributes`, `enchanting`, `spawners`, and required `placebo` subsets) are combined into a single downloadable JAR (`fabricated-apotheosis-1.0.0.jar`) under mod ID `apotheosis`.
+- **External Dependencies**:
+  - `fabricloader` (`>=0.19.5`)
+  - `fabric-api` (`0.161.0+26.3`)
+  - `yet_another_config_lib_v3` (`3.9.6+26.3-fabric`)
+- **Optional Integrations**:
+  - `patchouli` (for guidebook support)
+  - `modmenu` (for in-game config button)
+
+---
+
+## 7. Dependency and Licensing Blockers
+
+- **Code vs Asset Licenses**: Upstream Apotheosis code is MIT licensed, but assets (`LICENSE_ASSETS`) are `All Rights Reserved` by Stormraven Studios, LLC. The port must attribute original authors and preserve asset licensing boundaries.
+- **Patchouli CC-BY-NC-SA 3.0**: Patchouli cannot be flattened (shaded) into the mod jar without contaminating the MIT code license. Patchouli is cleanly isolated as an external optional dependency while preserving book JSON assets.
+- **YACL LGPL-3.0**: YACL is consumed as a standard dependency or Jar-in-Jar (`include`) to ensure LGPL metadata compliance.
+
+---
+
+## 8. Attribute Overlap Findings
+
+- Audited all 21 custom attributes from `ALObjects.java`.
+- **Obsolete Mining Speed**: Upstream already removed `mining_speed` in 3.1.0; both 26.1.2 and 26.3 natively provide `Attributes.MINING_EFFICIENCY` (`minecraft:mining_efficiency`) and `Attributes.SUBMERGED_MINING_SPEED`. No custom attribute will be added.
+- **21 Combat Attributes Kept**: `ARMOR_PIERCE`, `ARMOR_SHRED`, `ARROW_DAMAGE`, `ARROW_VELOCITY`, `COLD_DAMAGE`, `CRIT_CHANCE`, `CRIT_DAMAGE`, `CURRENT_HP_DAMAGE`, `DODGE_CHANCE`, `DRAW_SPEED`, `EXPERIENCE_GAINED`, `FIRE_DAMAGE`, `GHOST_HEALTH`, `HEALING_RECEIVED`, `LIFE_STEAL`, `OVERHEAL`, `PROJECTILE_DAMAGE`, `PROT_PIERCE`, `PROT_SHRED`, `ELYTRA_FLIGHT`, and `COOLDOWN_REDUCTION` are not represented in vanilla 26.3 and will be ported using standard `RangedAttribute` instances.
+
+---
+
+## 9. Most Difficult NeoForge / Coremod / Rendering Dependencies
+
+1. **Apothic Enchanting Level Uncapping**: In legacy versions, ASM was used; in 26.1.2 NeoForge, mixins and access transformers are used. On Fabric 26.3, this requires transpiling `accesstransformer.cfg` to `apotheosis.accesswidener` and targeting Minecraft 26.3's data-driven enchantment structure.
+2. **NeoForge Capability / Attachment Migration**: Migrating `RavenTableStats` and spawner custom data from NeoForge attachments to Fabric Data Attachment API (`fabric-data-attachment-api-v1`).
+3. **RenderPearl GPU Pipelines**: Boss health bar styling, gem sockets, and custom particle effects must use Minecraft 26.3 rendering abstractions without raw OpenGL calls.
+
+---
+
+## 10. Proposed Next Three Implementation Tasks
+
+1. **Task 1: Apothic Spawners Core Mechanics**
+   - File: `src/main/java/dev/shadowsoffire/apotheosis/spawners/`
+   - Implement `BaseSpawnerMixin` targeting 26.3's `serverTick` and `setEntityData(TypedEntityData)`.
+   - Implement spawner modifier item logic (sugar, clock, blaze rod, etc.).
+2. **Task 2: Spawner Silk Touch Harvesting & Persistence**
+   - Files: `src/main/resources/data/c/loot_table/blocks/spawner.json` & `src/main/java/dev/shadowsoffire/apotheosis/spawners/mixin/SpawnerBlockDropsMixin.java`
+   - Preserve modifier stats on harvested spawner items using `DataComponents.CUSTOM_DATA`.
+3. **Task 3: Apothic Attributes Registration & Tooltip Deltas**
+   - Files: `src/main/java/dev/shadowsoffire/apotheosis/attributes/ALObjects.java` & `src/client/java/dev/shadowsoffire/apotheosis/client/attributes/AttributeTooltipHandler.java`
+   - Register all 21 attributes with `Registry.register(BuiltInRegistries.ATTRIBUTE, ...)` and hook 26.3 `TooltipDisplay`.
+
+---
+
+## 11. Questions That Require a Product Decision
+
+1. **Gateways to Eternity**: Should Gateways to Eternity remain a separate optional mod (recommended), or should tiered wave battles eventually be bundled directly into Fabricated Apotheosis?
+2. **Guidebook Support**: Should we maintain Patchouli Fabric as the recommended guidebook engine, or evaluate a zero-dependency internal book viewer (or Lavender)?
+3. **Curios Accessories on Fabric**: Does the product intend to support Trinkets, Accessories, or rely strictly on vanilla equipment components for gem sockets and affixes?
+
+---
+
+## 12. Current Git Status & Commit
+
+- **Branch**: `main`
+- **Initial Commit SHA**: `25803d7`
+- **Skeleton Commit SHA**: `971cf62`
+- **Working Tree**: Clean (all reference files and build outputs strictly ignored via `.gitignore`).

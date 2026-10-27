@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "apotheosis",
+  "version": "${version}",
+  "name": "Fabricated Apotheosis",
+  "description": "Port of the Apotheosis ecosystem to Minecraft 26.3 Fabric with YACL configuration.",
+  "authors": [
+    "Shadows_of_Fire",
+    "Fabric Port Contributors"
+  ],
+  "contact": {
+    "homepage": "https://github.com/Shadows-of-Fire/Apotheosis",
+    "sources": "https://github.com/Shadows-of-Fire/Apotheosis"
+  },
+  "license": "MIT",
+  "icon": "assets/apotheosis/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.shadowsoffire.apotheosis.Apotheosis"
+    ],
+    "client": [
+      "dev.shadowsoffire.apotheosis.client.ApotheosisClient"
+    ]
+  },
+  "mixins": [
+    "apotheosis.mixins.json",
+    {
+      "config": "apotheosis.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*",
+    "yet_another_config_lib_v3": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

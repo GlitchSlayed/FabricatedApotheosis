@@ -1,55 +1,83 @@
 # Feature Parity Matrix — Apotheosis NeoForge (26.1.2) to Fabric (26.3)
 
-## 1. Overview
+## 1. Overview & Status Key
 
-This matrix tracks the parity status of features across the Apotheosis ecosystem as they are migrated from the pinned upstream Minecraft 26.1.2 NeoForge version to Minecraft 26.3 Fabric.
+This matrix tracks the parity status of all subsystems across the Apotheosis ecosystem.
 
-Status Indicators:
-- `NOT_STARTED`: Feature identified in upstream, porting work not yet begun.
-- `IN_PROGRESS`: Porting active, partial implementation or testing underway.
-- `PARITY_VERIFIED`: Implemented, tested, and verified against vanilla and upstream behavior.
-- `REPLACED_BY_VANILLA`: Feature superseded by vanilla 26.3; upstream code dropped.
-- `DROPPED`: Explicitly excluded per architecture guidelines.
-
----
-
-## 2. Apothic Spawners
-
-| Upstream Feature | Status | Implementation Plan / Notes |
-| :--- | :--- | :--- |
-| **Spawner Stat Modifiers** | `NOT_STARTED` | Configurable modifier items (sugar, clock, ghast tear, blaze rod, etc.) modifying `minSpawnDelay`, `maxSpawnDelay`, `spawnCount`, `maxNearbyEntities`, `requiredPlayerRange`, `spawnRange`. |
-| **Redstone Control** | `NOT_STARTED` | Comparator / redstone activation toggle on spawner block entity. |
-| **Ignore Conditions** | `NOT_STARTED` | Ignore players, ignore light levels, ignore spawn conditions. |
-| **Silk Touch Capture** | `NOT_STARTED` | Drop spawner block item on Silk Touch mine; preserve modifiers via custom data component. |
-| **Spawner Item Tooltips** | `NOT_STARTED` | Display modified values and +/- deltas on hover using 26.3 `TooltipDisplay`. |
-| **In-Game Configuration** | `NOT_STARTED` | YACL integration for spawner modifier values, limits, and items. |
+Status Definitions:
+- **`not started`**: Feature identified in upstream, no implementation work started.
+- **`investigated`**: Source, hooks, and porting surface audited; architecture established.
+- **`implemented`**: Code written and integrated into the Fabric project skeleton.
+- **`verified`**: Verified through compilation, automated tests, or in-game runtime launch.
+- **`blocked`**: Dependent on an unresolved design decision or external dependency.
 
 ---
 
-## 3. Apothic Attributes
+## 2. Infrastructure & Platform Skeleton
 
-| Upstream Feature | Status | Implementation Plan / Notes |
-| :--- | :--- | :--- |
-| **Custom Mining Speed** | `REPLACED_BY_VANILLA` | Upstream `apothic_attributes:mining_speed` dropped in favor of vanilla `minecraft:mining_efficiency`. |
-| **Combat / Utility Attributes** | `NOT_STARTED` | Life steal, overcure, armor shred, cold damage, etc. |
-| **Attribute Tooltip Formatting** | `NOT_STARTED` | Clean visual formatting of attribute modifiers with coloring and operations. |
-
----
-
-## 4. Apothic Enchanting
-
-| Upstream Feature | Status | Implementation Plan / Notes |
-| :--- | :--- | :--- |
-| **Enchanting Stats (Eterna, Quanta, Arcana)** | `NOT_STARTED` | Bookshelf stats calculation, custom enchanting GUI / table integration. |
-| **High-Tier Enchanting Levels** | `NOT_STARTED` | Enchantment level capping beyond vanilla 30 levels (up to level 100). |
-| **Tomes of Extraction / Scrapping** | `NOT_STARTED` | Extracting enchantments from items onto books. |
-| **Capturing Enchantment** | `NOT_STARTED` | Drops spawn eggs from killed mobs based on capturing level. |
+| Feature / Subsystem | Status | Verification & Evidence | Notes |
+| :--- | :--- | :--- | :--- |
+| **Combined 1-JAR Packaging** | `verified` | `./gradlew build` outputs single jar (16.7 KB) | `fabricated-apotheosis-1.0.0-alpha.1.jar` |
+| **Fabric 26.3 Toolchain** | `verified` | Loom 1.17.21, Fabric Loader 0.19.5, Java 25 | Fully builds and packages |
+| **Dedicated Server Launch** | `verified` | `./gradlew runServer --args="--nogui"` | 100% chunks loaded, clean stop, zero client leak |
+| **Server-Safe Config Model** | `verified` | `ApotheosisConfig.java` writes `apotheosis.json` | Tested on dedicated server startup |
+| **YACL Client Config Screen** | `implemented` | `ApotheosisConfigScreen.java` | Segregated in client source set |
+| **Reference Trees Isolation** | `verified` | `.gitignore` and `REFERENCE_INDEX.md` | Reference files strictly read-only and unbundled |
 
 ---
 
-## 5. Placebo Utilities (Required Subset)
+## 3. Apothic Spawners Module
 
-| Upstream Feature | Status | Implementation Plan / Notes |
+| Upstream Feature | Status | Target Scope / Plan |
 | :--- | :--- | :--- |
-| **Dynamic Recipe Helpers** | `NOT_STARTED` | Data-driven / programmatic recipe builders for spawner modifiers. |
-| **JSON Serialization Utilities** | `NOT_STARTED` | Gson codecs and codec bridges compatible with 26.3 Codec systems. |
+| **Spawner Stat Modifiers** | `investigated` | Modifier items (sugar, clock, ghast tear, blaze rod, etc.) targeting `BaseSpawner.serverTick`. |
+| **Redstone Activation Control** | `investigated` | Toggle spawner execution via comparator/redstone power. |
+| **Condition Ignore Modifiers** | `investigated` | Ignore light level, ignore nearby players, ignore spawn range checks. |
+| **Silk Touch Capture & Drops** | `investigated` | Custom loot table condition + block drops mixin to preserve spawner stats. |
+| **Spawner Stat Deltas in Tooltip** | `investigated` | `Item.appendHoverText` hooking into 26.3 `TooltipDisplay`. |
+| **Spawn Egg Modification** | `investigated` | Adapt from legacy `setEntityId` to 26.3 `setEntityData(TypedEntityData)`. |
+
+---
+
+## 4. Apothic Attributes Module
+
+| Upstream Feature | Status | Target Scope / Plan |
+| :--- | :--- | :--- |
+| **21 Custom Combat Attributes** | `investigated` | Audit completed in `docs/VANILLA_OVERLAP.md`. Porting to `RangedAttribute`. |
+| **Mining Speed Attribute Removal** | `verified` | Confirmed removed in upstream 3.1.0; mapped to vanilla `MINING_EFFICIENCY`. |
+| **Combat Rules & Armor Piercing** | `investigated` | Mixins on `CombatRules.getDamageAfterAbsorb` and `LivingEntity.hurt`. |
+| **Overheal & Ghost Health** | `investigated` | Absorption conversion and out-of-combat health recovery hooks. |
+| **Attributes GUI Formatting** | `investigated` | Client screen formatting for percentage and flat attribute values. |
+
+---
+
+## 5. Apothic Enchanting Module
+
+| Upstream Feature | Status | Target Scope / Plan |
+| :--- | :--- | :--- |
+| **Table Stats (Eterna, Quanta, Arcana)** | `investigated` | Calculation of bookshelf stats around enchanting table. |
+| **High-Tier Enchantment Levels** | `investigated` | Mixins on `EnchantmentHelper` and `EnchantmentMenu` to unlock up to level 100. |
+| **Access Widener Transpilation** | `investigated` | Transpile `accesstransformer.cfg` to Fabric `apotheosis.accesswidener`. |
+| **Custom Tomes** | `investigated` | Tomes of extraction, scrapping, and superior books. |
+| **Capturing Enchantment** | `investigated` | Spawn egg drop chance on mob death based on capturing level. |
+
+---
+
+## 6. Placebo Support (Required Subsets)
+
+| Upstream Feature | Status | Target Scope / Plan |
+| :--- | :--- | :--- |
+| **Dynamic Registry Helpers** | `investigated` | Lightweight codec registry helper for data-driven spawner modifiers. |
+| **Recipe Serialization Helpers** | `investigated` | Streamlined custom recipe serializers for Minecraft 26.3 format. |
+| **Network Payload Registrar** | `investigated` | Thin wrapper over Fabric `PayloadTypeRegistry`. |
+
+---
+
+## 7. Integrations & Documentation
+
+| Subsystem | Status | Target Scope / Plan |
+| :--- | :--- | :--- |
+| **Gateways to Eternity** | `investigated` | Excluded from initial core 1-JAR release; kept as optional companion integration. |
+| **Patchouli / Chronicle of Shadows**| `investigated` | Retain complete `patchouli_books` asset tree; optional runtime dependency. |
+| **ModMenu Config Integration** | `investigated` | Entrypoint hook to open YACL config screen from ModMenu list. |
+| **RenderPearl GPU Pipelines** | `investigated` | Reserved for boss health bars, gem render passes, and custom screen shaders. |

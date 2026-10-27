@@ -2,12 +2,14 @@
 Refrences/
 reference
 reference/
+upstream/
 
 # Gradle & Build artifacts
 .gradle/
 build/
 bin/
 out/
+run/
 
 # IDE files
 .idea/

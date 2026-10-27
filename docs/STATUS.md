@@ -1,29 +1,29 @@
 # Project Status & Roadmap
 
-## 1. Current Milestone: Prompt 1 — Discovery & Baseline Architecture
+## 1. Current Milestone: Task 1 — Discovery, Architecture & Working Skeleton
 
 - **Status**: **COMPLETE**
 - **Date**: 2026-10-27
-- **Accomplishments**:
-  - [x] Initialized Git repository and configured strict exclusion rules in `.gitignore` for `reference/` and `Refrences/`.
-  - [x] Maintained reference trees in read-only condition and established canonical symlink `reference -> Refrences`.
-  - [x] Completed full layout inspection and generated `docs/REFERENCE_INDEX.md` cataloging exact paths, hashes, versions, mapping scheme (MojMap), and search commands.
-  - [x] Merged persistent project instructions into `AGENTS.md` and linked `Agents.md`.
-  - [x] Performed vanilla 26.1.2 vs 26.3 comparison using local reference trees (`javap` bytecode analysis).
-  - [x] Created `docs/UPSTREAM_LOCK.md`, `docs/DEPENDENCY_MATRIX.md`, `docs/VANILLA_OVERLAP.md`, `docs/FEATURE_PARITY.md`, `docs/DECISIONS.md`.
-  - [x] Created comprehensive `docs/HANDOFF_REPORT.md`.
+- **Key Achievements**:
+  - [x] Cloned and verified upstream 26.1.2 source repositories (`Apotheosis`, `Placebo`, `Apothic-Attributes`, `Apothic-Enchanting`, `Apothic-Spawners`, `GatewaysToEternity`, `Patchouli`).
+  - [x] Created `docs/UPSTREAM_LOCK.md` with exact commit SHAs, licenses, and verified cohesion.
+  - [x] Created `docs/DEPENDENCY_MATRIX.md` with 6-way dependency classification and scope decisions.
+  - [x] Created `docs/PORTING_SURFACE.md` inventorying 632 Java classes across the ecosystem.
+  - [x] Created `docs/VANILLA_OVERLAP.md` auditing all 21 custom attributes against vanilla 26.1.2, 26.2, and 26.3.
+  - [x] Initialized reproducible Gradle build targeting Minecraft 26.3, Fabric Loader 0.19.5, Loom 1.17.21, and YACL 3.9.6.
+  - [x] Created split-source skeleton (`main` and `client`) with clean module boundaries.
+  - [x] Implemented server-safe config model (`ApotheosisConfig.java`) and client YACL screen (`ApotheosisConfigScreen.java`).
+  - [x] Verified compilation via `./gradlew build` generating `fabricated-apotheosis-1.0.0-alpha.1.jar`.
+  - [x] Verified dedicated server launch via `./gradlew runServer --args="--nogui"` (zero client leakage, 100% world load, clean shutdown).
 
 ---
 
-## 2. Roadmap
+## 2. Upcoming Milestones
 
-| Milestone | Focus | Key Deliverables | Status |
+| Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Prompt 1** | Discovery & Reference Setup | Reference Index, Vanilla Overlap Audit, Repo Hygiene, Project Docs | **DONE** |
-| **Prompt 2** | Build Environment Initialization | Gradle / Fabric Loom 26.3, Fabric API, YACL integration, Mod Entrypoint | `NEXT` |
-| **Prompt 3** | Spawner Core & Modifiers | `BaseSpawner` mixin, SpawnerModifierItems, Spawner component serialization | `PENDING` |
-| **Prompt 4** | Spawner Harvesting & Persistence | Silk Touch loot tables, drops mixin, BlockEntity save/load hooks | `PENDING` |
-| **Prompt 5** | Apothic Attributes Foundation | Attribute registrations, tooltip formatting, entity attributes | `PENDING` |
-| **Prompt 6** | Apothic Enchanting Foundation | Enchanting table stats, capturing enchantment, custom tomes | `PENDING` |
-| **Prompt 7** | Config & In-Game UI | YACL configuration screens, client/server config synchronization | `PENDING` |
-| **Prompt 8** | Integration & Parity Verification | Gametests, client & dedicated server launch verification, parity audit | `PENDING` |
+| **Milestone 2** | Apothic Spawners Core | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, tooltip deltas | `NEXT` |
+| **Milestone 3** | Apothic Attributes Core | Port 21 combat attributes, combat rules mixins, overheal, attribute GUI | `PENDING` |
+| **Milestone 4** | Apothic Enchanting Core | Access wideners, table stats (Eterna/Quanta/Arcana), level uncapping | `PENDING` |
+| **Milestone 5** | Apothic Adventure Core | Affixes, sockets, gems, boss spawning, RenderPearl overlays | `PENDING` |
+| **Milestone 6** | Polish & Full Parity | ModMenu integration, Chronicle of Shadows verification, GameTests | `PENDING` |
