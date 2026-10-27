@@ -1,0 +1,24 @@
+# Reference trees (excluded from Git)
+Refrences/
+reference
+reference/
+
+# Gradle & Build artifacts
+.gradle/
+build/
+bin/
+out/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS files
+.DS_Store
+Thumbs.db
