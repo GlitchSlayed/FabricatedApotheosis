@@ -1,0 +1,13 @@
+Fabricated Apotheosis
+Copyright (c) 2018-2026 Stormraven Studios, LLC and contributors.
+
+This distribution incorporates ported components from:
+- Apotheosis (MIT)
+- Placebo (MIT)
+- Apothic Attributes (MIT)
+- Apothic Enchanting (MIT)
+- Apothic Spawners (MIT)
+
+Third-party dependencies utilized at runtime:
+- YetAnotherConfigLib (LGPL-3.0) by isXander
+- Fabric Loader & Fabric API (Apache-2.0) by FabricMC

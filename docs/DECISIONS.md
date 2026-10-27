@@ -74,3 +74,17 @@
 - **Context**: Mixing client-only UI code (such as YACL screens and rendering) with common logic risks `ClassNotFoundException` on dedicated servers.
 - **Decision**: Use Fabric Loom's `splitEnvironmentSourceSets()` with `src/main` (common) and `src/client` (client-only).
 - **Consequences**: Compiler enforces that common code cannot import client classes, completely preventing dedicated-server crashes.
+
+---
+
+## ADR-009: Placebo Foundation Packaging, Atomic Dynamic Registries, and Interface-Segregated Networking
+
+- **Status**: Accepted
+- **Context**: Upstream modules depend on Placebo for dynamic data loading, registration helpers, math/codecs, and networking. Loom's `splitEnvironmentSourceSets()` strictly excludes client classes from `src/main`, and standalone Placebo or Apothic module JARs installed simultaneously would cause duplicate class collisions.
+- **Decision**:
+  - Produce one single ecosystem JAR under mod ID `apotheosis`, with explicit `"breaks"` in `fabric.mod.json` against conflicting standalone module IDs (`placebo`, `apothic_attributes`, `apothic_enchanting`, `apothic_spawners`).
+  - Implement a dedicated Gradle task `verifyNoDuplicateClasses` and `DuplicatesStrategy.FAIL` on all archive tasks.
+  - Port only the Placebo subset required by the audited ecosystem into `dev.shadowsoffire.placebo.*` without claiming public Placebo API compatibility via `provides`.
+  - Segregate networking into server-safe `PayloadHelper` in `src/main` with `ClientPayloadHandler` implemented in `src/client`, registered upon client initialization.
+  - Implement `DynamicRegistry` and `WeightedDynamicRegistry` with atomic reload staging, clear error logging without partial state, and automatic cache invalidation.
+- **Consequences**: Dedicated servers boot cleanly without client class leakage, network channels register synchronously via Fabric Networking API v1, dynamic data reloads reliably in multiplayer, and conflicting standalone jars are rejected gracefully at load time.

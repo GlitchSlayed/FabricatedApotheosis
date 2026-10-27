@@ -10,6 +10,7 @@ build/
 bin/
 out/
 run/
+logs/
 
 # IDE files
 .idea/

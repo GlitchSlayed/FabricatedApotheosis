@@ -65,11 +65,16 @@ Status Definitions:
 
 ## 6. Placebo Support (Required Subsets)
 
-| Upstream Feature | Status | Target Scope / Plan |
-| :--- | :--- | :--- |
-| **Dynamic Registry Helpers** | `investigated` | Lightweight codec registry helper for data-driven spawner modifiers. |
-| **Recipe Serialization Helpers** | `investigated` | Streamlined custom recipe serializers for Minecraft 26.3 format. |
-| **Network Payload Registrar** | `investigated` | Thin wrapper over Fabric `PayloadTypeRegistry`. |
+| Upstream Feature | Status | Target Scope / Plan | Verification & Evidence |
+| :--- | :--- | :--- | :--- |
+| **Registration Helpers (`DeferredHelper`)** | `verified` | Clean registration wrapper with explicit duplicate key detection. | Tested in `DeferredHelperTest`: duplicate registration throws clear `IllegalStateException`. |
+| **Codecs & Serialization (`StepFunction`, `PlaceboCodecs`, `MapBackedCodec`, `CodecMap`)** | `verified` | Math step functions and polymorphic codec maps for reloadable elements. | Tested in `StepFunctionTest`: exact JSON/NBT round-trip and level-based calculations pass. |
+| **Dynamic Data Loading (`DynamicRegistry`, `WeightedDynamicRegistry`, `DynamicHolder`)** | `verified` | Dynamic data loading from datapacks with atomic reloading and cache invalidation. | Tested in `DynamicRegistryTest`: load, reload, invalidation, and malformed JSON error handling verified. |
+| **Dynamic Registry Coordination (`DynamicRegistryManager`)** | `verified` | Server resource reload listener and network synchronization coordinator. | Verified on dedicated server startup (`Placebo/DynRegManager: Dynamic registry manager initialized successfully`). |
+| **Item Cache Utilities (`CachedObject`)** | `implemented` | Component-hash based item stack caching to prevent redundant calculations. | `CachedObject.java` in place with component hashing. |
+| **Experience Math (`EnchantmentUtils`)** | `verified` | Exact vanilla XP-to-level and level-to-XP conversions. | Tested in `EnchantmentUtilsTest` against vanilla level curve formulas. |
+| **Network Payload Registrar (`PayloadHelper`)** | `verified` | Dual clientbound/serverbound payload registration with dedicated-server safe client handler. | Server receivers registered; client separation verified via `PlaceboClientPayloadHandler`. |
+| **Packaging & Standalone Module Defense** | `verified` | Duplicate class enforcement and explicit mod conflict blocks. | `verifyNoDuplicateClasses` Gradle task, `DuplicatesStrategy.FAIL`, and `"breaks"` in `fabric.mod.json`. |
 
 ---
 

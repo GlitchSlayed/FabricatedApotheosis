@@ -41,14 +41,27 @@ dependencies {
 
 	// YetAnotherConfigLib for configuration screen
 	implementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
+
+	// Testing dependencies
+	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
 }
 
 processResources {
 	inputs.property "version", project.version
+	duplicatesStrategy = DuplicatesStrategy.FAIL
 
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
 	}
+}
+
+tasks.named("processClientResources") {
+	duplicatesStrategy = DuplicatesStrategy.FAIL
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -62,7 +75,38 @@ java {
 }
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.base.archivesName.get()}" }
+	duplicatesStrategy = DuplicatesStrategy.FAIL
+	from("LICENSE")
+	from("LICENSE_ASSETS")
+	from("NOTICE")
+}
+
+// Verification task ensuring no duplicate class files exist across compile outputs
+tasks.register("verifyNoDuplicateClasses") {
+	dependsOn compileJava, compileClientJava
+	doLast {
+		def seenClasses = new HashSet<String>()
+		def duplicateClasses = new ArrayList<String>()
+
+		sourceSets.each { sourceSet ->
+			sourceSet.output.classesDirs.each { dir ->
+				if (dir.exists()) {
+					dir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+						if (file.name.endsWith(".class")) {
+							def relPath = dir.toPath().relativize(file.toPath()).toString()
+							if (!seenClasses.add(relPath)) {
+								duplicateClasses.add(relPath)
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (!duplicateClasses.isEmpty()) {
+			throw new GradleException("Duplicate classes detected across source sets:\n" + duplicateClasses.join("\n"))
+		}
 	}
 }
+
+check.dependsOn verifyNoDuplicateClasses
