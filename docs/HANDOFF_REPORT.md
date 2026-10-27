@@ -232,4 +232,5 @@ All repos pinned on the `26.1` stable branch targeting Minecraft 26.1.2 NeoForge
 - **Branch**: `main`
 - **Initial Commit SHA**: `25803d7`
 - **Skeleton Commit SHA**: `8d9010f`
-- **Working Tree**: Ready to stage and commit Milestone 2 changes.
+- **Milestone 2 Commit SHA**: `9fda816`
+- **Working Tree**: Clean (all reference files and build outputs strictly ignored via `.gitignore`).
