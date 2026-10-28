@@ -1,4 +1,4 @@
-# Handoff Report — Milestone 2: Shared Foundation & Placebo Ecosystem Subset
+# Handoff Report — Milestone 3: Configuration Architecture & YACL UI
 
 ## 1. Current Repository Tree
 
@@ -41,7 +41,14 @@ FabricatedApotheosis/
 │   │   │   │   ├── Apotheosis.java
 │   │   │   │   ├── adventure/AdventureModule.java
 │   │   │   │   ├── attributes/AttributesModule.java
-│   │   │   │   ├── config/ApotheosisConfig.java
+│   │   │   │   ├── config/
+│   │   │   │   │   ├── ApotheosisConfig.java
+│   │   │   │   │   ├── ClientConfig.java
+│   │   │   │   │   ├── ConfigImpact.java
+│   │   │   │   │   ├── ConfigMigration.java
+│   │   │   │   │   ├── ServerConfig.java
+│   │   │   │   │   └── network/
+│   │   │   │   │       └── ApotheosisConfigPayload.java
 │   │   │   │   ├── docs/DocsSupport.java
 │   │   │   │   ├── enchanting/EnchantingModule.java
 │   │   │   │   ├── integrations/IntegrationsModule.java
@@ -80,16 +87,23 @@ FabricatedApotheosis/
 │   │   ├── java/dev/shadowsoffire/
 │   │   │   ├── apotheosis/client/
 │   │   │   │   ├── ApotheosisClient.java
-│   │   │   │   └── config/ApotheosisConfigScreen.java
+│   │   │   │   └── config/
+│   │   │   │       └── ApotheosisConfigScreen.java
 │   │   │   └── placebo/client/
 │   │   │       └── PlaceboClientPayloadHandler.java
 │   │   └── resources/
 │   │       └── apotheosis.client.mixins.json
-│   └── test/java/dev/shadowsoffire/placebo/
-│       ├── DeferredHelperTest.java
-│       ├── DynamicRegistryTest.java
-│       ├── EnchantmentUtilsTest.java
-│       └── StepFunctionTest.java
+│   └── test/java/dev/shadowsoffire/
+│       ├── apotheosis/config/
+│       │   ├── ApotheosisConfigTest.java
+│       │   ├── ClientConfigTest.java
+│       │   ├── ConfigMigrationTest.java
+│       │   └── ServerConfigTest.java
+│       └── placebo/
+│           ├── DeferredHelperTest.java
+│           ├── DynamicRegistryTest.java
+│           ├── EnchantmentUtilsTest.java
+│           └── StepFunctionTest.java
 ```
 
 ---
@@ -141,21 +155,28 @@ All repos pinned on the `26.1` stable branch targeting Minecraft 26.1.2 NeoForge
 
 ## 5. Commands Actually Executed & Results
 
-1. `./gradlew test`: **PASS** (1s). 5/5 automated unit tests passed:
-   - `StepFunctionTest.testStepFunctionMath`: verified step, level, and float evaluation formulas.
-   - `StepFunctionTest.testCodecSerialization`: verified JSON/NBT round-trip decoding and encoding.
-   - `EnchantmentUtilsTest.testExperienceCalculations`: verified exact vanilla XP-to-level conversions.
-   - `DeferredHelperTest.testDuplicateRegistrationThrowsClearError`: verified registry collisions throw clear `IllegalStateException` identifying duplicate key.
-   - `DynamicRegistryTest.testDynamicDataLoadReloadAndInvalidation`: verified dynamic datapack loading, atomic reloading, cache invalidation, and diagnostic error logging on malformed JSON without corrupting registry state.
-2. `./gradlew build`: **PASS** (735ms). Successfully executed `verifyNoDuplicateClasses`, validated archive duplicates strategy (`DuplicatesStrategy.FAIL`), bundled `LICENSE`, `LICENSE_ASSETS`, and `NOTICE`, generating `build/libs/fabricated-apotheosis-1.0.0-alpha.1.jar`.
+1. `./gradlew test`: **PASS** (2s). 14/14 automated unit tests passed:
+   - `ApotheosisConfigTest.testAtomicWrite`: verified temp file creation and atomic replacement with zero leftover `.tmp` files.
+   - `ApotheosisConfigTest.testRemoteOverrideAndDisconnectClearing`: verified remote server config overrides local setting when connected, and client disconnect immediately restores local settings.
+   - `ApotheosisConfigTest.testLoadAndSavePersistence`: verified disk persistence and re-loading for both server and client configurations.
+   - `ServerConfigTest.testDefaultsAreValid`: verified schema v1 defaults across all modules.
+   - `ServerConfigTest.testValidationAndClamping`: verified number clamping (`spawnerSilkLevel`, `maxEnchantmentLevelLimit`, `knowledgeMultiplier`) and relational constraints (`minSpawnDelayLimit <= maxSpawnDelayLimit`).
+   - `ServerConfigTest.testNetworkStreamCodecSerialization`: verified network byte buffer encoding/decoding round-trip.
+   - `ClientConfigTest.testClientConfigDefaultsAndValidation`: verified client preferences defaults and bounds clamping for offsets and noise chances.
+   - `ConfigMigrationTest.testSchemaV0ToV1Migration`: verified automatic schema upgrade from unversioned v0 JSON to v1 schema.
+   - `ConfigMigrationTest.testLegacyCfgMigration`: verified migration from legacy NeoForge `.cfg` format into structured configuration.
+   - 5 Placebo foundation tests: `StepFunctionTest` (math & codec), `EnchantmentUtilsTest` (XP conversion), `DeferredHelperTest` (duplicate rejection), `DynamicRegistryTest` (data loading, atomic reload, invalid diagnostics, cache invalidation).
+2. `./gradlew build`: **PASS** (662ms). Successfully executed `verifyNoDuplicateClasses`, validated archive duplicates strategy (`DuplicatesStrategy.FAIL`), bundled `LICENSE`, `LICENSE_ASSETS`, and `NOTICE`, generating `build/libs/fabricated-apotheosis-1.0.0-alpha.1.jar`.
 3. `./gradlew runServer --args="--nogui"`: **PASS**. Successfully booted dedicated server on Minecraft 26.3 Fabric:
    - Loaded 67 mods including `apotheosis 1.0.0-alpha.1`.
+   - Executed config migration on startup: `Migrating ServerConfig from schema version 0 to 1`.
    - Initialized `ApotheosisConfig` (`apotheosis.json`).
-   - Initialized `Placebo.init()` and registered `DynamicRegistryManager` as a server reload listener.
+   - Registered `ApotheosisConfigPayload` and `ServerPlayConnectionEvents.JOIN` config sync listener.
+   - Initialized `Placebo.init()` and `DynamicRegistryManager`.
    - Loaded world spawn chunks (100%), opened server socket, and shut down cleanly upon command without any client class leakage or crashes.
 4. Verification status:
    - **Compilation**: **VERIFIED**
-   - **Automated Behavioral Tests**: **VERIFIED**
+   - **Automated Behavioral Tests**: **VERIFIED** (14/14 pass)
    - **Dedicated-Server Launch**: **VERIFIED**
    - **Client Launch**: **IN PROGRESS** (Asset download initialized; client classes compiled and verified in JAR).
 

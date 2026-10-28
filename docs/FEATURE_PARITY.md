@@ -17,11 +17,15 @@ Status Definitions:
 
 | Feature / Subsystem | Status | Verification & Evidence | Notes |
 | :--- | :--- | :--- | :--- |
-| **Combined 1-JAR Packaging** | `verified` | `./gradlew build` outputs single jar (16.7 KB) | `fabricated-apotheosis-1.0.0-alpha.1.jar` |
+| **Combined 1-JAR Packaging** | `verified` | `./gradlew build` outputs single jar | `fabricated-apotheosis-1.0.0-alpha.1.jar` |
 | **Fabric 26.3 Toolchain** | `verified` | Loom 1.17.21, Fabric Loader 0.19.5, Java 25 | Fully builds and packages |
 | **Dedicated Server Launch** | `verified` | `./gradlew runServer --args="--nogui"` | 100% chunks loaded, clean stop, zero client leak |
-| **Server-Safe Config Model** | `verified` | `ApotheosisConfig.java` writes `apotheosis.json` | Tested on dedicated server startup |
-| **YACL Client Config Screen** | `implemented` | `ApotheosisConfigScreen.java` | Segregated in client source set |
+| **Server-Safe Config Model** | `verified` | `ServerConfig.java`, atomic writes, schema v1 | Tested in `ServerConfigTest` & server startup |
+| **Client Preferences Model** | `verified` | `ClientConfig.java`, persists in `apotheosis-client.json` | Tested in `ClientConfigTest` & `ApotheosisConfigTest` |
+| **Schema & Legacy Migration** | `verified` | `ConfigMigration.java` | Tested in `ConfigMigrationTest` (v0->v1 and `.cfg`) |
+| **Network Config Sync** | `verified` | `ApotheosisConfigPayload.java` | Tested in `ServerConfigTest.testNetworkStreamCodec` |
+| **Remote Stale State Clearing** | `verified` | `ClientPlayConnectionEvents.DISCONNECT` hook | Tested in `ApotheosisConfigTest.testRemoteOverride` |
+| **YACL Client Config Screen** | `verified` | `ApotheosisConfigScreen.java` | Segregated in client source set; read-only on remote |
 | **Reference Trees Isolation** | `verified` | `.gitignore` and `REFERENCE_INDEX.md` | Reference files strictly read-only and unbundled |
 
 ---

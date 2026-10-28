@@ -88,3 +88,20 @@
   - Segregate networking into server-safe `PayloadHelper` in `src/main` with `ClientPayloadHandler` implemented in `src/client`, registered upon client initialization.
   - Implement `DynamicRegistry` and `WeightedDynamicRegistry` with atomic reload staging, clear error logging without partial state, and automatic cache invalidation.
 - **Consequences**: Dedicated servers boot cleanly without client class leakage, network channels register synchronously via Fabric Networking API v1, dynamic data reloads reliably in multiplayer, and conflicting standalone jars are rejected gracefully at load time.
+
+---
+
+## ADR-010: Configuration Architecture: Typed Schema Separation, Atomic Writes, and Server-Authoritative YACL UI
+
+- **Status**: Accepted
+- **Context**: Upstream Apotheosis had scattered configs across Placebo `.cfg` files, with mixed client visual options and server gameplay rules. In multiplayer, client-side configuration screens could mislead players or cause desync if server gameplay rules are editable or not synchronized.
+- **Decision**:
+  - Separate configuration into two distinct files and schemas:
+    1. `apotheosis.json` (`ServerConfig`): Server-authoritative gameplay formulas, limits, and module toggles.
+    2. `apotheosis-client.json` (`ClientConfig`): Purely client preferences for visuals, tooltip details, and screen positioning.
+  - Implement schema versioning (`schemaVersion = 1`) and automatic migration for older unversioned JSONs and legacy `.cfg` files (`ConfigMigration`).
+  - Implement atomic file writes using sibling `.tmp` files with `StandardCopyOption.ATOMIC_MOVE` to prevent corrupted configs on crash.
+  - Synchronize authoritative `ServerConfig` over the network on player join (`ApotheosisConfigPayload`), and clear remote settings upon client disconnect (`ClientPlayConnectionEvents.DISCONNECT`) to prevent retaining stale state.
+  - In YACL UI (`ApotheosisConfigScreen`), render server gameplay settings as read-only (`.available(false)`) when connected to a remote server, while keeping client preferences fully editable.
+  - Tag every option with its impact: `LIVE`, `RELOAD_REQUIRED`, or `RESTART_REQUIRED`.
+- **Consequences**: Guarantees server authority in multiplayer, eliminates desync and stale state, ensures zero YACL classes on dedicated server classloaders, and provides a polished, intuitive configuration screen for players.
