@@ -57,11 +57,28 @@ Each attribute is evaluated for:
 Upstream relies on NeoForge helper classes:
 - `net.neoforged.neoforge.common.PercentageAttribute`
 - `net.neoforged.neoforge.common.BooleanAttribute`
+- `net.neoforged.neoforge.common.ItemAttributeModifierEvent`
+- NeoForge merged attribute tooltip formatting (`NeoForgeMod.enableMergedAttributeTooltips()`)
+- NeoForge equipment slot abstractions (`EntityEquipmentSlot`, `EntitySlotGroup`, `CurioEquipmentSlot`)
 
-**Fabric Implementation**:
-- Vanilla `RangedAttribute` handles min, max, and base values identically.
-- On Fabric, percentage formatting is handled in client-side tooltip formatters (`AttributeHelper.formatValue()`) without requiring non-standard attribute class hierarchies.
-- `BooleanAttribute` is implemented as `new RangedAttribute(name, 0.0, 0.0, 1.0)` where `>= 1.0` is true.
+### Fabric Implementation Decisions:
+1. **Attribute Class Architecture**:
+   - Vanilla `RangedAttribute` handles min, max, and base values identically to NeoForge.
+   - All 21 custom attributes are instantiated as standard `RangedAttribute` instances registered with `DeferredHelper` under `apothic_attributes:*` with `.setSyncable(true)`.
+   - Percentage and boolean semantics are decoupled from entity calculation classes and encapsulated in [`AttributeFormatting`](file:///home/vansh/Documents/projects/FabricatedApotheosis/src/main/java/dev/shadowsoffire/apotheosis/attributes/format/AttributeFormatting.java).
+2. **Formatting Semantics**:
+   - `PERCENTAGE`: Formatted as percentage values (e.g. `+15%` or `150%`), scaled by `* 100.0` for addition modifiers.
+   - `BOOLEAN`: Formatted as `Enabled` (`value >= 1.0`) or `Disabled` (`value < 1.0`).
+   - `FLAT`: Formatted as plain numbers with up to 2 decimal places.
+3. **Equipment Slot & Modifier Source Abstraction**:
+   - Upstream's `EntityEquipmentSlot` was designed to extend beyond vanilla slots to support Curios.
+   - On Fabric, we implement an open registry [`ModifierSourceType`](file:///home/vansh/Documents/projects/FabricatedApotheosis/src/client/java/dev/shadowsoffire/apotheosis/client/attributes/ModifierSourceType.java):
+     - `EQUIPMENT` extracts from all 6 vanilla `EquipmentSlot` types using `ItemStack.forEachModifier()`.
+     - `MOB_EFFECT` extracts from active entity potion effects.
+     - Extension point `ModifierSourceType.register()` is provided for optional accessory mods (Trinkets / Accessories) without introducing compile-time hard dependencies.
+4. **Modifier Provenance & Accumulation Prevention**:
+   - `ItemStack` modifiers are managed strictly through Minecraft 26.3 `DataComponents.ATTRIBUTE_MODIFIERS`.
+   - Equipping and unequipping recalculates effective modifiers through vanilla `LivingEntity.collectEquipmentChanges()` without retaining stateful modifier caches, preventing modifier leakage or accumulation bugs.
 
 ---
 
@@ -70,6 +87,9 @@ Upstream relies on NeoForge helper classes:
 1. **ItemStack Attribute Modifiers**:
    - Upstream uses Minecraft's data component `DataComponents.ATTRIBUTE_MODIFIERS`.
    - Modifiers saved under `apothic_attributes:*` namespace retain their persistent `Identifier` keys.
-2. **Entity Persistent Data**:
-   - `Overheal` and `GhostHealth` store auxiliary damage data in entity NBT.
-   - On Fabric, migrate entity NBT storage to Fabric Data Attachment API for clean world save synchronization.
+2. **Obsolete Mining Speed Migration**:
+   - When loading item stacks with legacy `apothic_attributes:mining_speed` attribute modifiers, they are migrated directly to `minecraft:mining_efficiency`.
+   - Explicit check in item modifier processing ensures that `apothic_attributes:mining_speed` is never registered in the attribute registry and never applied concurrently with vanilla mining efficiency.
+3. **Entity Persistent Data**:
+   - `Overheal` and `GhostHealth` store auxiliary damage data in entity components/attachments.
+   - On Fabric, migrate entity auxiliary data to Fabric Data Attachment API for clean world save synchronization.

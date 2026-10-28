@@ -1,4 +1,4 @@
-# Handoff Report — Milestone 3: Configuration Architecture & YACL UI
+# Handoff Report — Milestone 4: Custom Attributes, Vanilla Overlap & Attribute UI
 
 ## 1. Current Repository Tree
 
@@ -40,7 +40,13 @@ FabricatedApotheosis/
 │   │   │   ├── apotheosis/
 │   │   │   │   ├── Apotheosis.java
 │   │   │   │   ├── adventure/AdventureModule.java
-│   │   │   │   ├── attributes/AttributesModule.java
+│   │   │   │   ├── attributes/
+│   │   │   │   │   ├── AttributesModule.java
+│   │   │   │   │   ├── api/
+│   │   │   │   │   │   ├── ALObjects.java
+│   │   │   │   │   │   └── AttributeHelper.java
+│   │   │   │   │   └── format/
+│   │   │   │   │       └── AttributeFormatting.java
 │   │   │   │   ├── config/
 │   │   │   │   │   ├── ApotheosisConfig.java
 │   │   │   │   │   ├── ClientConfig.java
@@ -78,27 +84,50 @@ FabricatedApotheosis/
 │   │   │       └── util/
 │   │   │           ├── CachedObject.java
 │   │   │           ├── EnchantmentUtils.java
+│   │   │           ├── Offset.java
 │   │   │           ├── PlaceboUtil.java
 │   │   │           └── StepFunction.java
 │   │   └── resources/
 │   │       ├── apotheosis.mixins.json
-│   │       └── fabric.mod.json (with explicit "breaks" for standalone modules)
+│   │       ├── fabric.mod.json
+│   │       └── assets/apothic_attributes/
+│   │           ├── lang/ (en_us, zh_cn, etc.)
+│   │           ├── sounds/ & sounds.json
+│   │           └── textures/gui/ (attributes_gui.png, attribute_component.png, sprites/)
 │   ├── client/
 │   │   ├── java/dev/shadowsoffire/
 │   │   │   ├── apotheosis/client/
 │   │   │   │   ├── ApotheosisClient.java
-│   │   │   │   └── config/
-│   │   │   │       └── ApotheosisConfigScreen.java
-│   │   │   └── placebo/client/
-│   │   │       └── PlaceboClientPayloadHandler.java
+│   │   │   │   ├── attributes/
+│   │   │   │   │   ├── AttributeModifierComponent.java
+│   │   │   │   │   ├── AttributesClientTooltipHandler.java
+│   │   │   │   │   ├── AttributesGui.java
+│   │   │   │   │   ├── AttributesGuiHolder.java
+│   │   │   │   │   ├── ButtonPlacement.java
+│   │   │   │   │   ├── ModifierSource.java
+│   │   │   │   │   └── ModifierSourceType.java
+│   │   │   │   ├── config/
+│   │   │   │   │   └── ApotheosisConfigScreen.java
+│   │   │   │   └── mixin/
+│   │   │   │       ├── AbstractContainerScreenAccessor.java
+│   │   │   │       ├── AbstractContainerScreenMixin.java
+│   │   │   │       ├── AbstractRecipeBookScreenAccessor.java
+│   │   │   │       └── InventoryScreenMixin.java
+│   │   │   └── placebo/
+│   │   │       ├── PlaceboClient.java
+│   │   │       └── client/
+│   │   │           └── PlaceboClientPayloadHandler.java
 │   │   └── resources/
 │   │       └── apotheosis.client.mixins.json
 │   └── test/java/dev/shadowsoffire/
-│       ├── apotheosis/config/
-│       │   ├── ApotheosisConfigTest.java
-│       │   ├── ClientConfigTest.java
-│       │   ├── ConfigMigrationTest.java
-│       │   └── ServerConfigTest.java
+│       ├── apotheosis/
+│       │   ├── attributes/
+│       │   │   └── AttributesTest.java
+│       │   └── config/
+│       │       ├── ApotheosisConfigTest.java
+│       │       ├── ClientConfigTest.java
+│       │       ├── ConfigMigrationTest.java
+│       │       └── ServerConfigTest.java
 │       └── placebo/
 │           ├── DeferredHelperTest.java
 │           ├── DynamicRegistryTest.java
@@ -108,151 +137,88 @@ FabricatedApotheosis/
 
 ---
 
-## 2. Pinned Upstream Versions and Commit SHAs
+## 2. Key Findings & Vanilla Overlap Resolution
 
-All repos pinned on the `26.1` stable branch targeting Minecraft 26.1.2 NeoForge:
-- **Apotheosis**: `f2e76862ed9f4dcdf19c25400dc3d5478a46dd74` (v9.1.0)
-- **Placebo**: `8fcfa1e6e947e8f0f12044ad31ce4bef2145982a` (v10.0.2)
-- **Apothic-Attributes**: `44d0a8316fcb7965c26e8ff7eda341830ca63023` (v3.1.0)
-- **Apothic-Enchanting**: `4d167fd44222058819fa70bf99fbc3ab38220e34` (v2.1.0)
-- **Apothic-Spawners**: `a5401df4a80b833b297c398f88a5718bdd47c02a` (v2.0.1)
-- **GatewaysToEternity**: `73aa0726c998214a180df1e2981ef1752ddb56e9` (v6.0.2)
-- **Patchouli**: `4f94b07bbd287f2e208a7ea90b0ca066e54f738c` (tag `release-26.1-94-beta`)
-- **YetAnotherConfigLib**: `3.9.6+26.3-fabric` (Modrinth / isXander Maven)
+### Custom Attributes Inventory
+All 21 custom attributes from pinned Apothic Attributes (26.1.2) were analyzed against Minecraft 26.3 source and registered under `apothic_attributes`:
+- `armor_pierce` [0, 1000]
+- `armor_shred` [0, 2] (Percentage)
+- `arrow_damage` [0, 10] (Percentage)
+- `arrow_velocity` [0, 10] (Percentage)
+- `cold_damage` [0, 1000]
+- `crit_chance` [0, 10] (Percentage, base 0.05)
+- `crit_damage` [0, 100] (Percentage, base 1.5)
+- `current_hp_damage` [0, 1] (Percentage)
+- `dodge_chance` [0, 1] (Percentage)
+- `draw_speed` [0, 4] (Percentage, base 1.0)
+- `experience_gained` [0, 1000] (Percentage, base 1.0)
+- `fire_damage` [0, 1000]
+- `ghost_health` [0, 1000]
+- `healing_received` [0, 1000] (Percentage, base 1.0)
+- `life_steal` [0, 10] (Percentage)
+- `overheal` [0, 10] (Percentage)
+- `projectile_damage` [0, 10] (Percentage, base 1.0)
+- `prot_pierce` [0, 34]
+- `prot_shred` [0, 0.90] (Percentage)
+- `elytra_flight` [0, 1] (Boolean)
+- `cooldown_reduction` [-10, 0.95] (Percentage)
 
----
+All 21 attributes have `.setSyncable(true)` and are attached to all `LivingEntity` types using Fabric's `FabricDefaultAttributeRegistry.MODIFY` (`context.modifyAll`).
 
-## 3. Exact Build & Toolchain Versions
+### Replaced / Obsolete Attributes
+- **`apothic_attributes:mining_speed`**: Confirmed completely removed upstream in 3.1.0 in favor of vanilla `minecraft:mining_efficiency`.
+- Stored item modifiers referencing `apothic_attributes:mining_speed` are migrated explicitly to `minecraft:mining_efficiency` via `AttributeHelper.migrateItemModifiers(ItemStack)` upon tooltip inspection or inventory load, preventing duplicate application.
 
-- **Minecraft**: `26.3`
-- **Java**: Java 25 (`25.0.4.1`, OpenJDK 64-Bit Server VM)
-- **Gradle**: `9.5.1` (Wrapper) / `9.8.2` (Host)
-- **Fabric Loom**: `1.17.21` (`1.17-SNAPSHOT`)
-- **Fabric Loader**: `0.19.5`
-- **Fabric API**: `0.161.0+26.3`
-- **YACL**: `3.9.6+26.3-fabric`
-- **JUnit**: `5.10.2` with `junit-platform-launcher`
+### Fabric Formatting vs NeoForge Extensions
+- In upstream NeoForge, attributes relied on NeoForge-only classes (`PercentageAttribute`, `BooleanAttribute`, and `IAttributeExtension.toValueComponent`).
+- On Fabric, formatting is encapsulated in `AttributeFormatting.java`:
+  - `FormatType.PERCENTAGE`: Formats values as percentages (e.g. `25%`, `+15%`).
+  - `FormatType.BOOLEAN`: Formats boolean flags (`Enabled` / `Disabled`, `+Enabled` / `-Disabled`).
+  - `FormatType.FLAT`: Formats numerical decimals (`10.5`, `+2`).
+  - `buildFormula(...)`: Math representation of attribute calculations in tooltips.
 
----
-
-## 4. Build and Launch Commands
-
-```bash
-# Run automated test suite
-./gradlew test
-
-# Build mod JAR, verify class duplicates, and verify licenses
-./gradlew build
-
-# Launch dedicated server in development environment
-./gradlew runServer --args="--nogui"
-
-# Launch client with YACL config screen support
-./gradlew runClient
-```
-
----
-
-## 5. Commands Actually Executed & Results
-
-1. `./gradlew test`: **PASS** (2s). 14/14 automated unit tests passed:
-   - `ApotheosisConfigTest.testAtomicWrite`: verified temp file creation and atomic replacement with zero leftover `.tmp` files.
-   - `ApotheosisConfigTest.testRemoteOverrideAndDisconnectClearing`: verified remote server config overrides local setting when connected, and client disconnect immediately restores local settings.
-   - `ApotheosisConfigTest.testLoadAndSavePersistence`: verified disk persistence and re-loading for both server and client configurations.
-   - `ServerConfigTest.testDefaultsAreValid`: verified schema v1 defaults across all modules.
-   - `ServerConfigTest.testValidationAndClamping`: verified number clamping (`spawnerSilkLevel`, `maxEnchantmentLevelLimit`, `knowledgeMultiplier`) and relational constraints (`minSpawnDelayLimit <= maxSpawnDelayLimit`).
-   - `ServerConfigTest.testNetworkStreamCodecSerialization`: verified network byte buffer encoding/decoding round-trip.
-   - `ClientConfigTest.testClientConfigDefaultsAndValidation`: verified client preferences defaults and bounds clamping for offsets and noise chances.
-   - `ConfigMigrationTest.testSchemaV0ToV1Migration`: verified automatic schema upgrade from unversioned v0 JSON to v1 schema.
-   - `ConfigMigrationTest.testLegacyCfgMigration`: verified migration from legacy NeoForge `.cfg` format into structured configuration.
-   - 5 Placebo foundation tests: `StepFunctionTest` (math & codec), `EnchantmentUtilsTest` (XP conversion), `DeferredHelperTest` (duplicate rejection), `DynamicRegistryTest` (data loading, atomic reload, invalid diagnostics, cache invalidation).
-2. `./gradlew build`: **PASS** (662ms). Successfully executed `verifyNoDuplicateClasses`, validated archive duplicates strategy (`DuplicatesStrategy.FAIL`), bundled `LICENSE`, `LICENSE_ASSETS`, and `NOTICE`, generating `build/libs/fabricated-apotheosis-1.0.0-alpha.1.jar`.
-3. `./gradlew runServer --args="--nogui"`: **PASS**. Successfully booted dedicated server on Minecraft 26.3 Fabric:
-   - Loaded 67 mods including `apotheosis 1.0.0-alpha.1`.
-   - Executed config migration on startup: `Migrating ServerConfig from schema version 0 to 1`.
-   - Initialized `ApotheosisConfig` (`apotheosis.json`).
-   - Registered `ApotheosisConfigPayload` and `ServerPlayConnectionEvents.JOIN` config sync listener.
-   - Initialized `Placebo.init()` and `DynamicRegistryManager`.
-   - Loaded world spawn chunks (100%), opened server socket, and shut down cleanly upon command without any client class leakage or crashes.
-4. Verification status:
-   - **Compilation**: **VERIFIED**
-   - **Automated Behavioral Tests**: **VERIFIED** (14/14 pass)
-   - **Dedicated-Server Launch**: **VERIFIED**
-   - **Client Launch**: **IN PROGRESS** (Asset download initialized; client classes compiled and verified in JAR).
+### Attribute Inspection UI & 26.3 GUI Pipeline
+- Ported `AttributesGui.java` to Minecraft 26.3:
+  - Uses `GuiGraphicsExtractor` RenderPearl pipelines (`RenderPipelines.GUI_TEXTURED`, `blitSprite`, `fakeItem`, `text`).
+  - 2D matrix transformation via `org.joml.Matrix3x2fStack`.
+  - Injected into `InventoryScreen` via `InventoryScreenMixin` and `AbstractContainerScreenMixin` with zero raw OpenGL calls.
+  - Interactive sword button positioned relative to the player preview box (`Offset` & `ButtonPlacement`).
+  - Scrollable attribute list (max 6 visible at once), "Hide Unchanged" filter, and dynamic formula display.
+  - Tooltip breakdown with modifier sources (`ModifierSource`), equipment slot provenance, and mob effect sprites via `Hud.getMobEffectSprite`.
+  - Open extension point `ModifierSourceType.register()` allowing external accessory/curios mods to add custom modifier origins.
 
 ---
 
-## 6. Packaging Decision & External Dependencies
+## 3. Verification & Test Results
 
-- **Single Ecosystem Distributable**: All modules (`apotheosis`, `attributes`, `enchanting`, `spawners`, and required `placebo` subsets) are combined into a single downloadable JAR (`fabricated-apotheosis-1.0.0-alpha.1.jar`) under mod ID `apotheosis`.
-- **Standalone Module Conflict Defense**: Added explicit `"breaks"` in `fabric.mod.json` against conflicting standalone module IDs:
-  - `placebo`: `*`
-  - `apothic_attributes`: `*`
-  - `apothic_enchanting`: `*`
-  - `apothic_spawners`: `*`
-- **Duplicate Class Prevention**: `verifyNoDuplicateClasses` Gradle task inspects compile outputs and halts the build if duplicate fully-qualified class names occur.
-- **External Dependencies**:
-  - `fabricloader` (`>=0.19.5`)
-  - `fabric-api` (`0.161.0+26.3`)
-  - `yet_another_config_lib_v3` (`3.9.6+26.3-fabric`)
-- **Optional Integrations**:
-  - `patchouli` (for guidebook support)
-  - `modmenu` (for in-game config button)
+1. **Automated Unit Tests**:
+   - `AttributesTest.testAll21AttributesPresentAndSyncable()`: Passed.
+   - `AttributesTest.testAttributeBoundsAndDefaults()`: Passed.
+   - `AttributesTest.testPercentageAndBooleanFormatting()`: Passed.
+   - `AttributesTest.testModifierAccumulationPrevention()`: Passed.
+   - `AttributesTest.testObsoleteMiningSpeedMigration()`: Passed.
+   - `AttributesTest.testHiddenAttributeFiltering()`: Passed.
+   - **Total test suite**: 20 tests executed, 20 passed (`./gradlew test`).
 
----
+2. **Compilation & Packaging**:
+   - Aggregate compilation (`compileJava`, `compileClientJava`, `compileTestJava`) succeeded.
+   - Aggregate jar build (`./gradlew build`) succeeded.
+   - Duplicate class defense task (`verifyNoDuplicateClasses`) passed with 0 violations.
 
-## 7. Dependency and Licensing Blockers
-
-- **Code vs Asset Licenses**: Upstream Apotheosis code is MIT licensed, but assets (`LICENSE_ASSETS`) are `All Rights Reserved` by Stormraven Studios, LLC. The port preserves asset licensing boundaries and includes third-party attributions in `NOTICE`.
-- **Patchouli CC-BY-NC-SA 3.0**: Patchouli cannot be flattened (shaded) into the mod jar without contaminating the MIT code license. Patchouli is cleanly isolated as an external optional dependency while preserving book JSON assets.
-- **YACL LGPL-3.0**: YACL is consumed as a standard dependency or Jar-in-Jar (`include`) to ensure LGPL metadata compliance.
-
----
-
-## 8. Attribute Overlap Findings
-
-- Audited all 21 custom attributes from `ALObjects.java`.
-- **Obsolete Mining Speed**: Upstream already removed `mining_speed` in 3.1.0; both 26.1.2 and 26.3 natively provide `Attributes.MINING_EFFICIENCY` (`minecraft:mining_efficiency`) and `Attributes.SUBMERGED_MINING_SPEED`. No custom attribute will be added.
-- **21 Combat Attributes Kept**: `ARMOR_PIERCE`, `ARMOR_SHRED`, `ARROW_DAMAGE`, `ARROW_VELOCITY`, `COLD_DAMAGE`, `CRIT_CHANCE`, `CRIT_DAMAGE`, `CURRENT_HP_DAMAGE`, `DODGE_CHANCE`, `DRAW_SPEED`, `EXPERIENCE_GAINED`, `FIRE_DAMAGE`, `GHOST_HEALTH`, `HEALING_RECEIVED`, `LIFE_STEAL`, `OVERHEAL`, `PROJECTILE_DAMAGE`, `PROT_PIERCE`, `PROT_SHRED`, `ELYTRA_FLIGHT`, and `COOLDOWN_REDUCTION` are not represented in vanilla 26.3 and will be ported using standard `RangedAttribute` instances.
+3. **Dedicated Server Launch**:
+   - Executed `./gradlew runServer --args="--nogui"`.
+   - Log output:
+     `[Apotheosis/Attributes] Apothic Attributes module initialized successfully (21 attributes registered and attached)`
+     `[Server thread/INFO] (Minecraft) Done (0.253s)! For help, type "help"`
+   - Server shut down cleanly with `stop`.
+   - Verified 100% absence of client GUI/screen classes on dedicated server.
 
 ---
 
-## 9. Most Difficult NeoForge / Coremod / Rendering Dependencies
+## 4. Next Concrete Implementation Task
 
-1. **Apothic Enchanting Level Uncapping**: In legacy versions, ASM was used; in 26.1.2 NeoForge, mixins and access transformers are used. On Fabric 26.3, this requires transpiling `accesstransformer.cfg` to `apotheosis.accesswidener` and targeting Minecraft 26.3's data-driven enchantment structure.
-2. **NeoForge Capability / Attachment Migration**: Migrating `RavenTableStats` and spawner custom data from NeoForge attachments to Fabric Data Attachment API (`fabric-data-attachment-api-v1`).
-3. **RenderPearl GPU Pipelines**: Boss health bar styling, gem sockets, and custom particle effects must use Minecraft 26.3 rendering abstractions without raw OpenGL calls.
-
----
-
-## 10. Proposed Next Three Implementation Tasks
-
-1. **Task 1: Apothic Spawners Core Mechanics & Modifier Data Registry**
-   - File: `src/main/java/dev/shadowsoffire/apotheosis/spawners/`
-   - Implement `SpawnerModifier` data registry utilizing `DynamicRegistry` and `StepFunction`.
-   - Implement `BaseSpawnerMixin` targeting 26.3's `serverTick` and `setEntityData(TypedEntityData)`.
-2. **Task 2: Spawner Silk Touch Harvesting & Persistence**
-   - Files: `src/main/resources/data/c/loot_table/blocks/spawner.json` & `src/main/java/dev/shadowsoffire/apotheosis/spawners/mixin/SpawnerBlockDropsMixin.java`
-   - Preserve modifier stats on harvested spawner items using `DataComponents.CUSTOM_DATA`.
-3. **Task 3: Spawner Client Tooltip Deltas & Screen Sync**
-   - Files: `src/client/java/dev/shadowsoffire/apotheosis/client/spawners/SpawnerTooltipHandler.java`
-   - Hook 26.3 `TooltipDisplay` / item hover text to display modifier stats and delta comparisons.
-
----
-
-## 11. Questions That Require a Product Decision
-
-1. **Gateways to Eternity**: Should Gateways to Eternity remain a separate optional mod (recommended), or should tiered wave battles eventually be bundled directly into Fabricated Apotheosis?
-2. **Guidebook Support**: Should we maintain Patchouli Fabric as the recommended guidebook engine, or evaluate a zero-dependency internal book viewer (or Lavender)?
-3. **Curios Accessories on Fabric**: Does the product intend to support Trinkets, Accessories, or rely strictly on vanilla equipment components for gem sockets and affixes?
-
----
-
-## 12. Current Git Status & Commit
-
-- **Branch**: `main`
-- **Initial Commit SHA**: `25803d7`
-- **Skeleton Commit SHA**: `8d9010f`
-- **Milestone 2 Commit SHA**: `9fda816`
-- **Milestone 3 Commit SHA**: `9fe0c4e`
-- **Working Tree**: Clean (all reference files and build outputs strictly ignored via `.gitignore`).
+Proceed to **Milestone 5: Apothic Spawners Core**:
+1. Implement spawner stat modifications hooking into Minecraft 26.3 `BaseSpawner` (min/max spawn delay, spawn count, max nearby entities, required player range, spawn range).
+2. Implement spawner modifier items and data map definitions (sugar, clock, ghast tear, blaze rod, fermented spider eye, dragon egg, etc.).
+3. Implement Silk Touch spawner capture and custom drops loot table handling.
+4. Implement redstone control and condition-ignoring spawner modifiers.

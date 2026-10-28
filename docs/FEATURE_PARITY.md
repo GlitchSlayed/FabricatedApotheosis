@@ -45,13 +45,19 @@ Status Definitions:
 
 ## 4. Apothic Attributes Module
 
-| Upstream Feature | Status | Target Scope / Plan |
-| :--- | :--- | :--- |
-| **21 Custom Combat Attributes** | `investigated` | Audit completed in `docs/VANILLA_OVERLAP.md`. Porting to `RangedAttribute`. |
-| **Mining Speed Attribute Removal** | `verified` | Confirmed removed in upstream 3.1.0; mapped to vanilla `MINING_EFFICIENCY`. |
-| **Combat Rules & Armor Piercing** | `investigated` | Mixins on `CombatRules.getDamageAfterAbsorb` and `LivingEntity.hurt`. |
-| **Overheal & Ghost Health** | `investigated` | Absorption conversion and out-of-combat health recovery hooks. |
-| **Attributes GUI Formatting** | `investigated` | Client screen formatting for percentage and flat attribute values. |
+| Upstream Feature | Status | Target Scope / Plan | Verification & Evidence |
+| :--- | :--- | :--- | :--- |
+| **21 Custom Combat Attributes** | `verified` | Registered via `DeferredHelper` under `apothic_attributes` with `.setSyncable(true)`. Attached to all living entity types via `FabricDefaultAttributeRegistry.MODIFY`. | Tested in `AttributesTest.testAll21AttributesPresentAndSyncable` & `testAttributeBoundsAndDefaults`. |
+| **Mining Speed Attribute Removal & Migration** | `verified` | Confirmed removed upstream; replaced with vanilla `MINING_EFFICIENCY`. Stored modifiers migrated via `AttributeHelper.migrateItemModifiers`. | Tested in `AttributesTest.testObsoleteMiningSpeedMigration`: obsolete ID removed and vanilla efficiency verified. |
+| **Percentage & Boolean Attribute Formatting** | `verified` | Fabric mod-level formatting replacing NeoForge `PercentageAttribute` and `BooleanAttribute`. | Tested in `AttributesTest.testPercentageAndBooleanFormatting`. |
+| **Modifier Accumulation Prevention** | `verified` | Enforces that updating/re-equipping modifiers with identical identifiers replaces rather than duplicates modifiers. | Tested in `AttributesTest.testModifierAccumulationPrevention`. |
+| **Attribute Inspection UI (`AttributesGui`)** | `verified` | Scrollable inspection UI with sword toggle button on `InventoryScreen`, "Hide Unchanged" filter, and RenderPearl 26.3 GUI pipeline. | `AttributesGui.java`, `InventoryScreenMixin`, and exclusion zones for recipe viewers. |
+| **Modifier Provenance & Slot Display** | `verified` | Visual provenance rendering in tooltips with equipment slot items and mob effect sprites via `Hud.getMobEffectSprite`. | `ModifierSource.java`, `ModifierSourceType.java`, `AttributeModifierComponent.java`. |
+| **Hidden Attribute Filtering** | `verified` | Configurable client-side attribute filtering with namespace wildcards and negation (`!`) support. | Tested in `AttributesTest.testHiddenAttributeFiltering`. |
+| **Item & Potion Tooltip Integration** | `verified` | Fabric `ItemTooltipCallback` hook providing potion descriptions and automatic obsolete attribute migration. | `AttributesClientTooltipHandler.java`. |
+| **Accessory-Slot Extension Points** | `verified` | Open extension registry `ModifierSourceType.register()` allowing external accessory/curios mods to add custom modifier provenance. | `ModifierSourceType.java`. |
+| **Combat Rules & Piercing Hooks** | `investigated` | Targeted for combat milestones; audit complete in `docs/VANILLA_OVERLAP.md`. | Pending combat hooks milestone. |
+| **Overheal & Ghost Health** | `investigated` | Absorption conversion and out-of-combat health recovery hooks. | Pending combat hooks milestone. |
 
 ---
 

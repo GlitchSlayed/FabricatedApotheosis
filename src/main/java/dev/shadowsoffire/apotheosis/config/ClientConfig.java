@@ -1,5 +1,8 @@
 package dev.shadowsoffire.apotheosis.config;
 
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +35,38 @@ public class ClientConfig {
     public boolean enableAttributesGui = true;
     public int attributesGuiOffsetX = -3;
     public int attributesGuiOffsetY = 3;
+    public List<String> hiddenAttributes = new ArrayList<>(List.of(
+        "apothic_attributes:elytra_flight",
+        "apothic_attributes:ghost_health",
+        "minecraft:camera_distance",
+        "minecraft:explosion_knockback_resistance",
+        "minecraft:mining_efficiency",
+        "minecraft:movement_efficiency",
+        "minecraft:waypoint_receive_range",
+        "minecraft:waypoint_transmit_range"
+    ));
+
+    /**
+     * Checks whether an attribute should be hidden from the inspection GUI.
+     */
+    public boolean isAttributeHidden(Identifier id) {
+        if (id == null) return false;
+        String fullId = id.toString();
+        String namespaceWildcard = id.getNamespace() + ":*";
+        boolean hidden = false;
+        for (String entry : this.hiddenAttributes) {
+            if (entry == null || entry.isBlank()) continue;
+            if (entry.startsWith("!")) {
+                String unblocked = entry.substring(1);
+                if (unblocked.equals(fullId) || unblocked.equals(namespaceWildcard)) {
+                    hidden = false;
+                }
+            } else if (entry.equals(fullId) || entry.equals(namespaceWildcard)) {
+                hidden = true;
+            }
+        }
+        return hidden;
+    }
 
     /**
      * Validates and normalizes client preferences.

@@ -38,14 +38,30 @@
   - [x] Tagged every option with runtime impact: `LIVE`, `RELOAD_REQUIRED`, or `RESTART_REQUIRED` (`OptionFlag.GAME_RESTART`).
   - [x] Verified with 14 automated unit tests (`./gradlew test`) and verified dedicated server launch without client UI classes.
 
+### Milestone 4: Custom Attributes, Vanilla Overlap & Attribute UI
+- **Status**: **COMPLETE** (2026-10-27)
+- **Key Achievements**:
+  - [x] Finalized `docs/VANILLA_OVERLAP.md`: Audited all 21 custom attributes individually with ranges, default values, units, synchronization, and modifier operations.
+  - [x] Resolved obsolete `apothic_attributes:mining_speed`: confirmed removed upstream, mapped to vanilla `minecraft:mining_efficiency`, and implemented automatic migration in `AttributeHelper.migrateItemModifiers`.
+  - [x] Registered all 21 custom attributes via `DeferredHelper` under `apothic_attributes` with `setSyncable(true)`.
+  - [x] Attached all 21 attributes to all living entities via `FabricDefaultAttributeRegistry.MODIFY` (`context.modifyAll`).
+  - [x] Implemented Fabric attribute formatting (`AttributeFormatting`) supporting `PERCENTAGE`, `BOOLEAN`, and `FLAT` attributes without NeoForge dependencies.
+  - [x] Implemented attribute inspection UI (`AttributesGui`): sword toggle button on `InventoryScreen`, scrollable list, formula display, RenderPearl 26.3 GUI pipeline rendering (`GuiGraphicsExtractor`), and recipe viewer exclusion zones.
+  - [x] Implemented modifier provenance display (`ModifierSource`, `ItemModifierSource`, `EffectModifierSource`, `AttributeModifierComponent`) displaying equipment slot items and mob effect sprites via `Hud.getMobEffectSprite`.
+  - [x] Implemented hidden attribute filtering (`ClientConfig.isAttributeHidden`) supporting exact IDs, namespace wildcards (`apothic_attributes:*`), and negation entries (`!`).
+  - [x] Implemented item tooltip integration (`AttributesClientTooltipHandler`) via `ItemTooltipCallback`.
+  - [x] Provided open extension points for accessory slots (`ModifierSourceType.register()`).
+  - [x] Verified with 20 automated unit tests (`./gradlew test`) covering registration, bounds, synchronization, formatting, accumulation prevention, and migration.
+  - [x] Verified aggregate build (`./gradlew build`) and dedicated server launch (`./gradlew runServer --args="--nogui"`) with clean startup and shutdown.
+
 ---
 
 ## 2. Upcoming Milestones
 
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 4** | Apothic Spawners Core | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, tooltip deltas | `NEXT` |
-| **Milestone 5** | Apothic Attributes Core | Port 21 combat attributes, combat rules mixins, overheal, attribute GUI | `PENDING` |
-| **Milestone 6** | Apothic Enchanting Core | Access wideners, table stats (Eterna/Quanta/Arcana), level uncapping | `PENDING` |
-| **Milestone 7** | Apothic Adventure Core | Affixes, sockets, gems, boss spawning, RenderPearl overlays | `PENDING` |
-| **Milestone 8** | Polish & Full Parity | ModMenu integration, Chronicle of Shadows verification, GameTests | `PENDING` |
+| **Milestone 5** | Apothic Spawners Core | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, tooltip deltas | `NEXT` |
+| **Milestone 6** | Apothic Attributes Combat Hooks | Armor piercing, protection shred, damage calculation mixins, overheal, crit emitters | `PENDING` |
+| **Milestone 7** | Apothic Enchanting Core | Access wideners, table stats (Eterna/Quanta/Arcana), level uncapping | `PENDING` |
+| **Milestone 8** | Apothic Adventure Core | Affixes, sockets, gems, boss spawning, RenderPearl overlays | `PENDING` |
+| **Milestone 9** | Polish & Full Parity | ModMenu integration, Chronicle of Shadows verification, GameTests | `PENDING` |

@@ -4,6 +4,10 @@
   "package": "dev.shadowsoffire.apotheosis.client.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "AbstractContainerScreenAccessor",
+    "AbstractRecipeBookScreenAccessor",
+    "AbstractContainerScreenMixin",
+    "InventoryScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

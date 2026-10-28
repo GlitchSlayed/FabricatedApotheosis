@@ -62,7 +62,18 @@ public class DeferredHelper {
     public <T> Holder.Reference<T> custom(Registry<?> registry, String name, Supplier<T> supplier) {
         Identifier id = this.id(name);
         this.checkDuplicate(id, registry);
-        return Registry.registerForHolder((Registry<T>) registry, id, supplier.get());
+        T value = supplier.get();
+        Holder.Reference<T> ref = Registry.registerForHolder((Registry<T>) registry, id, value);
+        if (!ref.isBound()) {
+            try {
+                java.lang.reflect.Method bindValueMethod = Holder.Reference.class.getDeclaredMethod("bindValue", Object.class);
+                bindValueMethod.setAccessible(true);
+                bindValueMethod.invoke(ref, value);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to bind value to holder for " + id, e);
+            }
+        }
+        return ref;
     }
 
     public Holder.Reference<Attribute> attribute(String name, Supplier<Attribute> supplier) {
