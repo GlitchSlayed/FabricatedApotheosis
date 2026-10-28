@@ -1,0 +1,98 @@
+{
+    "replace": false,
+    "values": [
+        {
+            "id": "apothic_enchanting:basic_bookshelf"
+        },
+        {
+            "id": "apothic_enchanting:beeshelf"
+        },
+        {
+            "id": "apothic_enchanting:melonshelf"
+        },
+        {
+            "id": "apothic_enchanting:endshelf"
+        },
+        {
+            "id": "apothic_enchanting:pearl_endshelf"
+        },
+        {
+            "id": "apothic_enchanting:draconic_endshelf"
+        },
+        {
+            "id": "apothic_enchanting:hellshelf"
+        },
+        {
+            "id": "apothic_enchanting:infused_hellshelf"
+        },
+        {
+            "id": "apothic_enchanting:blazing_hellshelf"
+        },
+        {
+            "id": "apothic_enchanting:glowing_hellshelf"
+        },
+        {
+            "id": "apothic_enchanting:seashelf"
+        },
+        {
+            "id": "apothic_enchanting:infused_seashelf"
+        },
+        {
+            "id": "apothic_enchanting:crystal_seashelf"
+        },
+        {
+            "id": "apothic_enchanting:heart_seashelf"
+        },
+        {
+            "id": "apothic_enchanting:dormant_deepshelf"
+        },
+        {
+            "id": "apothic_enchanting:deepshelf"
+        },
+        {
+            "id": "apothic_enchanting:echoing_deepshelf"
+        },
+        {
+            "id": "apothic_enchanting:soul_touched_deepshelf"
+        },
+        {
+            "id": "apothic_enchanting:echoing_sculkshelf"
+        },
+        {
+            "id": "apothic_enchanting:soul_touched_sculkshelf"
+        },
+        {
+            "id": "apothic_enchanting:endshelf"
+        },
+        {
+            "id": "apothic_enchanting:draconic_endshelf"
+        },
+        {
+            "id": "apothic_enchanting:pearl_endshelf"
+        },
+        {
+            "id": "apothic_enchanting:stoneshelf"
+        },
+        {
+            "id": "apothic_enchanting:library"
+        },
+        {
+            "id": "apothic_enchanting:sightshelf"
+        },
+        {
+            "id": "apothic_enchanting:sightshelf_t2"
+        },
+        {
+            "id": "apothic_enchanting:ender_library"
+        },
+        {
+            "id": "apothic_enchanting:filtering_shelf"
+        },
+        {
+            "id": "apothic_enchanting:treasure_shelf"
+        },
+        {
+            "id": "apothic_enchanting:geode_shelf"
+        }
+    ]
+}

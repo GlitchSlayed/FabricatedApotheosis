@@ -30,6 +30,7 @@ public class ApotheosisClient implements ClientModInitializer {
         PlaceboClient.init();
         PayloadHelper.setClientHandler(new PlaceboClientPayloadHandler());
         AttributesClientTooltipHandler.init();
+        dev.shadowsoffire.apothic_enchanting.ApothEnchClient.init();
 
         // Register crit particle payload receiver
         ClientPlayNetworking.registerGlobalReceiver(CritParticlePayload.TYPE, (payload, context) -> {

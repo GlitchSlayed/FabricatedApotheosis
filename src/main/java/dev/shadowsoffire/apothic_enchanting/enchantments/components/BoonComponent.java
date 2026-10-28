@@ -1,0 +1,109 @@
+package dev.shadowsoffire.apothic_enchanting.enchantments.components;
+
+import java.util.List;
+import java.util.Optional;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
+import dev.shadowsoffire.apothic_enchanting.ApothicEnchanting;
+import dev.shadowsoffire.apothic_enchanting.Ench;
+import dev.shadowsoffire.apothic_enchanting.table.ApothEnchantmentHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.codec.RegistryCodecs;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.ConditionalEffect;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.effects.EnchantmentValueEffect;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
+
+/**
+ * @param entries A list of {@link BoonData} entries, determining the pairs of blocks and loot tables to drop items from.
+ */
+public record BoonComponent(List<BoonData> entries) {
+
+    public static Codec<BoonComponent> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+        BoonData.CODEC.listOf().fieldOf("entries").forGetter(BoonComponent::entries))
+        .apply(inst, BoonComponent::new));
+
+    public static void provideBenefits(ServerLevel level, BlockPos pos, BlockState state, Entity breaker, ItemStack stack) {
+        if (breaker == null || stack.isEmpty()) return;
+
+        EnchantmentHelper.runIterationOnItem(stack, (ench, enchLevel) -> {
+            BoonComponent comp = ench.value().effects().get(Ench.EnchantEffects.EARTHS_BOON);
+            if (comp != null) {
+                for (BoonData entry : comp.entries) {
+                    if (entry.matches(state)) {
+                        LootTable table = level.getServer().reloadableRegistries().getLootTable(entry.lootTable);
+                        if (table == LootTable.EMPTY) {
+                            ApothicEnchanting.LOGGER.error("[Boon] Loot table '{}' not found!", entry.lootTable.identifier());
+                            break;
+                        }
+
+                        LootContext ctx = boonContext(level, stack, breaker, Vec3.atCenterOf(pos), state);
+
+                        float chance = ApothEnchantmentHelper.processValue(entry.dropChance, ctx, enchLevel, 0);
+                        RandomSource rand = level.getRandom();
+
+                        if (rand.nextFloat() <= chance) {
+                            table.getRandomItems(ctx, item -> Block.popResource(level, pos, item));
+                        }
+
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * @param targets    A set of blocks to match against.
+     * @param lootTable  The loot table to drop items from.
+     * @param dropChance A list of {@link ConditionalEffect}s to determine the drop chance.
+     */
+    public static record BoonData(HolderSet<Block> targets, ResourceKey<LootTable> lootTable, List<ConditionalEffect<EnchantmentValueEffect>> dropChance) {
+
+        public static Codec<BoonData> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+            RegistryCodecs.holderSet(Registries.BLOCK).fieldOf("target").forGetter(BoonData::targets),
+            ResourceKey.codec(Registries.LOOT_TABLE).fieldOf("loot_table").forGetter(BoonData::lootTable),
+            ConditionalEffect.codec(EnchantmentValueEffect.CODEC).listOf().fieldOf("drop_chance").forGetter(BoonData::dropChance))
+            .apply(inst, BoonData::new));
+
+        @SuppressWarnings("deprecation")
+        public boolean matches(BlockState state) {
+            return targets.contains(state.getBlock().builtInRegistryHolder());
+        }
+    }
+
+    /**
+     * Creates the loot context used by Boon of the Earth. It uses {@link LootContextParamSets#ADVANCEMENT_LOCATION} since it has all the params we want.
+     * <p>
+     * I used to use {@link LootContextParamSets#HIT_BLOCK} but that doesn't include the tool, which is needed for fortune evaluation.
+     * 
+     * @apiNote Technically this means you can't evaluate the level of the specific enchantment with the boon component, but w/e.
+     */
+    public static LootContext boonContext(ServerLevel level, ItemStack tool, Entity entity, Vec3 origin, BlockState state) {
+        LootParams lootparams = new LootParams.Builder(level)
+            .withParameter(LootContextParams.ORIGIN, origin)
+            .withParameter(LootContextParams.TOOL, tool)
+            .withParameter(LootContextParams.THIS_ENTITY, entity)
+            .withParameter(LootContextParams.BLOCK_STATE, state)
+            .create(LootContextParamSets.ADVANCEMENT_LOCATION);
+        return new LootContext.Builder(lootparams).create(Optional.empty());
+    }
+
+}

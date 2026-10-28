@@ -4,6 +4,7 @@
     "apothic_attributes:bleeding",
     "apothic_attributes:detonation",
     "apothic_attributes:fire_damage",
-    "apothic_attributes:cold_damage"
+    "apothic_attributes:cold_damage",
+    "apothic_enchanting:corrupted"
   ]
 }

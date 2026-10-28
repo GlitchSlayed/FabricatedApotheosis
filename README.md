@@ -27,9 +27,12 @@ Fabricated Apotheosis brings all of Apotheosis, required Placebo foundations, Ap
   - Redstone activation modes and condition-ignoring modifiers.
 
 - **Apothic Enchanting**:
-  - Enchanting table bookshelf stats (Eterna, Quanta, Arcana).
-  - Level uncapping and high-tier enchantments.
-  - Custom tomes, capturing enchantments, and shelf progressions.
+  - Enchanting table bookshelf stats (Eterna, Quanta, Arcana, Rectification, Clues, Filtered) across 30 shelf variants (Hellshelves, Seashelves, Endershelves, Sculkshelves, and Beeshelves).
+  - Extended enchanting selection and deterministic level calculations scaling smoothly from levels 1 to 100.
+  - Anvil overhaul removing the "Too Expensive!" level 40 limit, optimal linear XP progression at high tiers, and Prismatic Web curse removal.
+  - Enchantment Library block with transactional $2^{N-1}$ point conversion and Fabric Transfer API automation support (`Storage<ItemVariant>`).
+  - 20 custom enchantments (Berserk's Fury, Life-Mending, Miners Fervor, Scavenger, Shield Bash, Endless Quiver, etc.) ported to Minecraft 26.3 data-driven component effects.
+  - Dedicated client screens (`ApothEnchantmentScreen`, `RavenEnchantmentScreen`, `EnchLibraryScreen`, `EnchantingInfoScreen`) built using RenderPearl and GuiGraphics abstractions without server leakage.
 
 - **Apothic Adventure**:
   - Socketing, gems, affixes, boss monsters, and custom gear.

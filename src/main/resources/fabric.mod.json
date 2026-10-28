@@ -15,6 +15,7 @@
   "license": "MIT",
   "icon": "assets/apotheosis/icon.png",
   "environment": "*",
+  "accessWidener": "apotheosis.accesswidener",
   "entrypoints": {
     "main": [
       "dev.shadowsoffire.apotheosis.Apotheosis"
@@ -25,8 +26,13 @@
   },
   "mixins": [
     "apotheosis.mixins.json",
+    "apothic_enchanting.mixins.json",
     {
       "config": "apotheosis.client.mixins.json",
+      "environment": "client"
+    },
+    {
+      "config": "apothic_enchanting.client.mixins.json",
       "environment": "client"
     }
   ],

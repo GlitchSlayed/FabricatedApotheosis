@@ -105,3 +105,38 @@
   - In YACL UI (`ApotheosisConfigScreen`), render server gameplay settings as read-only (`.available(false)`) when connected to a remote server, while keeping client preferences fully editable.
   - Tag every option with its impact: `LIVE`, `RELOAD_REQUIRED`, or `RESTART_REQUIRED`.
 - **Consequences**: Guarantees server authority in multiplayer, eliminates desync and stale state, ensures zero YACL classes on dedicated server classloaders, and provides a polished, intuitive configuration screen for players.
+
+---
+
+## ADR-011: Apothic Attributes Combat Pipeline & Targeted Damage Hooks
+
+- **Status**: Accepted
+- **Context**: Upstream Apothic Attributes in NeoForge relies on NeoForge-specific event hooks (`LivingIncomingDamageEvent`, `LivingDamageEvent.Pre`, `LivingDamageEvent.Post`, `CriticalHitEvent`, `ItemAttributeModifierEvent`) with priority ordering to apply damage scaling, penetration, auxiliary damage, overheal, and life steal. Naively porting this via a single generic damage callback leads to recursion, double application, and order-of-operation violations.
+- **Decision**:
+  - Implement a dedicated 9-phase damage processing pipeline with narrowly targeted Mixins:
+    1. Pre-attack / Dodge (`LivingEntityMixin` `hurtServer` head injection).
+    2. Attack scaling & cooldown penalties (`PlayerMixin` `attack` injection).
+    3. Critical strikes and over-crit scaling (`PlayerMixin` `attack` critical calculation).
+    4. Armor & protection penetration / shred (`CombatRulesMixin` `getDamageAfterAbsorb` & `ProtectionEnchantmentMixin`).
+    5. Auxiliary damage (Current HP, Fire, Cold) executed via `DamagePipeline` with explicit recursion flags.
+    6. Absorption handling (`LivingEntityMixin` `getDamageAfterMagicAbsorb`).
+    7. Health damage (`LivingEntityMixin` post-absorption).
+    8. Healing, Life Steal, Overheal, and Ghost Health applied only on confirmed damage dealt.
+    9. Post-hit effects & experience scaling (`LivingEntityMixin` `dropExperience`).
+  - Guard against: recursive auxiliary damage, healing on canceled damage, double application of armor pierce, and projectile stat re-scaling after reload.
+- **Consequences**: Deterministic combat matching upstream formulas and priority ordering, with zero NeoForge event dependencies and guaranteed safety against infinite damage loops.
+
+---
+
+## ADR-012: Apothic Enchanting Architecture, Screen Navigation, and Data Component Alignment
+
+- **Status**: Accepted
+- **Context**: Upstream Apothic Enchanting relied on NeoForge Coremods/ASM to bypass hardcoded enchantment level caps, NeoForge-specific recipe ingredients (`neoforge:components`, `neoforge:or`), and older Minecraft GUI screen management APIs.
+- **Decision**:
+  - Replace Coremods and bytecode ASM with Minecraft 26.3 data-driven enchantment systems, custom data component effects (`dev.shadowsoffire.apothic_enchanting.compat`), and narrow Mixins (`AnvilMenuMixin`, `EnchantmentMixin`, `EnchantmentHelperMixin`).
+  - Adopt Fabric Access Widener (`apotheosis.accesswidener`) for container screen layout (`leftPos`, `topPos`, `imageHeight`, `imageWidth`) and enchanting table book models.
+  - Align screen navigation with Minecraft 26.3 GUI hierarchy (`Minecraft.getInstance().gui.screen()`, `Minecraft.getInstance().gui.setScreen(...)`).
+  - Implement the Enchantment Library with transactional $2^{N-1}$ point conversion and standard Fabric Transfer API (`Storage<ItemVariant>`).
+  - Migrate component-based recipe ingredients to `"fabric:type": "fabric:components"`.
+  - Fix `DeferredHelper` registry collisions by indexing on `ResourceKey<?>` (`(RegistryKey, Identifier)`) instead of bare `Identifier`, safely supporting items and blocks sharing the same ID.
+- **Consequences**: Zero legacy ASM/coremods, full compatibility with 26.3 data-driven enchantments and recipes, clean dedicated-server loading, and thread-safe dynamic registry reloading.

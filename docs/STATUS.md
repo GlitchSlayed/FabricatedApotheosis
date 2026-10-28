@@ -74,13 +74,27 @@
   - [x] Verified with 23 automated unit tests (`./gradlew test`) covering math formulas, negative armor, multicrit degradation, CDR, cooldown pruning, dodge determinism, and recursion safety.
   - [x] Verified dedicated server launch (`./gradlew runServer --args="--nogui"`) with 100% chunks loaded, clean datapack loading, zero client leakage, and clean shutdown.
 
+### Milestone 6: Apothic Enchanting Baseline & Anvil Overhaul
+- **Status**: **COMPLETE** (2026-10-27)
+- **Key Achievements**:
+  - [x] Audited full feature inventory and NeoForge coremods documented in `docs/ENCHANTING_INVENTORY.md` (30 blocks, 3 block entities, 46 items, 20 enchantments, 14 enchantment effect components, menus, recipes).
+  - [x] Ported Bookshelf statistics engine (`EnchantmentTableStats`, `EnchantingStatRegistry`, `TypedShelfBlock`, `SculkShelfBlock`, `FilteringShelfBlock`, `GeodeShelfBlock`, `TreasureShelfBlock`): Eterna, Quanta, Arcana, Rectification, Clues, and Filtering.
+  - [x] Ported Enchanting Selection and Level Calculations (`ApothEnchantmentMenu`, `RavenEnchantmentMenu`, `ApothEnchantmentHelper`): full formula parity for Quanta power bounds $[1, 200]$, Arcana rarity weight shifts, and tiered clue generation.
+  - [x] Ported Infusion and Keep-NBT Infusion recipes (`InfusionRecipe`, `KeepNBTInfusionRecipe`, `InfusionRecipeCache`).
+  - [x] Ported Enchantment Library subsystem (`EnchLibraryBlock`, `EnchLibraryTile`, `BasicLibraryTile`, `EnderLibraryTile`, `EnchLibraryContainer`): Fabric Transfer API (`Storage<ItemVariant>`), transactional insertion with `SnapshotParticipant`, $2^{N-1}$ points conversion math, and full item safety across reload/disconnect/break.
+  - [x] Ported Anvil Overhaul (`AnvilMenuMixin`, `AnvilEvents`, `TomeItem`): level 40 limit removed, optimal experience progression curve, Prismatic Web curse removal, and Tome combining limits.
+  - [x] Ported 20 Custom Enchantments and 14 Data Component Effects to Minecraft 26.3 vanilla data-driven systems (`EndlessQuiverEffect`, `MinerFervorEffect`, `ReboundingEffect`, `ShieldBashEffect`, `SpearfishingEffect`, `StableFootingEffect`, `ScavengerLootModifier`, `WardenLootModifier`, etc.).
+  - [x] Ported Client Screens (`ApothEnchantmentScreen`, `RavenEnchantmentScreen`, `EnchLibraryScreen`, `EnchantingInfoScreen`, `DrawsOnLeft`): RenderPearl GUI pipeline rendering, zero client classes on dedicated server.
+  - [x] Fabric custom ingredient integration (`DefaultCustomIngredients.components`) for potions in shaped and infusion recipes.
+  - [x] Verified with 37 automated unit tests (`./gradlew test`) covering Eterna step-ladder, Quanta power range, stable rectification, Arcana thresholds, Library points math, and XP progression.
+  - [x] Verified dedicated server launch (`./gradlew runServer --args="--nogui"`) with clean datapack initialization, zero unbound registry keys, and clean shutdown.
+
 ---
 
 ## 2. Upcoming Milestones
 
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 6** | Apothic Spawners Core | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, tooltip deltas | `NEXT` |
-| **Milestone 7** | Apothic Enchanting Core | Access wideners, table stats (Eterna/Quanta/Arcana), level uncapping | `PENDING` |
+| **Milestone 7** | Apothic Spawners Core | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, tooltip deltas | `NEXT` |
 | **Milestone 8** | Apothic Adventure Core | Affixes, sockets, gems, boss spawning, RenderPearl overlays | `PENDING` |
 | **Milestone 9** | Polish & Full Parity | ModMenu integration, Chronicle of Shadows verification, GameTests | `PENDING` |

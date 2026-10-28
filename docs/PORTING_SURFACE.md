@@ -10,21 +10,21 @@ This inventory is generated from direct codebase scans across the pinned upstrea
 - **Apotheosis Core & Adventure**: 342 Java classes
 - **Total Surface**: 632 Java classes
 
-| Category | Total Count | Representative References | Porting Strategy to Fabric 26.3 |
+| Category | Total Count | Representative References | Porting Strategy & Current Status |
 | :--- | :--- | :--- | :--- |
-| **Registries & Namespaces** | 61 registration points | `ALObjects.java`, `Apoth.java`, `Ench.java`, `ASObjects.java` | Unify under standard Fabric/vanilla `Registry.register` |
-| **NeoForge Events** | 27 subscriber classes | `ApothEnchEvents.java`, `AdventureEvents.java`, `ASEvents.java` | Map to Fabric API lifecycle/entity/attack callbacks or narrow mixins |
-| **Capabilities / Attachments** | 8 attachment points | `RavenTableStats.java`, `FestiveAffix.java`, `EnchantmentTableItemHandler.java` | Fabric Data Attachment API (`fabric-data-attachment-api-v1`) |
-| **Custom Packets / Networking** | 21 payload records | `ConfigPayload.java`, `CluePayload.java`, `BossSpawnPayload.java` | Fabric Networking API (`PayloadTypeRegistry`, `ServerPlayNetworking`) |
-| **Configuration Files** | 18 config structures | `ASConfig.java`, `ALConfig.java`, `EnchConfig.java`, `AdventureConfig.java` | Unified server-authoritative JSON config with client YACL screen |
-| **Dynamic Registries / Codecs**| 12 dynamic codecs | `DynamicRegistry.java`, `SpawnerModifier.java`, `Affix.java`, `Gem.java` | Vanilla 26.3 `RegistryOps` and Codecs via Fabric Resource Reloaders |
-| **Custom Recipes & Conditions**| 16 recipe serializers | `EnchantingRecipe.java`, `SpawnerModifierRecipe.java`, `PotionReforgingRecipe.java` | Vanilla 26.3 Recipe API + Fabric Resource Conditions |
-| **Loot Integration** | 9 loot modifier hooks | `SpawnerBlockDropsMixin.java`, `LootTableModifier.java`, `AffixLootEntry.java` | Fabric Loot API v3 (`LootTableEvents.MODIFY`) |
+| **Registries & Namespaces** | 61 registration points | `ALObjects.java`, `Apoth.java`, `Ench.java`, `ASObjects.java` | **PORTED & VERIFIED**: Unified under standard Fabric/vanilla `Registry.register` and `DeferredHelper` with `ResourceKey` collision protection |
+| **NeoForge Events** | 27 subscriber classes | `ApothEnchEvents.java`, `AdventureEvents.java`, `ASEvents.java` | **PORTED & VERIFIED**: Mapped to Fabric API lifecycle/entity/attack callbacks and 9-phase combat mixin pipeline |
+| **Capabilities / Attachments** | 8 attachment points | `RavenTableStats.java`, `FestiveAffix.java`, `EnchantmentTableItemHandler.java` | **PORTED & VERIFIED**: Fabric Transfer API (`Storage<ItemVariant>`), Fabric Data Attachment API |
+| **Custom Packets / Networking** | 21 payload records | `ConfigPayload.java`, `CluePayload.java`, `BossSpawnPayload.java` | **PORTED & VERIFIED**: Fabric Networking API (`PayloadTypeRegistry`, `ServerPlayNetworking`, `ClientPlayNetworking`) |
+| **Configuration Files** | 18 config structures | `ASConfig.java`, `ALConfig.java`, `EnchConfig.java`, `AdventureConfig.java` | **PORTED & VERIFIED**: Unified server-authoritative JSON config (`apotheosis.json`) with client YACL screen (`apotheosis-client.json`) |
+| **Dynamic Registries / Codecs**| 12 dynamic codecs | `DynamicRegistry.java`, `SpawnerModifier.java`, `Affix.java`, `Gem.java` | **PORTED & VERIFIED**: Vanilla 26.3 `RegistryOps` and Codecs via Fabric Resource Reloaders with atomic reload staging |
+| **Custom Recipes & Conditions**| 16 recipe serializers | `EnchantingRecipe.java`, `SpawnerModifierRecipe.java`, `PotionReforgingRecipe.java` | **PORTED & VERIFIED**: Vanilla 26.3 Recipe API + `fabric:components` custom ingredients |
+| **Loot Integration** | 9 loot modifier hooks | `SpawnerBlockDropsMixin.java`, `LootTableModifier.java`, `AffixLootEntry.java` | **PORTED**: Fabric Loot API v3 (`LootTableEvents.MODIFY`) |
 | **World Generation** | 7 worldgen features | `BossDungeonFeature.java`, `RogueSpawnerFeature.java` | Vanilla 26.3 `ConfiguredFeature` / `PlacedFeature` JSON definitions |
-| **Access Transformers / Mixins**| 5 AT files, 61 mixins | `accesstransformer.cfg` in each module; `EnchantmentMenuMixin.java` | Transpile ATs to Fabric Access Wideners (`.accesswidener`); audit mixins |
-| **Coremods / JS / ASM** | 0 JS coremods | Legacy ASM replaced by Mixins in 26.1.2 | No ASM required; verify enchantment level limits via narrow mixins |
-| **Client Screens & Renderers** | 24 client classes | `EnchantmentScreen.java`, `ReforgingScreen.java`, `BossBarRenderer.java` | Mojang 26.3 screen abstractions + RenderPearl for GPU blend states |
-| **Save Formats & Migration** | 6 NBT/component types | Spawner modifiers in `BlockEntityTag`, item components, player capability NBT | Vanilla 26.3 `DataComponents.CUSTOM_DATA` and Fabric Data Attachments |
+| **Access Transformers / Mixins**| 5 AT files, 61 mixins | `accesstransformer.cfg` in each module; `EnchantmentMenuMixin.java` | **PORTED & VERIFIED**: Transpiled to Fabric Access Wideners (`apotheosis.accesswidener`); narrow targeted mixins |
+| **Coremods / JS / ASM** | 0 JS coremods | Legacy ASM replaced by Mixins in 26.1.2 | **PORTED & VERIFIED**: Data component effects and narrow mixins cleanly replace legacy coremod patterns |
+| **Client Screens & Renderers** | 24 client classes | `EnchantmentScreen.java`, `ReforgingScreen.java`, `BossBarRenderer.java` | **PORTED & VERIFIED**: Mojang 26.3 screen abstractions + RenderPearl for GPU blend states |
+| **Save Formats & Migration** | 6 NBT/component types | Spawner modifiers in `BlockEntityTag`, item components, player capability NBT | **PORTED & VERIFIED**: Vanilla 26.3 `DataComponents.CUSTOM_DATA` and Fabric Data Attachments |
 
 ---
 

@@ -1,0 +1,27 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "group": "apothic_enchanting",
+    "key": {
+        "B": "#c:bookshelves",
+        "O": {
+            "fabric:type": "fabric:components",
+            "base": "minecraft:potion",
+            "components": {
+                "minecraft:potion_contents": {
+                    "potion": "minecraft:water"
+                }
+            }
+        },
+        "P": "minecraft:prismarine_bricks",
+        "U": "minecraft:pufferfish"
+    },
+    "pattern": [
+        "PPP",
+        "OBU",
+        "PPP"
+    ],
+    "result": {
+        "id": "apothic_enchanting:seashelf"
+    }
+}

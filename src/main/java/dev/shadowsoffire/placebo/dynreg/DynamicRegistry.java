@@ -66,10 +66,19 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         registerRegistry(this);
     }
 
+    public void registerToBus() {
+        registerRegistry(this);
+    }
+
     public static synchronized void registerRegistry(DynamicRegistry<?> reg) {
-        if (ALL_REGISTRIES.putIfAbsent(reg.getId(), reg) != null) {
+        DynamicRegistry<?> existing = ALL_REGISTRIES.get(reg.getId());
+        if (existing == reg) {
+            return;
+        }
+        if (existing != null) {
             throw new IllegalArgumentException("Duplicate dynamic registry registered with ID: " + reg.getId());
         }
+        ALL_REGISTRIES.put(reg.getId(), reg);
     }
 
     @Nullable

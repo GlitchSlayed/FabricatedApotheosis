@@ -1,0 +1,11 @@
+{
+    "replace": false,
+    "values": [
+        {
+            "id": "apothic_enchanting:apothic_enchanting_table"
+        },
+        {
+            "id": "apothic_enchanting:raven_enchanting_table"
+        }
+    ]
+}

@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.shadowsoffire.apothic_enchanting.mixin.client",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "AnvilScreenMixin",
+    "EnchantmentScreenMixin",
+    "EnchantTableRendererMixin",
+    "EnchantTableRenderStateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

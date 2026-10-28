@@ -70,13 +70,17 @@ Status Definitions:
 
 ## 5. Apothic Enchanting Module
 
-| Upstream Feature | Status | Target Scope / Plan |
-| :--- | :--- | :--- |
-| **Table Stats (Eterna, Quanta, Arcana)** | `investigated` | Calculation of bookshelf stats around enchanting table. |
-| **High-Tier Enchantment Levels** | `investigated` | Mixins on `EnchantmentHelper` and `EnchantmentMenu` to unlock up to level 100. |
-| **Access Widener Transpilation** | `investigated` | Transpile `accesstransformer.cfg` to Fabric `apotheosis.accesswidener`. |
-| **Custom Tomes** | `investigated` | Tomes of extraction, scrapping, and superior books. |
-| **Capturing Enchantment** | `investigated` | Spawn egg drop chance on mob death based on capturing level. |
+| Upstream Feature | Status | Target Scope / Plan | Verification & Evidence |
+| :--- | :--- | :--- | :--- |
+| **Table Stats (Eterna, Quanta, Arcana, Rectification, Clues)** | `verified` | Step-ladder Eterna aggregation, Quanta $[1, 200]$ power clamping, stable floor preservation, Arcana threshold weight shifts. | Tested in `EnchantingTests.testEternaStepLadderCalculation`, `testQuantaRangeCalculation`, `testRectificationAndStableBehavior`, `testArcanaTiers`. |
+| **Bookshelf Blocks (30 Shelves)** | `verified` | Wood shelves (`TypedShelfBlock`), Sculk shelves, Filtering, Geode, Treasure shelves with particle definitions. | Blocks and BlockItems registered in `Ench.java`; verified on dedicated server boot. |
+| **Enchantment Library (Basic & Ender)** | `verified` | Transactional storage via Fabric Transfer API (`Storage<ItemVariant>`, `SnapshotParticipant`), $2^{N-1}$ point conversion math, max levels 16 and 31. | Tested in `EnchantingTests.testLevelToPoints`; zero duplication/deletion on break/drop/reload. |
+| **Anvil Overhaul & Cap Removal** | `verified` | Level 40 cap removed, optimal XP progression calculation, Tome combining limits, Prismatic Web curse removal. | Tested in `EnchantingTests.testAnvilCostExperienceCalculations`; mixins verified in `AnvilMenuMixin`. |
+| **Custom Tomes (6 Types)** | `verified` | Helm, Chestplate, Leggings, Boots, Weapon, Pickaxe, Fishing tomes limiting enchantment application to specific gear types. | Items registered in `Ench.Items.TYPED_BOOKS`; verified on server launch. |
+| **Infusion & Keep-NBT Recipes** | `verified` | Custom recipe serializers for enchanting table infusion and stat-requirement validation. | Serializers registered, `InfusionRecipeCache` loaded from `RecipeManager`. |
+| **20 Custom Enchantments** | `verified` | Data-driven enchantments (`berserkers_fury`, `chainsaw`, `crescendo`, `endless_quiver`, `exploitation`, `growth_serum`, `icy_thorns`, `knowledge`, `miners_fervor`, `nature_blessing`, `obliteration`, `rebounding`, `reflective`, `scavenger`, `shield_bash`, `spearfishing`, `stable_footing`, `tethering`, `warden_curse`, `vitality`). | JSON definitions verified; loaded without unbound keys on dedicated server startup. |
+| **14 Enchantment Effect Components** | `verified` | Custom data component effects registered under `apothic_enchanting` and executed via vanilla 26.3 effect pipelines. | Codecs registered in `Ench.Components`; effect implementations in `dev.shadowsoffire.apothic_enchanting.enchantments.effects`. |
+| **Client Screens & UI** | `verified` | `ApothEnchantmentScreen`, `RavenEnchantmentScreen`, `EnchLibraryScreen`, `EnchantingInfoScreen` with RenderPearl GUI pipeline. | Client compilation passed; zero client classes referenced on dedicated server. |
 
 ---
 

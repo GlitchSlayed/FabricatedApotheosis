@@ -52,16 +52,21 @@ The code is strictly partitioned into distinct internal packages to prevent arch
    - Isolates Fabric Loader specific calls, environment detection (`isClient()`, `isDedicatedServer()`), and platform abstractions.
 2. **`placebo`** (`dev.shadowsoffire.apotheosis.placebo`):
    - Only the minimal, required utilities from upstream Placebo (codecs, dynamic registry wrappers, recipe helpers).
-3. **`attributes`** (`dev.shadowsoffire.apotheosis.attributes`):
+3. **`attributes`** (`dev.shadowsoffire.apothic_attributes`):
    - Registration of the 21 Apothic attributes, combat calculations, armor piercing, life steal, and attribute formatting.
-4. **`enchanting`** (`dev.shadowsoffire.apotheosis.enchanting`):
-   - Extended enchanting mechanics, bookshelf stat calculation (Eterna, Quanta, Arcana), level uncapping, and custom tomes.
-5. **`spawners`** (`dev.shadowsoffire.apotheosis.spawners`):
+   - 9-phase server-authoritative combat pipeline handling dodge, attack scaling, critical strikes, penetration, auxiliary damage, absorption, health damage, overheal/life steal, and experience scaling.
+4. **`enchanting`** (`dev.shadowsoffire.apothic_enchanting`):
+   - Table statistics engine (`EnchantmentTableStats`, `EnchantingStatRegistry`), supporting Eterna, Quanta, Arcana, Rectification, Clues, and Filtered stats across 30 block types.
+   - Enchanting table menus (`ApothEnchantmentMenu`, `RavenEnchantmentMenu`) and level calculation formulas matching upstream.
+   - Anvil overhaul (`AnvilMenuMixin`, `AnvilEvents`, `TomeItem`) removing level 40 caps, enabling optimal XP progression, and curse removal via Prismatic Web.
+   - Enchantment Library (`EnchLibraryBlock`, `EnchLibraryTile`, `BasicLibraryTile`, `EnderLibraryTile`) with transactional $2^{N-1}$ point conversion and Fabric Transfer API (`Storage<ItemVariant>`).
+   - 20 custom enchantments and 14 data-driven enchantment effect components.
+5. **`spawners`** (`dev.shadowsoffire.apothic_spawners`):
    - Monster spawner modification, delay scaling, redstone controls, spawn conditions, and Silk Touch harvesting.
 6. **`adventure`** (`dev.shadowsoffire.apotheosis.adventure`):
    - Affixes, gems, socketing, and boss mob generation.
-7. **`client`** (`dev.shadowsoffire.apotheosis.client`):
-   - Client-only screens, tooltips, particle factories, keybindings, and rendering hooks.
+7. **`client`** (`dev.shadowsoffire.apothic_attributes.client`, `dev.shadowsoffire.apothic_enchanting.client`, `dev.shadowsoffire.apotheosis.client`):
+   - Client-only screens (`AttributesGui`, `ApothEnchantmentScreen`, `RavenEnchantmentScreen`, `EnchLibraryScreen`, `EnchantingInfoScreen`), tooltips, particle factories, keybindings, and rendering hooks.
 8. **`integrations`** (`dev.shadowsoffire.apotheosis.integrations`):
    - Optional external mod hooks (Patchouli, ModMenu, Jade, EMI/JEI).
 9. **`docs`** (`dev.shadowsoffire.apotheosis.docs`):
@@ -76,6 +81,32 @@ The code is strictly partitioned into distinct internal packages to prevent arch
   - The project utilizes Loom's `splitEnvironmentSourceSets()`.
   - All classes referencing GUI, screens, YACL, Minecraft client classes, or rendering live strictly in `src/client/java`.
   - The dedicated server classpath NEVER loads client classes. Dedicated server launch has been verified with 100% clean startup and shutdown.
+
+---
+
+## 4. Apothic Enchanting Pipeline & Transactional Storage
+
+```mermaid
+flowchart TD
+    subgraph TableStats ["Enchanting Statistics Engine"]
+        Blocks["Block / Shelf Detection (AABB search)"] --> Reg["EnchantingStatRegistry (Dynamic Data)"]
+        Reg --> Stats["Calculated Stats: Eterna, Quanta, Arcana, Rectification, Clues"]
+        Stats --> Menu["ApothEnchantmentMenu / RavenEnchantmentMenu"]
+    end
+
+    subgraph Calculations ["Enchanting Formulas"]
+        Menu --> Seed["Player Seed + Item Enchantability"]
+        Seed --> Levels["Levels 1-100 Selection & Clues"]
+        Levels --> EnchResult["Enchantment Result Generation"]
+    end
+
+    subgraph Library ["Enchantment Library Architecture"]
+        Tile["EnchLibraryTile (Base / Ender)"]
+        TransferAPI["Fabric Transfer API (Storage<ItemVariant>)"] <--> Tile
+        Points["Point Conversion: 2^(Level - 1) Points per Level"] <--> Tile
+        Snapshot["SnapshotParticipant (Transactional Rollback on Fail)"] <--> Points
+    end
+```
 
 ---
 
