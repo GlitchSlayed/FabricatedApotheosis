@@ -4,13 +4,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.shadowsoffire.apotheosis.attributes.api.ALObjects;
+import dev.shadowsoffire.apotheosis.attributes.payload.CritParticlePayload;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 
 /**
  * Apothic Attributes foundation module.
- * Registers custom attributes and attaches them to all LivingEntity types.
+ * Registers custom attributes, mob effects, damage types, attachments, and attaches attributes to all LivingEntity types.
  */
 public class AttributesModule {
 
@@ -19,10 +21,13 @@ public class AttributesModule {
     public static void init() {
         LOGGER.info("Initializing Apothic Attributes module");
 
-        // 1. Bootstrap attribute registrations
-        ALObjects.Attributes.bootstrap();
+        // 1. Bootstrap registrations
+        ALObjects.bootstrap();
 
-        // 2. Attach all 21 custom attributes to all LivingEntity types via FabricDefaultAttributeRegistry
+        // 2. Register network payloads
+        PayloadTypeRegistry.clientboundPlay().register(CritParticlePayload.TYPE, CritParticlePayload.CODEC);
+
+        // 3. Attach all custom attributes to all LivingEntity types via FabricDefaultAttributeRegistry
         FabricDefaultAttributeRegistry.MODIFY.register(context -> {
             context.modifyAll((type, builder) -> {
                 for (Holder<Attribute> attr : ALObjects.Attributes.ALL) {
@@ -31,6 +36,6 @@ public class AttributesModule {
             });
         });
 
-        LOGGER.info("Apothic Attributes module initialized successfully (21 attributes registered and attached)");
+        LOGGER.info("Apothic Attributes module initialized successfully (all attributes registered and attached)");
     }
 }

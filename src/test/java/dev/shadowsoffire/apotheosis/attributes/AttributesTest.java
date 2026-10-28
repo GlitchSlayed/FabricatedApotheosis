@@ -30,12 +30,15 @@ public class AttributesTest {
         net.minecraft.SharedConstants.tryDetectVersion();
         net.minecraft.server.Bootstrap.bootStrap();
 
-        // Unfreeze attribute registry for test environment
+        // Unfreeze registries for test environment
         java.lang.reflect.Field frozenField = net.minecraft.core.MappedRegistry.class.getDeclaredField("frozen");
         frozenField.setAccessible(true);
         frozenField.set(net.minecraft.core.registries.BuiltInRegistries.ATTRIBUTE, false);
+        frozenField.set(net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT, false);
+        frozenField.set(net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT, false);
+        frozenField.set(net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE, false);
 
-        ALObjects.Attributes.bootstrap();
+        ALObjects.bootstrap();
 
         // Bind default item components for diamond pickaxe if in unit test environment
         try {

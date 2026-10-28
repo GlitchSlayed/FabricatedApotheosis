@@ -54,14 +54,33 @@
   - [x] Verified with 20 automated unit tests (`./gradlew test`) covering registration, bounds, synchronization, formatting, accumulation prevention, and migration.
   - [x] Verified aggregate build (`./gradlew build`) and dedicated server launch (`./gradlew runServer --args="--nogui"`) with clean startup and shutdown.
 
+### Milestone 5: Apothic Attributes Combat Pipeline & Gameplay
+- **Status**: **COMPLETE** (2026-10-27)
+- **Key Achievements**:
+  - [x] Documented the authoritative 11-stage damage processing pipeline (`docs/DAMAGE_PIPELINE.md`) mapping every NeoForge event and priority to targeted Fabric mixins and hooks.
+  - [x] Implemented custom combat rules (`ALCombatRules`): A-value calculation, toughness bypass resistance ($\min(0.02 \times \text{toughness}, 0.60)$), negative effective armor amplification ($0.015 \times (-\text{armor}) \times \text{damage}$), armor pierce/shred, protection pierce/shred, and protection cap (80%).
+  - [x] Implemented critical strike mechanics: tiered multicrit degradation loop ($0.85\times$ per tier above 100%), vanilla jump critical upgrade ($\max(1.5\text{F}, \text{critDamage})$), and S2C crit particle network packet (`CritParticlePayload`).
+  - [x] Implemented auxiliary damage pipeline (`AuxDmgTracker`, `AttributeEvents`): non-reentrant execution guard (`noRecurse`), invulnerability frames and last hurt preservation, sweeping attack ratio scaling, and post-hit fire/cold callbacks.
+  - [x] Implemented dodge mechanics: deterministic per-tick hash dodge roll (`AttributeEvents.checkDodge`), melee reach bounds check, projectile impact dodge (`AbstractArrowMixin`), and dodge sound event.
+  - [x] Implemented life steal and overheal: post-damage health capture and healing, overheal absorption cap ($50\%$ max HP) without destroying external absorption (`AttributesUtil`), and ghost health restoration.
+  - [x] Implemented healing received scaling in `heal()` with cancellation when $\le 0$.
+  - [x] Implemented projectile and arrow behavior: first-tick base damage and velocity scaling with loop prevention tag (`apothic_attributes.arrow.done`), and thrown trident quad-scaling (`ThrownTridentMixin`, `AbstractArrowAccessor`).
+  - [x] Implemented draw speed item use-duration acceleration (`LivingEntityMixin.updateUsingItem`).
+  - [x] Implemented shared ability cooldowns and cooldown reduction (`AbilityCooldowns`, `CooldownTracker`).
+  - [x] Implemented flight mechanics: `canGlide` / `canGlideUsing` for `ELYTRA_FLIGHT`, and safe creative flight grant tracking (`had_flight_granted`) preserving external/creative states.
+  - [x] Implemented experience scaling: mob experience in `getExperienceReward` and block experience in `popExperience` (`AttributesUtil.CURRENT_BREAKER`).
+  - [x] Implemented 7 Mob Effects: `BleedingEffect`, `DetonationEffect`, `FlyingEffect`, `GrievousEffect`, `KnowledgeEffect`, `SunderingEffect`, `VitalityEffect`.
+  - [x] Added datapack definitions: 5 damage types (`bleeding`, `detonation`, `current_hp_damage`, `fire_damage`, `cold_damage`) and 5 damage type tags (`cannot_critically_strike`, `is_non_physical`, `#c:is_physical`, `#c:is_magic`, `#minecraft:bypasses_armor`).
+  - [x] Verified with 23 automated unit tests (`./gradlew test`) covering math formulas, negative armor, multicrit degradation, CDR, cooldown pruning, dodge determinism, and recursion safety.
+  - [x] Verified dedicated server launch (`./gradlew runServer --args="--nogui"`) with 100% chunks loaded, clean datapack loading, zero client leakage, and clean shutdown.
+
 ---
 
 ## 2. Upcoming Milestones
 
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 5** | Apothic Spawners Core | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, tooltip deltas | `NEXT` |
-| **Milestone 6** | Apothic Attributes Combat Hooks | Armor piercing, protection shred, damage calculation mixins, overheal, crit emitters | `PENDING` |
+| **Milestone 6** | Apothic Spawners Core | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, tooltip deltas | `NEXT` |
 | **Milestone 7** | Apothic Enchanting Core | Access wideners, table stats (Eterna/Quanta/Arcana), level uncapping | `PENDING` |
 | **Milestone 8** | Apothic Adventure Core | Affixes, sockets, gems, boss spawning, RenderPearl overlays | `PENDING` |
 | **Milestone 9** | Polish & Full Parity | ModMenu integration, Chronicle of Shadows verification, GameTests | `PENDING` |

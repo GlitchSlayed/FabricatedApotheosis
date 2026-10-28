@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "#c:is_magic",
+    "#is_fire",
+    "#is_explosion",
+    "#is_lightning",
+    "#is_freezing"
+  ]
+}

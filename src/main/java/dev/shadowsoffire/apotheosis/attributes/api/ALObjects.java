@@ -2,11 +2,28 @@ package dev.shadowsoffire.apotheosis.attributes.api;
 
 import java.util.List;
 
+import com.mojang.serialization.Codec;
+
+import dev.shadowsoffire.apotheosis.attributes.effects.BleedingEffect;
+import dev.shadowsoffire.apotheosis.attributes.effects.DetonationEffect;
+import dev.shadowsoffire.apotheosis.attributes.effects.FlyingEffect;
+import dev.shadowsoffire.apotheosis.attributes.effects.GrievousEffect;
+import dev.shadowsoffire.apotheosis.attributes.effects.KnowledgeEffect;
+import dev.shadowsoffire.apotheosis.attributes.effects.SunderingEffect;
+import dev.shadowsoffire.apotheosis.attributes.effects.VitalityEffect;
 import dev.shadowsoffire.placebo.registry.DeferredHelper;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 
@@ -94,7 +111,107 @@ public class ALObjects {
         public static void bootstrap() {}
     }
 
+    public static class MobEffects {
+        public static Holder<MobEffect> BLEEDING;
+        public static Holder<MobEffect> DETONATION;
+        public static Holder<MobEffect> GRIEVOUS;
+        public static Holder<MobEffect> KNOWLEDGE;
+        public static Holder<MobEffect> SUNDERING;
+        public static Holder<MobEffect> VITALITY;
+        public static Holder<MobEffect> FLYING;
+
+        public static void bootstrap() {
+            if (BLEEDING == null) {
+                BLEEDING = R.effect("bleeding", BleedingEffect::new);
+                DETONATION = R.effect("detonation", DetonationEffect::new);
+                GRIEVOUS = R.effect("grievous", GrievousEffect::new);
+                KNOWLEDGE = R.effect("knowledge", KnowledgeEffect::new);
+                SUNDERING = R.effect("sundering", SunderingEffect::new);
+                VITALITY = R.effect("vitality", VitalityEffect::new);
+                FLYING = R.effect("flying", FlyingEffect::new);
+            }
+        }
+    }
+
+    public static class Particles {
+        public static Holder<SimpleParticleType> APOTH_CRIT;
+
+        public static void bootstrap() {
+            if (APOTH_CRIT == null) {
+                APOTH_CRIT = R.particle("apoth_crit");
+            }
+        }
+    }
+
+    public static class Sounds {
+        public static Holder<SoundEvent> DODGE;
+
+        public static void bootstrap() {
+            if (DODGE == null) {
+                DODGE = R.sound("dodge");
+            }
+        }
+    }
+
+    public static class DamageTypes {
+        public static final ResourceKey<DamageType> BLEEDING = ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(MODID, "bleeding"));
+        public static final ResourceKey<DamageType> DETONATION = ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(MODID, "detonation"));
+        public static final ResourceKey<DamageType> CURRENT_HP_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(MODID, "current_hp_damage"));
+        public static final ResourceKey<DamageType> FIRE_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(MODID, "fire_damage"));
+        public static final ResourceKey<DamageType> COLD_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(MODID, "cold_damage"));
+
+        public static void bootstrap() {}
+    }
+
+    public static class Attachments {
+        public static AttachmentType<Float> PRE_DAMAGE_HEALTH;
+        public static AttachmentType<AuxDmgTracker> AUX_DMG_TRACKER;
+        public static AttachmentType<CooldownTracker> COOLDOWNS;
+        public static AttachmentType<Float> OVERHEAL_ABSORPTION;
+        public static AttachmentType<CompoundTag> PERSISTENT_DATA;
+
+        public static void bootstrap() {
+            if (PRE_DAMAGE_HEALTH == null) {
+                try {
+                    PRE_DAMAGE_HEALTH = AttachmentRegistry.createDefaulted(
+                        Identifier.fromNamespaceAndPath(MODID, "pre_damage_health"), () -> 0.0F);
+                    AUX_DMG_TRACKER = AttachmentRegistry.<AuxDmgTracker>builder()
+                        .initializer(AuxDmgTracker::new)
+                        .persistent(AuxDmgTracker.CODEC)
+                        .buildAndRegister(Identifier.fromNamespaceAndPath(MODID, "aux_dmg_tracker"));
+                    COOLDOWNS = AttachmentRegistry.<CooldownTracker>builder()
+                        .initializer(CooldownTracker::new)
+                        .persistent(CooldownTracker.CODEC.codec())
+                        .copyOnDeath()
+                        .buildAndRegister(Identifier.fromNamespaceAndPath(MODID, "cooldowns"));
+                    OVERHEAL_ABSORPTION = AttachmentRegistry.<Float>builder()
+                        .initializer(() -> 0.0F)
+                        .persistent(Codec.FLOAT)
+                        .buildAndRegister(Identifier.fromNamespaceAndPath(MODID, "overheal_absorption"));
+                    PERSISTENT_DATA = AttachmentRegistry.<CompoundTag>builder()
+                        .initializer(CompoundTag::new)
+                        .persistent(CompoundTag.CODEC)
+                        .buildAndRegister(Identifier.fromNamespaceAndPath(MODID, "persistent_data"));
+                } catch (Throwable t) {
+                    // Suppressed in headless unit tests where Loom mixin transformation is inactive
+                }
+            }
+        }
+    }
+
     public static class Tags {
         public static final TagKey<Attribute> DYNAMIC_BASE_ATTRIBUTES = TagKey.create(Registries.ATTRIBUTE, Identifier.fromNamespaceAndPath(MODID, "dynamic_base"));
+        public static final TagKey<DamageType> CANNOT_CRITICALLY_STRIKE = TagKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(MODID, "cannot_critically_strike"));
+        public static final TagKey<DamageType> IS_NON_PHYSICAL = TagKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(MODID, "is_non_physical"));
+        public static final TagKey<DamageType> IS_PHYSICAL = TagKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath("c", "is_physical"));
+    }
+
+    public static void bootstrap() {
+        Attributes.bootstrap();
+        MobEffects.bootstrap();
+        Particles.bootstrap();
+        Sounds.bootstrap();
+        DamageTypes.bootstrap();
+        Attachments.bootstrap();
     }
 }
