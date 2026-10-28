@@ -8,7 +8,7 @@
 
 A faithful port of the **Apotheosis** ecosystem from Minecraft 26.1.2 NeoForge to **Minecraft 26.3 Fabric**, distributed as **one unified ecosystem JAR**.
 
-Fabricated Apotheosis brings all of Apotheosis, required Placebo foundations, Apothic Attributes, Apothic Enchanting, and Apothic Spawners together for Fabric, leveraging modern Minecraft 26.3 rendering abstractions and [YetAnotherConfigLib (YACL)](https://github.com/isXander/YetAnotherConfigLib) for configuration screens.
+Fabricated Apotheosis brings all of Apotheosis, required Placebo foundations, Apothic Attributes, Apothic Enchanting, and Apothic Spawners together for Fabric, leveraging [YetAnotherConfigLib (YACL)](https://github.com/isXander/YetAnotherConfigLib) for configuration screens.
 
 ---
 
