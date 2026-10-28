@@ -1,5 +1,9 @@
 # Handoff Report — Milestone 4: Custom Attributes, Vanilla Overlap & Attribute UI
 
+- **Commit SHA**: `5cf47f41c8207e2d5894a438355848ac245f6838`
+- **Date**: 2026-10-27
+- **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.19.5, YACL 3.9.6)
+
 ## 1. Current Repository Tree
 
 ```text
