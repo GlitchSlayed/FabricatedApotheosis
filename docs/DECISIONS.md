@@ -154,3 +154,23 @@
   - Existing migration code in the codebase remains untouched pending future review and removal.
   - Enforce explicit schema versioning, preserve all state across upgrades (items, affixes, gems, library points, spawners), prevent silent deletion/reset of unresolved data, and require world backups prior to testing. See `docs/SAVE_COMPATIBILITY.md`.
 - **Consequences**: Eliminates fragile external legacy migration paths while guaranteeing world persistence integrity and reliable upgrade paths within this Fabric ecosystem.
+
+---
+
+## ADR-014: Enchantment Limits, Coremod Replacements, and Staged Atomic EnchantmentInfo Loading
+
+- **Status**: Accepted
+- **Context**: Upstream Apothic Enchanting relied on NeoForge Coremods (ASM) to patch enchantment maximum levels across vanilla commands, fishing, loot, and anvil combining. In addition, `EnchantmentInfoLoader` loaded datapack configurations by clearing live state before parsing, leading to corrupted or partial runtime state if a datapack contained syntax errors or failed during parsing.
+- **Decision**:
+  - Replace NeoForge coremods with targeted Fabric Mixins:
+    1. `AnvilMenuMixin`: Modify constant `40` at `ordinal = 2` with `require = 1` to lift the vanilla "Too Expensive!" level cap to `Integer.MAX_VALUE` when `enableEnchanting` is active, and redirect `Enchantment.getMaxLevel()` to `EnchHooks.getMaxAnvilCombineLevel(ench)`.
+    2. `EnchantCommandMixin`: Redirect `Enchantment.getMaxLevel()` in `/enchant` to `EnchHooks.getMaxLevel(ench)`.
+    3. `FishingHookMixin`: Replace `FishingHookLureTransformer` by redirecting `timeUntilLured` to `EnchHooks.getTicksCaughtDelay(hook)`.
+    4. `EnchantRandomlyFunctionMixin` & `SingleEnchantmentMixin`: Redirect `getMaxLevel()` during loot generation to `EnchHooks.getMaxLootLevel(ench)`.
+  - Re-architect `EnchantmentInfoLoader` with staged validation and atomic publication:
+    - Parse into an isolated `Map<ResourceLocation, EnchantmentInfo> staged` map without modifying the live `INFO_MAP`.
+    - Support datapack stack semantics: `replace: true`, `remove: [...]`, and entry-level `remove: true`.
+    - Publish atomically via `INFO_MAP = Map.copyOf(staged)` only upon full validation success; on error, log diagnostics and retain previous valid state.
+    - Synchronize authoritative definitions to clients on join via `EnchantmentInfoPayload` and clean up on disconnect.
+    - Invalidate enchantment caches via `EnchHooks.clearEnchantmentCaches()`.
+- **Consequences**: Zero ASM or coremod bytecode manipulators, deterministic enchantment limits up to configured maximums, zero partial data corruptions during hot-reloads, and dedicated-server authority in multiplayer.

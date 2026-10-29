@@ -22,6 +22,9 @@
     ],
     "client": [
       "dev.shadowsoffire.apotheosis.client.ApotheosisClient"
+    ],
+    "modmenu": [
+      "dev.shadowsoffire.apotheosis.client.ModMenuIntegration"
     ]
   },
   "mixins": [

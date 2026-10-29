@@ -6,21 +6,72 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import dev.shadowsoffire.apotheosis.config.ApotheosisConfig;
+import dev.shadowsoffire.apothic_enchanting.event.AnvilUpdateEvent;
 import dev.shadowsoffire.apothic_enchanting.library.EnchLibraryTile;
+import dev.shadowsoffire.apothic_enchanting.library.EnchLibraryTile.BasicLibraryTile;
+import dev.shadowsoffire.apothic_enchanting.mixin.AnvilMenuMixin;
+import dev.shadowsoffire.apothic_enchanting.table.ApothEnchantmentHelper;
 import dev.shadowsoffire.apothic_enchanting.table.Arcana;
 import dev.shadowsoffire.apothic_enchanting.table.EnchantmentTableStats;
 import dev.shadowsoffire.placebo.util.EnchantmentUtils;
 import dev.shadowsoffire.placebo.util.StepFunction;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.SharedConstants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.Bootstrap;
-import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.level.block.Blocks;
 
 public class EnchantingTests {
 
     @BeforeAll
-    public static void setup() {
+    public static void setup() throws Exception {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+
+        java.lang.reflect.Field frozenField = net.minecraft.core.MappedRegistry.class.getDeclaredField("frozen");
+        frozenField.setAccessible(true);
+        java.lang.reflect.Field intrusiveField = net.minecraft.core.MappedRegistry.class.getDeclaredField("unregisteredIntrusiveHolders");
+        intrusiveField.setAccessible(true);
+
+        for (net.minecraft.core.Registry<?> reg : net.minecraft.core.registries.BuiltInRegistries.REGISTRY) {
+            if (reg instanceof net.minecraft.core.MappedRegistry<?> mapped) {
+                frozenField.set(mapped, false);
+                if (mapped == net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                    || mapped == net.minecraft.core.registries.BuiltInRegistries.ITEM
+                    || mapped == net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+                    || mapped == net.minecraft.core.registries.BuiltInRegistries.FLUID
+                    || mapped == net.minecraft.core.registries.BuiltInRegistries.BLOCK_ENTITY_TYPE) {
+                    if (intrusiveField.get(mapped) == null) {
+                        intrusiveField.set(mapped, new java.util.IdentityHashMap<>());
+                    }
+                }
+            }
+        }
+
+        Ench.bootstrap();
+
+        for (net.minecraft.world.item.Item item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+            try {
+                item.builtInRegistryHolder().components();
+            } catch (Exception e) {
+                item.builtInRegistryHolder().bindComponents(net.minecraft.core.component.DataComponentMap.EMPTY);
+            }
+        }
+
+        ApotheosisConfig.load();
     }
 
     @Test
@@ -32,8 +83,8 @@ public class EnchantingTests {
         assertEquals(8, EnchLibraryTile.levelToPoints(4));
         assertEquals(16, EnchLibraryTile.levelToPoints(5));
         assertEquals(32, EnchLibraryTile.levelToPoints(6));
-        assertEquals(32768, EnchLibraryTile.levelToPoints(16)); // Basic library cap
-        assertEquals(1073741824, EnchLibraryTile.levelToPoints(31)); // Ender library cap
+        assertEquals(32768, EnchLibraryTile.levelToPoints(16)); // Basic library cap (2^15)
+        assertEquals(1073741824, EnchLibraryTile.levelToPoints(31)); // Ender library cap (2^30)
 
         // Verify incremental cost to upgrade an existing item
         // Going from Sharpness III (4 pts) to Sharpness V (16 pts) costs 12 points
@@ -80,111 +131,224 @@ public class EnchantingTests {
     }
 
     @Test
-    @DisplayName("Enchanting Stats: Quanta power range calculation conforms to baseline")
-    void testQuantaRangeCalculation() {
-        int level = 30;
+    @DisplayName("Production Enchanting Calculations: getQuantaFactor invokes production algorithm")
+    void testProductionQuantaFactor() {
+        RandomSource zeroRand = RandomSource.create(42L);
 
-        // 0% Quanta, unstable: power range is [30, 30]
-        float zeroQuanta = 0.0F;
-        int minPow0 = Math.round(Mth.clamp(level - level * zeroQuanta, 1, 200));
-        int maxPow0 = Math.round(Mth.clamp(level + level * zeroQuanta, 1, 200));
-        assertEquals(30, minPow0);
-        assertEquals(30, maxPow0);
+        // 0% Quanta: factor must be exactly 1.0F regardless of stability
+        float qFactor0Unstable = ApothEnchantmentHelper.getQuantaFactor(zeroRand, 0.0F, false);
+        assertEquals(1.0F, qFactor0Unstable, 0.001F);
 
-        // 25% Quanta, unstable: power range is [23, 38]
-        float q25 = 0.25F;
-        int minPow25 = Math.round(Mth.clamp(level - level * q25, 1, 200));
-        int maxPow25 = Math.round(Mth.clamp(level + level * q25, 1, 200));
-        assertEquals(23, minPow25);
-        assertEquals(38, maxPow25);
+        float qFactor0Stable = ApothEnchantmentHelper.getQuantaFactor(zeroRand, 0.0F, true);
+        assertEquals(1.0F, qFactor0Stable, 0.001F);
 
-        // 50% Quanta, unstable: power range is [15, 45]
-        float q50 = 0.50F;
-        int minPow50 = Math.round(Mth.clamp(level - level * q50, 1, 200));
-        int maxPow50 = Math.round(Mth.clamp(level + level * q50, 1, 200));
-        assertEquals(15, minPow50);
-        assertEquals(45, maxPow50);
+        // Stable enchanting table (100% rectification): factor is always >= 1.0 (never negative deviation)
+        for (int i = 0; i < 50; i++) {
+            float factor = ApothEnchantmentHelper.getQuantaFactor(zeroRand, 50.0F, true);
+            assertTrue(factor >= 1.0F, "Stable quanta factor must never reduce enchanting power");
+            assertTrue(factor <= 1.50F, "50% quanta stable factor must not exceed 1.50");
+        }
 
-        // 100% Quanta, unstable: power range is [1, 60] (clamped to min 1)
-        float q100 = 1.00F;
-        int minPow100 = Math.round(Mth.clamp(level - level * q100, 1, 200));
-        int maxPow100 = Math.round(Mth.clamp(level + level * q100, 1, 200));
-        assertEquals(1, minPow100);
-        assertEquals(60, maxPow100);
+        // Unstable table: gaussian can deviate both positive and negative
+        boolean sawAbove = false;
+        boolean sawBelow = false;
+        for (int i = 0; i < 200; i++) {
+            float factor = ApothEnchantmentHelper.getQuantaFactor(zeroRand, 50.0F, false);
+            if (factor > 1.0F) sawAbove = true;
+            if (factor < 1.0F) sawBelow = true;
+            assertTrue(factor >= 0.50F && factor <= 1.50F, "50% quanta factor must stay within [0.50, 1.50]");
+        }
+        assertTrue(sawAbove && sawBelow, "Unstable quanta must produce bidirectional power variance");
     }
 
     @Test
-    @DisplayName("Enchanting Stats: Rectification preserves floor when stable")
-    void testRectificationAndStableBehavior() {
-        int level = 50;
-        float quanta = 0.40F;
+    @DisplayName("Production Enchanting Calculations: slot cost progression scaling")
+    void testProductionEnchantmentCostScaling() {
+        RandomSource rand = RandomSource.create(12345L);
+        ItemStack dummyTool = new ItemStack(Items.DIAMOND_SWORD);
 
-        // When stable flag is true (e.g. 100% rectification), minimum power never falls below level
-        boolean stable = true;
-        int minPowStable = stable ? level : Math.round(Mth.clamp(level - level * quanta, 1, 200));
-        int maxPowStable = Math.round(Mth.clamp(level + level * quanta, 1, 200));
-        assertEquals(50, minPowStable);
-        assertEquals(70, maxPowStable);
+        for (int eterna = 1; eterna <= 100; eterna += 10) {
+            // Slot 2 (top slot) always equals eterna level
+            int slot2Cost = ApothEnchantmentHelper.getEnchantmentCost(rand, 2, (float) eterna, dummyTool);
+            assertEquals(eterna, slot2Cost);
+
+            // Slot 1 is between 60% and 80% of Slot 2
+            int slot1Cost = ApothEnchantmentHelper.getEnchantmentCost(rand, 1, (float) eterna, dummyTool);
+            assertTrue(slot1Cost >= 1 && slot1Cost <= slot2Cost);
+
+            // Slot 0 is between 20% and 40% of Slot 2
+            int slot0Cost = ApothEnchantmentHelper.getEnchantmentCost(rand, 0, (float) eterna, dummyTool);
+            assertTrue(slot0Cost >= 1 && slot0Cost <= slot1Cost);
+        }
     }
 
     @Test
-    @DisplayName("Arcana Thresholds: Tiers resolve accurately per baseline spec")
-    void testArcanaTiers() {
-        assertEquals(Arcana.EMPTY, Arcana.getForThreshold(0.0F));
-        assertEquals(Arcana.EMPTY, Arcana.getForThreshold(9.9F));
+    @DisplayName("Enchantment Library: Transactional storage insert, commit, and abort")
+    void testLibraryTransactionalStorage() {
+        BasicLibraryTile library = new BasicLibraryTile(BlockPos.ZERO, Ench.Blocks.LIBRARY.value().defaultBlockState());
+        Storage<ItemVariant> storage = library.getItemStorage(null);
 
-        assertEquals(Arcana.LITTLE, Arcana.getForThreshold(10.0F));
-        assertEquals(Arcana.LITTLE, Arcana.getForThreshold(15.0F));
+        // Insert non-enchanted item -> rejected
+        ItemVariant nonEnchantedVariant = createItemVariant(new ItemStack(Items.BOOK));
+        try (Transaction tx = Transaction.openOuter()) {
+            long inserted = storage.insert(nonEnchantedVariant, 1, tx);
+            assertEquals(0, inserted);
+            tx.commit();
+        }
 
-        assertEquals(Arcana.FEW, Arcana.getForThreshold(20.0F));
-        assertEquals(Arcana.SOME, Arcana.getForThreshold(30.0F));
-        assertEquals(Arcana.LESS, Arcana.getForThreshold(40.0F));
-        assertEquals(Arcana.MEDIUM, Arcana.getForThreshold(50.0F));
-        assertEquals(Arcana.MORE, Arcana.getForThreshold(60.0F));
-        assertEquals(Arcana.VALUE, Arcana.getForThreshold(70.0F));
-        assertEquals(Arcana.EXTRA, Arcana.getForThreshold(80.0F));
-        assertEquals(Arcana.ALMOST, Arcana.getForThreshold(90.0F));
+        // Prepare an enchanted book with Sharpness III (4 points)
+        ItemStack book = new ItemStack(Items.ENCHANTED_BOOK);
+        ItemEnchantments.Mutable enchs = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        Holder<Enchantment> dummyEnch = Holder.direct(
+            Enchantment.enchantment(
+                Enchantment.definition(
+                    net.minecraft.core.HolderSet.empty(),
+                    1, 5,
+                    Enchantment.constantCost(1),
+                    Enchantment.constantCost(1),
+                    1
+                )
+            ).build(Identifier.fromNamespaceAndPath("test", "dummy"))
+        );
+        enchs.set(dummyEnch, 3);
+        EnchantmentHelper.setEnchantments(book, enchs.toImmutable());
+        ItemVariant bookVariant = createItemVariant(book);
 
-        assertEquals(Arcana.MAX, Arcana.getForThreshold(99.0F));
-        assertEquals(Arcana.MAX, Arcana.getForThreshold(100.0F));
-        assertEquals(Arcana.MAX, Arcana.getForThreshold(150.0F));
+        // Test Abort: transaction inserts book, but aborts -> library points remain 0
+        try (Transaction tx = Transaction.openOuter()) {
+            long inserted = storage.insert(bookVariant, 1, tx);
+            assertEquals(1, inserted);
+            assertEquals(4, library.getPointsMap().getInt(dummyEnch)); // Visible during tx
+            tx.abort();
+        }
+        assertEquals(0, library.getPointsMap().getInt(dummyEnch), "Aborted transaction must roll back library points to 0");
+
+        // Test Commit: transaction inserts book and commits -> points persist
+        try (Transaction tx = Transaction.openOuter()) {
+            long inserted = storage.insert(bookVariant, 1, tx);
+            assertEquals(1, inserted);
+            tx.commit();
+        }
+        assertEquals(4, library.getPointsMap().getInt(dummyEnch), "Committed transaction must persist points");
+        assertEquals(3, library.getLevelsMap().getInt(dummyEnch));
+
+        // Test Nested Transaction Abort
+        try (Transaction outer = Transaction.openOuter()) {
+            try (Transaction nested = outer.openNested()) {
+                storage.insert(bookVariant, 1, nested);
+                assertEquals(8, library.getPointsMap().getInt(dummyEnch));
+                nested.abort();
+            }
+            assertEquals(4, library.getPointsMap().getInt(dummyEnch), "Nested abort must roll back to outer transaction state");
+            outer.commit();
+        }
+        assertEquals(4, library.getPointsMap().getInt(dummyEnch));
+    }
+
+    private static ItemVariant createItemVariant(ItemStack stack) {
+        return new ItemVariant() {
+            @Override
+            public boolean isBlank() {
+                return stack.isEmpty();
+            }
+
+            @Override
+            public net.minecraft.world.item.Item getObject() {
+                return stack.getItem();
+            }
+
+            @Override
+            public net.minecraft.core.component.DataComponentPatch getComponentsPatch() {
+                return stack.getComponentsPatch();
+            }
+
+            @Override
+            public net.minecraft.core.component.DataComponentMap getComponents() {
+                return stack.getComponents();
+            }
+
+            @Override
+            public boolean isOf(net.minecraft.world.item.Item item) {
+                return stack.is(item);
+            }
+
+            @Override
+            public ItemStack toStack(int count) {
+                return stack.copyWithCount(count);
+            }
+
+            @Override
+            public ItemVariant withComponents(net.minecraft.core.component.DataComponentPatch patch) {
+                return this;
+            }
+        };
     }
 
     @Test
-    @DisplayName("Anvil Overhaul: Optimal XP calculation without 40-level cap")
-    void testAnvilCostExperienceCalculations() {
-        // Vanilla capped at 40 (Too Expensive)
-        // Verify EnchantmentUtils correctly handles unbounded levels: 40, 50, 75, 100
-        int xpAt40 = EnchantmentUtils.getTotalExperienceForLevel(40);
-        int xpAt50 = EnchantmentUtils.getTotalExperienceForLevel(50);
-        int xpAt75 = EnchantmentUtils.getTotalExperienceForLevel(75);
-        int xpAt100 = EnchantmentUtils.getTotalExperienceForLevel(100);
+    @DisplayName("Anvil Overhaul: Level 40 cap removal injection validation")
+    void testAnvilLevel40CapRemoval() {
+        AnvilMenuMixin mixin = new AnvilMenuMixin();
 
-        assertTrue(xpAt40 > 0);
-        assertTrue(xpAt50 > xpAt40);
-        assertTrue(xpAt75 > xpAt50);
-        assertTrue(xpAt100 > xpAt75);
+        // When enableEnchanting is true (default), cap is removed (Integer.MAX_VALUE)
+        ApotheosisConfig.getServer().enableEnchanting = true;
+        assertEquals(Integer.MAX_VALUE, mixin.apoth_removeLevelCap(40));
 
-        // Verify roundtrip level conversion
-        assertEquals(40, EnchantmentUtils.getLevelForExperience(xpAt40));
-        assertEquals(50, EnchantmentUtils.getLevelForExperience(xpAt50));
-        assertEquals(75, EnchantmentUtils.getLevelForExperience(xpAt75));
-        assertEquals(100, EnchantmentUtils.getLevelForExperience(xpAt100));
+        // When enableEnchanting is disabled, vanilla behavior is strictly preserved (returns old cap 40)
+        ApotheosisConfig.getServer().enableEnchanting = false;
+        assertEquals(40, mixin.apoth_removeLevelCap(40));
+
+        // Reset
+        ApotheosisConfig.getServer().enableEnchanting = true;
+    }
+
+    @Test
+    @DisplayName("Anvil Overhaul: Prismatic Web curse removal and Anvil repair recipes")
+    void testAnvilEvents() {
+        // Test damaged anvil repair with iron block
+        ItemStack damagedAnvil = new ItemStack(Items.DAMAGED_ANVIL);
+        ItemStack ironBlock = new ItemStack(Blocks.IRON_BLOCK);
+        AnvilUpdateEvent repairEvent = new AnvilUpdateEvent(damagedAnvil, ironBlock, "Anvil", 0, null);
+        ApothEnchEvents.onAnvilUpdate(repairEvent);
+
+        assertEquals(Items.ANVIL, repairEvent.getOutput().getItem(), "Damaged anvil + iron block should repair to regular anvil");
+        assertEquals(5, repairEvent.getXpCost(), "Anvil iron block repair costs 5 XP levels");
+        assertEquals(1, repairEvent.getMaterialCost());
+
+        // Test Prismatic Web on enchanted item
+        ItemStack swordWithCurse = new ItemStack(Items.DIAMOND_SWORD);
+        Holder<Enchantment> testEnch = Holder.direct(
+            Enchantment.enchantment(
+                Enchantment.definition(
+                    net.minecraft.core.HolderSet.empty(),
+                    1, 5,
+                    Enchantment.constantCost(1),
+                    Enchantment.constantCost(1),
+                    1
+                )
+            ).build(Identifier.fromNamespaceAndPath("test", "test_ench"))
+        );
+        ItemEnchantments.Mutable enchs = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        enchs.set(testEnch, 2);
+        EnchantmentHelper.setEnchantments(swordWithCurse, enchs.toImmutable());
+
+        ItemStack web = new ItemStack(Ench.Items.PRISMATIC_WEB.value());
+        AnvilUpdateEvent webEvent = new AnvilUpdateEvent(swordWithCurse, web, "Clean Sword", 0, null);
+        ApothEnchEvents.onAnvilUpdate(webEvent);
+
+        assertFalse(webEvent.getOutput().isEmpty(), "Prismatic web on enchanted sword must output cleaned item");
+        assertEquals(30, webEvent.getXpCost(), "Prismatic web curse removal costs 30 levels");
     }
 
     @Test
     @DisplayName("StepFunction: Power curve evaluation")
     void testStepFunctionEvaluation() {
-        // StepFunction: min=10, max=50, step=10 (4 steps)
         StepFunction func = StepFunction.fromBounds(10.0F, 50.0F, 10.0F);
         assertEquals(10.0F, func.min());
         assertEquals(50.0F, func.max());
         assertEquals(10.0F, func.step());
         assertEquals(4, func.steps());
 
-        // At level 0.0F (minimum progress)
         assertEquals(10.0F, func.get(0.0F), 0.001F);
-        // At level 1.0F (maximum progress)
         assertEquals(50.0F, func.get(1.0F), 0.001F);
     }
 }

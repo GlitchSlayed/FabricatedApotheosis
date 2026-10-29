@@ -20,6 +20,10 @@ repositories {
 		name = 'Fabric'
 		url = 'https://maven.fabricmc.net/'
 	}
+	maven {
+		name = 'TerraformersMC'
+		url = 'https://maven.terraformersmc.com/releases/'
+	}
 	mavenCentral()
 }
 
@@ -42,6 +46,9 @@ dependencies {
 
 	// YetAnotherConfigLib for configuration screen
 	implementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
+
+	// Optional ModMenu integration
+	compileOnly "com.terraformersmc:modmenu:22.0.0-alpha.3"
 
 	// Testing dependencies
 	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"

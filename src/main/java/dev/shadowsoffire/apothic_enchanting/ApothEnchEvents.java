@@ -130,9 +130,9 @@ public class ApothEnchEvents {
             return;
         }
 
-        if (left.getCount() == 1 && (left.getItem() == Items.CHIPPED_ANVIL || left.getItem() == Items.DAMAGED_ANVIL) && e.getRight().is(ConventionalItemTags.STORAGE_BLOCKS_IRON)) {
-            Item target = left.getItem() == Items.CHIPPED_ANVIL ? Items.DAMAGED_ANVIL : Items.ANVIL;
-            ItemStack out = left.transmuteCopy(target);
+        if (left.getCount() == 1 && (left.getItem() == Items.CHIPPED_ANVIL || left.getItem() == Items.DAMAGED_ANVIL)
+            && (e.getRight().is(ConventionalItemTags.STORAGE_BLOCKS_IRON) || e.getRight().is(Items.IRON_BLOCK))) {
+            ItemStack out = left.transmuteCopy(Items.ANVIL);
             e.setOutput(out);
             e.setXpCost(5);
             e.setMaterialCost(1);

@@ -89,6 +89,24 @@
   - [x] Verified with 37 automated unit tests (`./gradlew test`) covering Eterna step-ladder, Quanta power range, stable rectification, Arcana thresholds, Library points math, and XP progression.
   - [x] Verified dedicated server launch (`./gradlew runServer --args="--nogui"`) with clean datapack initialization, zero unbound registry keys, and clean shutdown.
 
+### Milestone 6 Stabilization: Audit, Coremod Replacements & Persistence Verification
+- **Status**: **COMPLETE** (2026-10-28)
+- **Key Achievements**:
+  - [x] Pinned immutable Loom release `loom_version=1.17.21` across `gradle.properties` and documentation.
+  - [x] Re-architected `EnchantmentInfoLoader` with staged atomic validation, `listResourceStacks` priority merge semantics, `"replace": true`, `"remove": [...]`, atomic publication (`INFO_MAP = Map.copyOf(staged)`), cache invalidation, network sync (`EnchantmentInfoPayload`), and disconnect reset.
+  - [x] Implemented robust holder lookup in `MiscUtil.findHolder` with server access bridge (`CURRENT_SERVER.registries().compositeAccess()`) and client bridge (`ClientMiscUtil`).
+  - [x] Replaced all NeoForge Coremods / bytecode ASM transformers with targeted Fabric Mixins:
+    - `AnvilMenuMixin`: targeted `createResult` constant 40 (`ordinal = 2`, `require = 1`) to lift the level 40 cap to `Integer.MAX_VALUE`, and redirected `getMaxLevel()` to `EnchHooks.getMaxAnvilCombineLevel(ench)`.
+    - `EnchantCommandMixin`: redirected `/enchant` to `EnchHooks.getMaxLevel(ench)`.
+    - `FishingHookMixin`: redirected lure delay to `EnchHooks.getTicksCaughtDelay(hook)`.
+    - `EnchantRandomlyFunctionMixin` and `SingleEnchantmentMixin`: redirected loot generation to `EnchHooks.getMaxLootLevel(ench)`.
+  - [x] Registered Fabric Transfer API automation (`ItemStorage.SIDED.registerForBlockEntity`) for `Ench.Tiles.LIBRARY` and `Ench.Tiles.ENDER_LIBRARY`.
+  - [x] Optimized `EnchLibraryContainer.onButtonClick` to use O(1) integer raw ID lookup `reg.get(rawId)` with validation checks against menu state and level limits.
+  - [x] Fixed `MiscUtil.breakExtraBlock` with player-breaking simulation, adventure mode & unbreakable checks, drop spawning, tool breaking events, and recursion guards (`IS_BREAKING_EXTRA`).
+  - [x] Implemented optional `ModMenuApi` entrypoint (`ModMenuIntegration`) hooked to `ApotheosisConfigScreen::create`.
+  - [x] Verified with 38 automated unit tests (`./gradlew test`) covering mathematical models, transactional storage commit/abort, anvil overrides, and data loading.
+  - [x] Verified full aggregate build (`./gradlew build`), dedicated server run (`./gradlew runServer`), and client launch (`./gradlew runClient`) with clean startup, zero errors, and clean shutdown.
+
 ---
 
 ## 2. Upcoming Milestones
@@ -98,8 +116,12 @@
 
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 6 Stabilization** | Apothic Enchanting Stabilization & Persistence Audit | Audit container/library/table persistence against save-compatibility rules; verify point conversion round-tripping; validate high-level enchantment component serialization without data loss; replace legacy migration work with this fork's internal persistence verification | `NEXT` |
-| **Milestone 7** | Apothic Spawners Core & Persistence | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, redstone control modes, tooltip deltas, and save-compatible spawner block entity data | `PENDING` |
+| **Milestone 7** | Apothic Spawners Core & Persistence | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, redstone control modes, tooltip deltas, and save-compatible spawner block entity data | `NEXT` |
+| **Milestone 8** | Apothic Adventure Core & Affixes/Gems | Affix data system, gem definitions, socketing mechanics, forging/reforging tables, data components, and item persistence | `PENDING` |
+| **Milestone 9** | Boss Generation, Worldgen & Loot Integration | Rogue spawners, boss dungeons, wanderer/invader boss entities, Fabric Loot API v3 integration (Gateways to Eternity completely excluded) | `PENDING` |
+| **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points (Patchouli / Chronicle of Shadows deferred TBD; no replacement book system) | `PENDING` |
+| **Milestone 11** | End-to-End GameTests & Multiplayer Validation | Automated Minecraft GameTests for combat, enchanting, spawners, and affix systems; dedicated-server round-trip verification; copied representative world upgrade testing | `PENDING` |
+| **Milestone 12** | Ecosystem Polish, Documentation & Release Readiness | Full ecosystem distributable verification, strict duplicate checks, dependency audit, final user documentation, release packaging | `PENDING` |
 | **Milestone 8** | Apothic Adventure Core & Affixes/Gems | Affix data system, gem definitions, socketing mechanics, forging/reforging tables, data components, and item persistence | `PENDING` |
 | **Milestone 9** | Boss Generation, Worldgen & Loot Integration | Rogue spawners, boss dungeons, wanderer/invader boss entities, Fabric Loot API v3 integration (Gateways to Eternity completely excluded) | `PENDING` |
 | **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points (Patchouli / Chronicle of Shadows deferred TBD; no replacement book system) | `PENDING` |

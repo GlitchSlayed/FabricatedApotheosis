@@ -98,13 +98,13 @@ This document inventories every registered block, item, block entity, enchantmen
 
 NeoForge upstream used five coremod transformer classes in `dev.shadowsoffire.apothic_enchanting.coremods`. Here is the exact audit and how each is replaced on Fabric:
 
-| Upstream Transformer | Target Classes / Methods | Original ASM Behavior | Fabric Replacement Strategy |
+| Upstream Transformer | Target Classes / Methods | Original ASM Behavior | Fabric Replacement Implementation |
 | :--- | :--- | :--- | :--- |
-| **`EnchInfoRedirector`** | `EnchantCommand`, `AnvilMenu`, `CreativeModeTabs`, `Enchantment` | Replaced virtual calls to `Enchantment.getMaxLevel()` with `INVOKESTATIC EnchHooks.getMaxLevel(Enchantment)`. | Mixin on `AnvilMenu` (`@ModifyConstant` / `@WrapOperation` for max combine level), `EnchantCommand` (`@ModifyVariable` / `@WrapOperation` for max level argument validation), and `Enchantment.getMaxLevel()` defaulting to `EnchantmentInfo` override. |
-| **`EnchInfoLootRedirector`**| `EnchantRandomlyFunction`, `EnchantmentHelper`, `SingleEnchantment` | Replaced virtual calls to `Enchantment.getMaxLevel()` in loot generation with `INVOKESTATIC EnchHooks.getMaxLootLevel(Enchantment)`. | Targeted Mixin on `EnchantRandomlyFunction` and `EnchantmentHelper` wrapping the level upper bound query with `EnchantmentInfo.getMaxLootLevel()`. |
-| **`FishingHookLureTransformer`** | `FishingHook.catchingFish(BlockPos)` | Replaced the final `PUTFIELD timeUntilHooked` calculation with `EnchHooks.getTicksCaughtDelay(FishingHook)` to prevent delay from being $\le 0$ when `lureSpeed` is very high. | Mixin on `FishingHook` (`@WrapOperation` or `@ModifyVariable` on `timeUntilLured`) clamping the minimum delay to $\ge 1$ ticks: `Math.max(1, 100 - lureSpeed)`. |
-| **`EnchantmentCallRewriter`** | Bytecode utility | Assisted ASM method rewriting. | Eliminated entirely; replaced with declarative Mixin annotations. |
-| **`ApothEnchCoreMod`** | NeoForge `ClassProcessorProvider` | Coremod registration. | Eliminated entirely; zero ASM plugins needed. |
+| **`EnchInfoRedirector`** | `EnchantCommand`, `AnvilMenu`, `CreativeModeTabs`, `Enchantment` | Replaced virtual calls to `Enchantment.getMaxLevel()` with `INVOKESTATIC EnchHooks.getMaxLevel(Enchantment)`. | Implemented `AnvilMenuMixin` (`@ModifyConstant(ordinal = 2, require = 1)` lifting cap to `Integer.MAX_VALUE` and `@Redirect` to `EnchHooks.getMaxAnvilCombineLevel(ench)`), and `EnchantCommandMixin` (`@Redirect` to `EnchHooks.getMaxLevel(ench)`). |
+| **`EnchInfoLootRedirector`**| `EnchantRandomlyFunction`, `EnchantmentHelper`, `SingleEnchantment` | Replaced virtual calls to `Enchantment.getMaxLevel()` in loot generation with `INVOKESTATIC EnchHooks.getMaxLootLevel(Enchantment)`. | Implemented `EnchantRandomlyFunctionMixin` and `SingleEnchantmentMixin` via `@Redirect` on `Enchantment.getMaxLevel()` to `EnchHooks.getMaxLootLevel(ench)`. |
+| **`FishingHookLureTransformer`** | `FishingHook.catchingFish(BlockPos)` | Replaced the final `PUTFIELD timeUntilHooked` calculation with `EnchHooks.getTicksCaughtDelay(FishingHook)` to prevent delay from being $\le 0$ when `lureSpeed` is very high. | Implemented `FishingHookMixin` via `@Redirect` on `timeUntilLured` invoking `EnchHooks.getTicksCaughtDelay(this)`. |
+| **`EnchantmentCallRewriter`** | Bytecode utility | Assisted ASM method rewriting. | Eliminated entirely; replaced with declarative Fabric Mixins. |
+| **`ApothEnchCoreMod`** | NeoForge `ClassProcessorProvider` | Coremod registration. | Eliminated entirely; zero ASM plugins or external transformers needed. |
 
 ---
 

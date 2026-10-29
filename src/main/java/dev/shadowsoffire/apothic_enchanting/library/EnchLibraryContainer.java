@@ -22,11 +22,13 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 public class EnchLibraryContainer extends BlockEntityMenu<EnchLibraryTile> implements IButtonContainer {
 
+    protected final Inventory playerInv;
     protected SimpleContainer ioInv = new SimpleContainer(3);
     protected Runnable notifier = null;
 
     public EnchLibraryContainer(int id, Inventory inv, BlockPos pos) {
         super(Ench.Menus.LIBRARY, id, inv, pos);
+        this.playerInv = inv;
         this.tile.addListener(this);
         this.initCommon(inv);
     }
@@ -128,15 +130,26 @@ public class EnchLibraryContainer extends BlockEntityMenu<EnchLibraryTile> imple
 
     @Override
     public void onButtonClick(int id) {
+        if (this.tile == null || this.tile.isRemoved() || !this.stillValid(this.playerInv.player)) return;
         boolean shift = (id & 0x80000000) == 0x80000000;
-        if (shift) id = id & 0x7FFFFFFF; // Look, if this ever breaks, it's not my fault someone has 2 billion enchantments.
+        int rawId = id & 0x7FFFFFFF;
+        if (rawId < 0) return;
+
         var reg = this.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
-        Holder<Enchantment> ench = reg.listElements().skip(id).findFirst().orElse(null);
+        Holder<Enchantment> ench = reg.get(rawId).orElse(null);
         if (ench == null) return;
+
         ItemStack outSlot = this.ioInv.getItem(1);
+        if (!outSlot.isEmpty() && !outSlot.is(Items.ENCHANTED_BOOK)) return;
+
         int curLvl = EnchantmentHelper.getEnchantmentsForCrafting(outSlot).getLevel(ench);
-        int targetLevel = shift ? Math.min(this.tile.getMax(ench), 1 + (int) (Math.log(this.tile.getPointsMap().getInt(ench) + EnchLibraryTile.levelToPoints(curLvl)) / Math.log(2))) : curLvl + 1;
+        int maxAllowed = this.tile.getMax(ench);
+        if (curLvl >= maxAllowed) return;
+
+        int targetLevel = shift ? Math.min(maxAllowed, 1 + (int) (Math.log(this.tile.getPointsMap().getInt(ench) + EnchLibraryTile.levelToPoints(curLvl)) / Math.log(2))) : curLvl + 1;
+        if (targetLevel <= curLvl || targetLevel > maxAllowed) return;
         if (!this.tile.canExtract(ench, targetLevel, curLvl)) return;
+
         if (outSlot.isEmpty()) outSlot = new ItemStack(Items.ENCHANTED_BOOK);
         this.tile.extractEnchant(outSlot, ench, targetLevel);
         this.ioInv.setItem(1, outSlot);

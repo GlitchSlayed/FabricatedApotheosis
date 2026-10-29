@@ -19,6 +19,7 @@ import dev.shadowsoffire.apothic_enchanting.payloads.SetRavenStatsPayload;
 import dev.shadowsoffire.apothic_enchanting.payloads.StatsPayload;
 import dev.shadowsoffire.apothic_enchanting.table.EnchantmentInfoLoader;
 import dev.shadowsoffire.apothic_enchanting.table.EnchantingStatRegistry;
+import dev.shadowsoffire.apothic_enchanting.util.MiscUtil;
 import dev.shadowsoffire.placebo.network.PayloadHelper;
 import dev.shadowsoffire.placebo.payloads.ButtonClickPayload;
 import dev.shadowsoffire.placebo.util.PlaceboTaskQueue;
@@ -63,8 +64,15 @@ public class ApothicEnchanting {
         Ench.bootstrap();
         writeMigratedConfigNotice();
 
+        EnchantmentInfoLoader.init();
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(EnchantmentInfoLoader.INSTANCE);
         EnchantingStatRegistry.INSTANCE.registerToBus();
+
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(MiscUtil::setCurrentServer);
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> MiscUtil.setCurrentServer(null));
+
+        net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerForBlockEntity((tile, direction) -> tile.getItemStorage(direction), Ench.Tiles.LIBRARY);
+        net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerForBlockEntity((tile, direction) -> tile.getItemStorage(direction), Ench.Tiles.ENDER_LIBRARY);
 
         FabricDefaultAttributeRegistry.MODIFY.register(context -> {
             context.modify(EntityTypes.PLAYER, (type, builder) -> builder.add(Ench.Attributes.MAX_ETERNA));
@@ -156,6 +164,10 @@ public class ApothicEnchanting {
     }
 
     private static final ConcurrentMap<Holder<Enchantment>, Integer> DEFAULT_MAX_LEVEL_CACHE = new MapMaker().weakKeys().makeMap();
+
+    public static void clearEnchantmentCaches() {
+        DEFAULT_MAX_LEVEL_CACHE.clear();
+    }
 
     public static int getDefaultMaxLevel(Holder<Enchantment> ench) {
         return DEFAULT_MAX_LEVEL_CACHE.computeIfAbsent(ench, ApothicEnchanting::computeDefaultMaxLevel);

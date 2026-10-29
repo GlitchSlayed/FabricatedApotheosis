@@ -7,8 +7,10 @@ import java.util.List;
 import dev.shadowsoffire.apothic_enchanting.Ench.Particles;
 import dev.shadowsoffire.apothic_enchanting.library.EnchLibraryScreen;
 import dev.shadowsoffire.apothic_enchanting.payloads.CluePayload;
+import dev.shadowsoffire.apothic_enchanting.payloads.EnchantmentInfoPayload;
 import dev.shadowsoffire.apothic_enchanting.payloads.StatsPayload;
 import dev.shadowsoffire.apothic_enchanting.table.ApothEnchantmentScreen;
+import dev.shadowsoffire.apothic_enchanting.table.EnchantmentInfoLoader;
 import dev.shadowsoffire.apothic_enchanting.table.RavenEnchantmentScreen;
 import dev.shadowsoffire.apothic_enchanting.table.infusion.InfusionRecipeCache;
 import dev.shadowsoffire.apothic_enchanting.util.TooltipUtil;
@@ -57,6 +59,7 @@ public class ApothEnchClient {
     private static final BlockHitResult MISS = BlockHitResult.miss(Vec3.ZERO, Direction.NORTH, BlockPos.ZERO);
 
     public static void init() {
+        dev.shadowsoffire.apothic_enchanting.util.MiscUtil.setClientHolderLookup(dev.shadowsoffire.apothic_enchanting.util.ClientMiscUtil::findClientHolder);
         MenuScreens.register(Ench.Menus.ENCHANTING_TABLE, ApothEnchantmentScreen::new);
         MenuScreens.register(Ench.Menus.RAVEN_ENCHANTING_TABLE, RavenEnchantmentScreen::new);
         MenuScreens.register(Ench.Menus.LIBRARY, EnchLibraryScreen::new);
@@ -72,9 +75,13 @@ public class ApothEnchClient {
         ClientPlayNetworking.registerGlobalReceiver(StatsPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> handleStatsPayload(payload));
         });
+        ClientPlayNetworking.registerGlobalReceiver(EnchantmentInfoPayload.TYPE, (payload, context) -> {
+            context.client().execute(() -> EnchantmentInfoLoader.applyClientSync(payload.infoMap()));
+        });
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             InfusionRecipeCache.clear();
+            EnchantmentInfoLoader.resetClient();
         });
 
         ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipFlag, tooltip) -> {

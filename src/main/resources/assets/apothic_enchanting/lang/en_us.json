@@ -507,5 +507,8 @@
     "enchantment.level.127": "CXXVII",
 
     "commands.apothic_enchanting.dump.success": "Dumped %s enchantment_info entries to %s",
-    "commands.apothic_enchanting.dump.failure": "Failed to dump enchantment_info: %s"
+    "commands.apothic_enchanting.dump.failure": "Failed to dump enchantment_info: %s",
+
+    "tag.item.apothic_enchanting.tomes": "Tomes",
+    "tag.item.apothic_enchanting.infused_shelves": "Infused Shelves"
 }
