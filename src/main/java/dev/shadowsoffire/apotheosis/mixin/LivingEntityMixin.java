@@ -225,10 +225,52 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
 
     @ModifyReturnValue(method = "getExperienceReward(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;)I", at = @At("RETURN"))
     private int apoth_scaleMobExperience(int original, ServerLevel level, Entity attackingEntity) {
+        LivingEntity self = (LivingEntity) (Object) this;
+        int echoes = AttributesUtil.getPersistentData(self).getIntOr(dev.shadowsoffire.apothic_spawners.stats.SpawnerStats.ECHOING.getId().toString(), 0);
+        if (echoes > 0) {
+            original = original * (1 + echoes);
+        }
         if (attackingEntity instanceof LivingEntity living) {
             double mult = living.getAttributeValue(ALObjects.Attributes.EXPERIENCE_GAINED);
             return (int) (original * mult);
         }
         return original;
+    }
+
+    @Unique
+    private boolean apoth_isEchoingDrops = false;
+
+    @Inject(method = "dropFromLootTable(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;Z)V", at = @At("TAIL"))
+    private void apoth_handleSpawnerDrops(ServerLevel serverLevel, net.minecraft.world.damagesource.DamageSource damageSource, boolean hitByPlayer, CallbackInfo ci) {
+        LivingEntity self = (LivingEntity) (Object) this;
+
+        // Capturing
+        Entity killer = damageSource.getEntity();
+        if (killer instanceof LivingEntity living) {
+            var capturingPair = net.minecraft.world.item.enchantment.EnchantmentHelper.getHighestLevel(living.getWeaponItem(), dev.shadowsoffire.apothic_spawners.ASObjects.CAPTURING);
+            if (capturingPair != null && !self.getType().builtInRegistryHolder().is(dev.shadowsoffire.apothic_spawners.ASObjects.BLACKLISTED_FROM_SPAWNERS)) {
+                if (self.level().getRandom().nextFloat() < capturingPair.getSecond() * capturingPair.getFirst()) {
+                    net.minecraft.world.item.SpawnEggItem.byId(self.getType()).ifPresent(eggItem -> {
+                        ItemStack egg = new ItemStack(eggItem);
+                        self.spawnAtLocation(serverLevel, egg);
+                    });
+                }
+            }
+        }
+
+        // Echoing extra loot table rolls
+        if (!this.apoth_isEchoingDrops) {
+            int echoes = AttributesUtil.getPersistentData(self).getIntOr(dev.shadowsoffire.apothic_spawners.stats.SpawnerStats.ECHOING.getId().toString(), 0);
+            if (echoes > 0) {
+                this.apoth_isEchoingDrops = true;
+                try {
+                    for (int i = 0; i < echoes; i++) {
+                        self.dropFromLootTable(serverLevel, damageSource, hitByPlayer);
+                    }
+                } finally {
+                    this.apoth_isEchoingDrops = false;
+                }
+            }
+        }
     }
 }

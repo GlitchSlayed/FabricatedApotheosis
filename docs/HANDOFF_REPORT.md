@@ -1,4 +1,4 @@
-# Handoff Report — Milestone 6 Stabilization: Apothic Enchanting Audit & Hardening
+# Handoff Report — Milestone 7: Apothic Spawners Core, Persistence & Instability
 
 - **Date**: 2026-10-28
 - **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.19.5, YACL 3.9.6)
@@ -34,6 +34,7 @@ FabricatedApotheosis/
 │   ├── PORTING_SURFACE.md
 │   ├── REFERENCE_INDEX.md
 │   ├── SAVE_COMPATIBILITY.md
+│   ├── SPAWNERS_INVENTORY.md
 │   ├── STATUS.md
 │   ├── TEST_PLAN.md
 │   ├── UPSTREAM_LOCK.md
@@ -53,118 +54,135 @@ FabricatedApotheosis/
 │   │   │   │   ├── integrations/
 │   │   │   │   ├── placebo/
 │   │   │   │   ├── platform/
-│   │   │   │   └── spawners/
+│   │   │   │   └── spawners/SpawnersModule.java
 │   │   │   ├── apothic_enchanting/
-│   │   │   │   ├── ApothicEnchanting.java
-│   │   │   │   ├── Ench.java
-│   │   │   │   ├── api/
-│   │   │   │   ├── asm/EnchHooks.java
-│   │   │   │   ├── blocks/
+│   │   │   ├── apothic_spawners/
+│   │   │   │   ├── ApothicSpawners.java
+│   │   │   │   ├── ASConfig.java
+│   │   │   │   ├── ASObjects.java
+│   │   │   │   ├── advancements/
+│   │   │   │   │   ├── ModifierTrigger.java
+│   │   │   │   │   └── SpawnEggItemPredicate.java
+│   │   │   │   ├── block/
+│   │   │   │   │   ├── ApothSpawnerBlock.java
+│   │   │   │   │   ├── ApothSpawnerItem.java
+│   │   │   │   │   ├── ApothSpawnerTile.java
+│   │   │   │   │   └── LyingLevel.java
 │   │   │   │   ├── enchantments/
-│   │   │   │   ├── event/
-│   │   │   │   ├── library/
+│   │   │   │   │   └── CapturingEnchantmentEffect.java
 │   │   │   │   ├── mixin/
-│   │   │   │   │   ├── AnvilMenuMixin.java
-│   │   │   │   │   ├── EnchantCommandMixin.java
-│   │   │   │   │   ├── EnchantRandomlyFunctionMixin.java
-│   │   │   │   │   ├── FishingHookMixin.java
-│   │   │   │   │   └── SingleEnchantmentMixin.java
-│   │   │   │   ├── payloads/
-│   │   │   │   │   └── EnchantmentInfoPayload.java
-│   │   │   │   ├── table/
-│   │   │   │   │   ├── EnchantmentInfo.java
-│   │   │   │   │   └── EnchantmentInfoLoader.java
-│   │   │   │   └── util/
-│   │   │   │       └── MiscUtil.java
+│   │   │   │   │   ├── BlockEntityTypesMixin.java
+│   │   │   │   │   ├── BlocksMixin.java
+│   │   │   │   │   ├── EntityTeleportMixin.java
+│   │   │   │   │   ├── ItemStackMixin.java
+│   │   │   │   │   ├── ItemsMixin.java
+│   │   │   │   │   ├── MobDespawnMixin.java
+│   │   │   │   │   ├── MobTickMixin.java
+│   │   │   │   │   └── SlimeSplitMixin.java
+│   │   │   │   ├── modifiers/
+│   │   │   │   │   ├── SpawnerModifier.java
+│   │   │   │   │   ├── SpawnerRecipeCache.java
+│   │   │   │   │   └── StatModifier.java
+│   │   │   │   └── stats/
+│   │   │   │       ├── BooleanStat.java
+│   │   │   │       ├── CustomStat.java
+│   │   │   │       ├── LevelStat.java
+│   │   │   │       ├── PercentageStat.java
+│   │   │   │       ├── SpawnerStat.java
+│   │   │   │       ├── SpawnerStats.java
+│   │   │   │       └── VanillaStat.java
 │   │   │   └── placebo/
 │   │   └── resources/
 │   │       ├── fabric.mod.json
 │   │       ├── apotheosis.accesswidener
 │   │       ├── apothic_enchanting.mixins.json
-│   │       └── data/
+│   │       ├── apothic_spawners.mixins.json
+│   │       ├── assets/apothic_spawners/
+│   │       └── data/apothic_spawners/
 │   ├── client/
 │   │   ├── java/dev/shadowsoffire/
 │   │   │   ├── apotheosis/client/
-│   │   │   │   └── ModMenuIntegration.java
 │   │   │   ├── apothic_enchanting/
-│   │   │   │   ├── ApothEnchClient.java
-│   │   │   │   ├── library/
-│   │   │   │   ├── table/
-│   │   │   │   └── util/ClientMiscUtil.java
-│   │   │   └── placebo/util/DrawsOnLeft.java
+│   │   │   ├── apothic_spawners/client/
+│   │   │   │   └── ASClient.java
+│   │   │   └── placebo/
 │   │   └── resources/
-│   │       └── apothic_enchanting.client.mixins.json
 │   └── test/
 │       └── java/dev/shadowsoffire/
 │           ├── apotheosis/
-│           ├── apothic_enchanting/EnchantingTests.java
-│           └── placebo/
+│           ├── apothic_enchanting/
+│           └── apothic_spawners/
+│               └── SpawnerTests.java
 ```
 
 ---
 
-## 2. Milestone 6 Stabilization Deliverables
+## 2. Milestone 7 Deliverables
 
-1. **Toolchain Pinning**:
-   - Pinned immutable `loom_version=1.17.21` across `gradle.properties` and documentation.
-2. **Staged Atomic Data Loading & Merging**:
-   - `EnchantmentInfoLoader` re-architected with `listResourceStacks`, datapack priority merge order, `"replace": true`, `"remove": [...]`, and entry `"remove": true`.
-   - Staged in temporary map; published atomically via `INFO_MAP = Map.copyOf(staged)` only upon successful validation.
-   - Synchronized to clients via `EnchantmentInfoPayload` and cleared upon disconnect.
-   - Full cache invalidation via `EnchHooks.clearEnchantmentCaches()`.
-3. **Coremod Replacements**:
-   - `AnvilMenuMixin`: targeted `createResult` constant 40 (`ordinal = 2, require = 1`) to lift the "Too Expensive!" level cap to `Integer.MAX_VALUE`, and redirected `Enchantment.getMaxLevel()` to `EnchHooks.getMaxAnvilCombineLevel(ench)`.
-   - `EnchantCommandMixin`: redirected `/enchant` to `EnchHooks.getMaxLevel(ench)`.
-   - `FishingHookMixin`: redirected lure delay to `EnchHooks.getTicksCaughtDelay(hook)`.
-   - `EnchantRandomlyFunctionMixin` & `SingleEnchantmentMixin`: redirected loot generation to `EnchHooks.getMaxLootLevel(ench)`.
-4. **Library & Menu Safety**:
-   - Registered Fabric Transfer API `ItemStorage.SIDED` for `Ench.Tiles.LIBRARY` and `Ench.Tiles.ENDER_LIBRARY`.
-   - Replaced O(N) stream skip in `EnchLibraryContainer.onButtonClick` with O(1) integer raw ID lookup `reg.get(rawId)` and level-capping validations.
-   - Replaced bare `destroyBlock` in `MiscUtil.breakExtraBlock` with player-breaking simulation, adventure mode & unbreakable checks, drop spawning, tool breaking events, and recursion guards (`IS_BREAKING_EXTRA`).
-5. **ModMenu Integration**:
-   - Added `ModMenuApi` client entrypoint `ModMenuIntegration` hooked to `ApotheosisConfigScreen::create`.
-6. **Zero Client Leakage to Dedicated Server**:
-   - Segregated client holder lookup in `ClientMiscUtil`.
-   - Zero client UI/rendering classes imported or referenced on dedicated server.
+1. **Feature Inventory & Specifications**:
+   - Authored `docs/SPAWNERS_INVENTORY.md` covering all 16 spawner stats, 32 modifier recipes, instability mechanics, drops, tags, data, and World Tier integration points.
+2. **16 Spawner Statistics (`SpawnerStats`)**:
+   - `min_delay` [20, 1600], `max_delay` [20, 1600], `spawn_count` [1, 16], `max_nearby_entities` [1, 32], `req_player_range` [1, 48], `spawn_range` [1, 16], `initial_health` [0.05, 1.00], `ignore_players`, `ignore_conditions`, `redstone_control`, `ignore_light`, `no_ai`, `silent`, `youthful`, `burning`, `echoing` [0, 3].
+3. **32 Spawner Modifier Recipes**:
+   - 16 base and 16 inverse recipes (quartz in offhand) with exact clamping bounds and server-authoritative item consumption preventing waste.
+4. **Vanilla In-Place Replacement**:
+   - Subclassed `SpawnerBlock`, `SpawnerBlockEntity`, and `BlockItem` replacing vanilla constants via `BlocksMixin`, `BlockEntityTypesMixin`, and `ItemsMixin` while maintaining vanilla identifiers (`minecraft:spawner`, `minecraft:mob_spawner`).
+5. **Silk Touch Harvest & Placement State Restoration**:
+   - `ApothSpawnerBlock.playerDestroy`: requires `spawnerSilkLevel` (1), inflicts `spawnerSilkDamage` (100) tool damage, and drops `minecraft:spawner` with full `DataComponents.BLOCK_ENTITY_DATA`.
+   - `setPlacedBy`: restores all custom stats, delay, and entity spawn potentials.
+6. **Explosive Instability & Cascade Detonation**:
+   - Intercepted `onExplosionHit` to snapshot `nextSpawnData`, cancel instant destruction, and initiate a 60-tick countdown (`unstableTicks`) culminating in an 8-radius explosion, 12-entity cluster spawn, and `apothic_spawners:gameplay/unstable_spawner` loot drops.
+7. **LyingLevel Light Simulation**:
+   - Simulated light levels $0 \dots 15$ for `ignore_light` condition checks using `LyingLevel` (`ServerLevelAccessor` decorator).
+8. **Entity Behavior Modifiers**:
+   - `no_ai` mobs receive `apotheosis:movable` (physics velocity in `MobTickMixin`, teleport cancellation in `EntityTeleportMixin`, split cube inheritance in `SlimeSplitMixin`).
+   - `youthful` baby state, `silent`, `initial_health` scaling, `burning` fire ticks, and `echoing` bonus loot drops and XP multiplier ($1 + \text{level}$).
+9. **Spawner-Origin Despawn Protection**:
+   - Spawner-spawned entities tagged with `apothic_spawners:from_spawner`. `MobDespawnMixin` prevents premature despawn during `tickCount <= entityDespawnDelay` (600 ticks) without altering natural mob spawns or Peaceful checks.
+10. **Capturing Enchantment & Blacklist Protection**:
+    - `CapturingEnchantmentEffect` (0.5% per level egg drop chance).
+    - Entities in `#apothic_spawners:blacklisted_from_spawners` (e.g. Ender Dragon, Wither, Elder Guardian, Warden) cannot be dropped via Capturing or inserted into spawners via spawn eggs.
+11. **Client Tooltip Integration**:
+    - Category-colored spawner item names (Monster, Creature, Water, Ambient) and Shift hover stat modification summary via client tooltip handlers.
 
 ---
 
 ## 3. Verification & Test Evidence
 
 1. **Automated Unit Tests**:
-   - `EnchantingTests.testLibraryTransactionalStorage`: Verified transactional storage `insert`, `commit`, rollback on `abort`, and nested transaction rollback.
-   - `EnchantingTests.testAnvilLevel40CapRemoval`: Verified cap removal when `enableEnchanting` is true and vanilla 40 cap preservation when false.
-   - `EnchantingTests.testAnvilEvents`: Verified damaged anvil iron block repair to pristine anvil (5 levels) and Prismatic Web curse removal (30 levels).
-   - `EnchantingTests.testProductionEnchantmentCostScaling`: Verified production slot cost scaling.
-   - `EnchantingTests.testQuantaFactorProductionAlgorithm`: Verified bidirectional quanta power variance $[0.50, 1.50]$.
-   - `EnchantingTests.testLevelToPoints`, `testEternaStepLadderCalculation`, `testQuantaRangeCalculation`, `testRectificationAndStableBehavior`, `testArcanaTiers`, `testAnvilCostExperienceCalculations`, `testStepFunctionEvaluation`: Passed.
-   - **Total test suite**: 38 tests executed across 11 test classes, 38 passed (`./gradlew test`).
+   - Executed `./gradlew test --rerun-tasks`: 49 tests executed across 12 test classes, 49 passed in 4s.
+   - 10 comprehensive tests in `SpawnerTests.java`:
+     - `testStatClampingAndBounds`: Verified clamping across min/max bounds and quartz inverse modifiers.
+     - `testModifierRecipeSerialization`: Verified JSON and StreamCodec serialization for modifier recipes.
+     - `testSilkTouchHarvestLogic`: Verified tool damage, silk touch requirement, and empty spawner config.
+     - `testPlacementStateRestoration`: Verified stat and nextSpawnData restoration on placement.
+     - `testRedstoneActivationControl`: Verified neighbor signal requirement.
+     - `testInstabilityDetonationCountdown`: Verified 60-tick countdown, cluster spawning, and loot table drop.
+     - `testSpawnerOriginDespawnTagging`: Verified persistent tag and despawn delay threshold.
+     - `testSpecialEntityModifiers`: Verified movable, youthful, burning, and echoing modifiers.
+     - `testBlacklistAndCapturingEnchantment`: Verified blacklist rejection and egg drop calculations.
+     - `testBooleanAndPercentageStatMath`: Verified boolean toggles and percentage scaling formulas.
 
 2. **Compilation & Packaging**:
-   - `./gradlew compileJava`: Succeeded.
-   - `./gradlew compileClientJava`: Succeeded.
+   - `./gradlew compileJava compileClientJava`: Succeeded.
    - `./gradlew build`: Succeeded (including `validateAccessWidener` and `verifyNoDuplicateClasses`).
 
 3. **Dedicated Server Launch**:
    - Executed `./gradlew runServer --args="--nogui"` with live shutdown handling.
    - Output evidence:
-     `[Apotheosis/Enchanting] Apothic Enchanting module initialized successfully`
-     `[Apotheosis/EnchantmentInfo] Loaded and published 6 enchantment info override(s)`
-     `Done (0.255s)! For help, type "help"`
+     `[Apotheosis/Spawners] Apothic Spawners module initialized successfully`
+     `Loaded 1904 advancements`
+     `Done (0.198s)! For help, type "help"`
      `Stopping the server... Saving worlds... Saving chunks`
-   - Server loaded 100% of spawn chunks, staged and published enchantment info, registered Transfer API automation, and shut down cleanly with exit code 0.
-
-4. **Client Launch**:
-   - Executed `./gradlew runClient`.
-   - Verified clean client initialization with RenderPearl GUI pipeline and `Setting user: Player574`.
+   - Clean shutdown with exit code 0; zero errors, zero unbound registry keys, zero client class leakage.
 
 ---
 
 ## 4. Next Concrete Implementation Task
 
-Proceed to **Milestone 7: Apothic Spawners Core & Persistence**:
-1. Implement spawner stat modifications hooking into Minecraft 26.3 `BaseSpawner` (min/max spawn delay, spawn count, max nearby entities, required player range, spawn range).
-2. Implement spawner modifier items and data map definitions (sugar, clock, ghast tear, blaze rod, fermented spider eye, dragon egg, etc.).
-3. Implement Silk Touch spawner capture and custom drops loot table handling.
-4. Implement redstone control and condition-ignoring spawner modifiers.
-5. Implement spawner persistence adhering to `docs/SAVE_COMPATIBILITY.md`.
+Proceed to **Milestone 8: Apothic Adventure Core & Affixes/Gems**:
+1. Implement the Affix data system, Affix types, categories, and rarity definitions.
+2. Implement Gem data system, gem definitions, socketing mechanics, and gem cutting/upgrading.
+3. Implement forging, salvage, and reforging tables and menus.
+4. Implement custom Adventure item data components and serialization.
+5. Implement adventure item persistence adhering to `docs/SAVE_COMPATIBILITY.md`.

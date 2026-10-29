@@ -30,6 +30,7 @@
   "mixins": [
     "apotheosis.mixins.json",
     "apothic_enchanting.mixins.json",
+    "apothic_spawners.mixins.json",
     {
       "config": "apotheosis.client.mixins.json",
       "environment": "client"

@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.shadowsoffire.apothic_spawners.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "BlockEntityTypesMixin",
+    "BlocksMixin",
+    "EntityTeleportMixin",
+    "ItemStackMixin",
+    "ItemsMixin",
+    "MobDespawnMixin",
+    "MobTickMixin",
+    "SlimeSplitMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

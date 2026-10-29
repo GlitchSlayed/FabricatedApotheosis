@@ -32,14 +32,18 @@ Status Definitions:
 
 ## 3. Apothic Spawners Module
 
-| Upstream Feature | Status | Target Scope / Plan |
-| :--- | :--- | :--- |
-| **Spawner Stat Modifiers** | `investigated` | Modifier items (sugar, clock, ghast tear, blaze rod, etc.) targeting `BaseSpawner.serverTick`. |
-| **Redstone Activation Control** | `investigated` | Toggle spawner execution via comparator/redstone power. |
-| **Condition Ignore Modifiers** | `investigated` | Ignore light level, ignore nearby players, ignore spawn range checks. |
-| **Silk Touch Capture & Drops** | `investigated` | Custom loot table condition + block drops mixin to preserve spawner stats. |
-| **Spawner Stat Deltas in Tooltip** | `investigated` | `Item.appendHoverText` hooking into 26.3 `TooltipDisplay`. |
-| **Spawn Egg Modification** | `investigated` | Adapt from legacy `setEntityId` to 26.3 `setEntityData(TypedEntityData)`. |
+| Upstream Feature | Status | Target Scope / Plan | Verification & Evidence |
+| :--- | :--- | :--- | :--- |
+| **16 Spawner Statistics (`SpawnerStats`)** | `verified` | Ported 16 custom & vanilla spawner stats (`min_delay`, `max_delay`, `spawn_count`, `max_nearby_entities`, `req_player_range`, `spawn_range`, `initial_health`, `ignore_players`, `ignore_conditions`, `redstone_control`, `ignore_light`, `no_ai`, `silent`, `youthful`, `burning`, `echoing`). | Tested in `SpawnerTests.testStatClampingAndBounds` and dedicated server boot. |
+| **32 Spawner Modifier Recipes** | `verified` | 16 base and 16 inverse recipes (`SpawnerModifier`, `PlacementInfo.NOT_PLACEABLE`) with quartz offhand. Bounds checking prevents item consumption when stats are at limit. | Tested in `SpawnerTests.testModifierRecipeSerialization` and item consumption checks. |
+| **Silk Touch Capture & State Drops** | `verified` | Custom drop logic in `ApothSpawnerBlock.playerDestroy`: requires `spawnerSilkLevel` (1), damages tool by `spawnerSilkDamage` (100), drops `minecraft:spawner` with `DataComponents.BLOCK_ENTITY_DATA`. | Tested in `SpawnerTests.testSilkTouchHarvestLogic` and `testPlacementStateRestoration`. |
+| **Redstone Activation Control** | `verified` | `redstone_control` stat requires neighbor signal $> 0$ for spawner ticking and client spin particles. | Tested in `SpawnerTests.testRedstoneActivationControl`. |
+| **Condition Ignore & Light Simulation** | `verified` | `ignore_conditions` bypasses collision and placement rules. `ignore_light` simulates light levels $0 \dots 15$ via `LyingLevel` (`ServerLevelAccessor`). | Verified in `ApothSpawnerTile.serverTick` and `LyingLevel.java`. |
+| **Explosion Instability & Detonation** | `verified` | `onExplosionHit` triggers 60-tick unstable countdown, snapshotting `nextSpawnData`, terminating in radius 8 blast, 12-mob cluster spawn, and `unstable_spawner` loot table drop. | Tested in `SpawnerTests.testInstabilityDetonationCountdown` and NBT persistence. |
+| **Spawner-Origin Despawn Handling** | `verified` | Spawner-spawned mobs receive persistent tag `apothic_spawners:from_spawner`. `MobDespawnMixin` prevents despawning while `tickCount <= entityDespawnDelay` without altering natural mob spawns or peaceful checks. | Tested in `SpawnerTests.testSpawnerOriginDespawnTagging`. |
+| **Special Entity Modifiers** | `verified` | `no_ai` mobs receive `apotheosis:movable` (physics travel in `MobTickMixin`, teleport cancel in `EntityTeleportMixin`, split cube inheritance in `SlimeSplitMixin`), `youthful` baby state, `burning` fire ticks, and `echoing` extra loot/XP. | Tested in `SpawnerTests.testSpecialEntityModifiers` and `LivingEntityMixin`. |
+| **Capturing Enchantment & Blacklist** | `verified` | `CapturingEnchantmentEffect` (0.5% per level egg drop on kill). Entities in `#apothic_spawners:blacklisted_from_spawners` are rejected from spawner modification and egg drops. | Tested in `SpawnerTests.testBlacklistAndCapturingEnchantment` and `ApothicSpawners.init`. |
+| **Spawner Item & Client Tooltips** | `verified` | `ApothSpawnerItem` provides category-colored item names (Monster, Creature, Water, Ambient) and Shift hover stat modification summary via client tooltip handlers. | Verified in `ApothSpawnerItem.java` and `ASClient.java`. |
 
 ---
 

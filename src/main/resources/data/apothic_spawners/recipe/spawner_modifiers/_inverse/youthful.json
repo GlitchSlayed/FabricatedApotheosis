@@ -1,0 +1,12 @@
+{
+    "type": "apothic_spawners:spawner_modifier",
+    "mainhand": "minecraft:golden_dandelion",
+    "offhand": "minecraft:quartz",
+    "stat_changes": [
+        {
+            "type": "apothic_spawners:youthful",
+            "mode": "set",
+            "value": false
+        }
+    ]
+}

@@ -107,6 +107,23 @@
   - [x] Verified with 38 automated unit tests (`./gradlew test`) covering mathematical models, transactional storage commit/abort, anvil overrides, and data loading.
   - [x] Verified full aggregate build (`./gradlew build`), dedicated server run (`./gradlew runServer`), and client launch (`./gradlew runClient`) with clean startup, zero errors, and clean shutdown.
 
+### Milestone 7: Apothic Spawners Core, Persistence & Instability
+- **Status**: **COMPLETE** (2026-10-28)
+- **Key Achievements**:
+  - [x] Audited full feature inventory documented in `docs/SPAWNERS_INVENTORY.md` covering 16 stats, 32 modifier recipes, instability mechanics, drops, tags, and data.
+  - [x] Ported 16 Spawner Statistics (`SpawnerStats`): `min_delay`, `max_delay`, `spawn_count`, `max_nearby_entities`, `req_player_range`, `spawn_range`, `initial_health`, `ignore_players`, `ignore_conditions`, `redstone_control`, `ignore_light`, `no_ai`, `silent`, `youthful`, `burning`, `echoing`.
+  - [x] Ported 32 Spawner Modifier Recipes: 16 base and 16 inverse (offhand `minecraft:quartz`), with exact bounds clamping, non-placeable placement info, and server-authoritative item consumption preventing waste.
+  - [x] Replaced vanilla Spawner Block, BlockEntity, and Item via targeted clinit mixins (`BlocksMixin`, `BlockEntityTypesMixin`, `ItemsMixin`), keeping full vanilla identity (`minecraft:spawner`, `minecraft:mob_spawner`).
+  - [x] Implemented Silk Touch harvest with tool damage penalty (`spawnerSilkDamage`), `spawnersDropEmpty` configuration, and block entity NBT state persistence across drop and placement.
+  - [x] Implemented explosive instability and cascade detonation (`onExplosionHit`): snapshotting `nextSpawnData`, 60-tick countdown, radius 8 detonation, 12-mob cluster spawning, and `apothic_spawners:gameplay/unstable_spawner` loot drops.
+  - [x] Implemented light-level simulation via `LyingLevel` across $[0, 15]$ for `ignore_light` condition bypass.
+  - [x] Implemented entity behavior modifiers: `no_ai` with `apotheosis:movable` physics travel and teleport cancellation, slime split inheritance, `youthful` baby state, `burning` fire ticks, and `echoing` extra loot rolls and XP multiplier ($1 + \text{level}$).
+  - [x] Implemented Spawner-origin despawn protection: mob tagging (`apothic_spawners:from_spawner`) and cancellable despawn check in `MobDespawnMixin` during `tickCount <= entityDespawnDelay` without altering natural mob spawns or peaceful checks.
+  - [x] Ported Capturing enchantment, spawn egg item predicate, and entity blacklist tag (`#apothic_spawners:blacklisted_from_spawners`) preventing forbidden egg modifications or drops.
+  - [x] Implemented Client tooltip integration: category-colored spawner item names (Monster, Creature, Water, Ambient) and Shift hover stat modification summary.
+  - [x] Verified with 10 automated unit tests in `SpawnerTests.java` (49/49 total project unit tests passing).
+  - [x] Verified dedicated server launch (`./gradlew runServer --args="--nogui"`): 100% chunks loaded, clean recipe/advancement loading, zero errors, and clean shutdown.
+
 ---
 
 ## 2. Upcoming Milestones
@@ -116,13 +133,7 @@
 
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 7** | Apothic Spawners Core & Persistence | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, redstone control modes, tooltip deltas, and save-compatible spawner block entity data | `NEXT` |
-| **Milestone 8** | Apothic Adventure Core & Affixes/Gems | Affix data system, gem definitions, socketing mechanics, forging/reforging tables, data components, and item persistence | `PENDING` |
-| **Milestone 9** | Boss Generation, Worldgen & Loot Integration | Rogue spawners, boss dungeons, wanderer/invader boss entities, Fabric Loot API v3 integration (Gateways to Eternity completely excluded) | `PENDING` |
-| **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points (Patchouli / Chronicle of Shadows deferred TBD; no replacement book system) | `PENDING` |
-| **Milestone 11** | End-to-End GameTests & Multiplayer Validation | Automated Minecraft GameTests for combat, enchanting, spawners, and affix systems; dedicated-server round-trip verification; copied representative world upgrade testing | `PENDING` |
-| **Milestone 12** | Ecosystem Polish, Documentation & Release Readiness | Full ecosystem distributable verification, strict duplicate checks, dependency audit, final user documentation, release packaging | `PENDING` |
-| **Milestone 8** | Apothic Adventure Core & Affixes/Gems | Affix data system, gem definitions, socketing mechanics, forging/reforging tables, data components, and item persistence | `PENDING` |
+| **Milestone 8** | Apothic Adventure Core & Affixes/Gems | Affix data system, gem definitions, socketing mechanics, forging/reforging tables, data components, and item persistence | `NEXT` |
 | **Milestone 9** | Boss Generation, Worldgen & Loot Integration | Rogue spawners, boss dungeons, wanderer/invader boss entities, Fabric Loot API v3 integration (Gateways to Eternity completely excluded) | `PENDING` |
 | **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points (Patchouli / Chronicle of Shadows deferred TBD; no replacement book system) | `PENDING` |
 | **Milestone 11** | End-to-End GameTests & Multiplayer Validation | Automated Minecraft GameTests for combat, enchanting, spawners, and affix systems; dedicated-server round-trip verification; copied representative world upgrade testing | `PENDING` |

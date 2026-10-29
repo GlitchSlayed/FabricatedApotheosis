@@ -174,3 +174,17 @@
     - Synchronize authoritative definitions to clients on join via `EnchantmentInfoPayload` and clean up on disconnect.
     - Invalidate enchantment caches via `EnchHooks.clearEnchantmentCaches()`.
 - **Consequences**: Zero ASM or coremod bytecode manipulators, deterministic enchantment limits up to configured maximums, zero partial data corruptions during hot-reloads, and dedicated-server authority in multiplayer.
+
+---
+
+## ADR-015: Apothic Spawners: In-Place Vanilla Spawner Replacement, Instability Cascade, and Origin-Tagged Despawn Rules
+
+- **Status**: Accepted
+- **Context**: In upstream NeoForge, Apothic Spawners replaced the spawner block and tile entity, patched `BaseSpawner` fields, and hooked into NeoForge's `EntityJoinLevelEvent` / `Mob.getSpawnType()` to manage despawning. In Minecraft 26.3 Fabric, `Blocks.SPAWNER`, `Items.SPAWNER`, and `BlockEntityTypes.MOB_SPAWNER` are statically initialized in `<clinit>`, and vanilla does not track `SpawnType` on `Mob` instances after spawning.
+- **Decision**:
+  - Replace vanilla `Blocks.SPAWNER`, `Items.SPAWNER`, and `BlockEntityTypes.MOB_SPAWNER` in-place during class initialization using targeted Mixins (`BlocksMixin`, `BlockEntityTypesMixin`, `ItemsMixin`), ensuring identical registry keys (`minecraft:spawner`, `minecraft:mob_spawner`) and zero item or tile ID migration issues.
+  - Implement explosive instability via `BlockBehaviour.onExplosionHit` rather than block destruction: when an explosion affects an `ApothSpawnerBlock`, snapshot the current `nextSpawnData`, cancel immediate drop destruction, and initiate a 60-tick countdown (`unstableTicks`) that culminates in an 8-radius explosion, 12-entity cluster spawn, and `apothic_spawners:gameplay/unstable_spawner` loot drops.
+  - Manage despawning by stamping spawner-spawned entities with a persistent data tag (`apothic_spawners:from_spawner`). Intercept `Mob.checkDespawn()` via `MobDespawnMixin` to cancel premature despawning while `tickCount <= entityDespawnDelay` (default: 600 ticks) without globally altering vanilla despawn behavior or bypassing Peaceful difficulty checks.
+  - Simulate lighting conditions for the `ignore_light` stat via `LyingLevel` (`ServerLevelAccessor` decorator) that evaluates candidate positions across light levels $0 \dots 15$, rather than patching entity spawn rules directly.
+  - Synchronize spawner configuration parameters dynamically through `ApotheosisConfig.getServer()` / `ServerConfig`, ensuring server-authoritative enforcement across multiplayer sessions.
+- **Consequences**: Flawless save compatibility with vanilla spawners, deterministic upgrade consumption, safe explosion cascading with chunk reload persistence, and zero global despawn side effects on natural spawns.
