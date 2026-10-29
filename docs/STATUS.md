@@ -93,8 +93,15 @@
 
 ## 2. Upcoming Milestones
 
+> [!NOTE]
+> Roadmap format: One substantial prompt per numbered milestone (no A/B/C sub-prompts). Gateways to Eternity is completely out of scope; Patchouli / Chronicle of Shadows is deferred (TBD, not an initial release requirement). External legacy migrations from upstream/Zenith/older configs are not required; persistence tasks focus strictly on this fork's own save compatibility across supported upgrades per `docs/SAVE_COMPATIBILITY.md`.
+
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 7** | Apothic Spawners Core | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, tooltip deltas | `NEXT` |
-| **Milestone 8** | Apothic Adventure Core | Affixes, sockets, gems, boss spawning, RenderPearl overlays | `PENDING` |
-| **Milestone 9** | Polish & Full Parity | ModMenu integration, Chronicle of Shadows verification, GameTests | `PENDING` |
+| **Milestone 6 Stabilization** | Apothic Enchanting Stabilization & Persistence Audit | Audit container/library/table persistence against save-compatibility rules; verify point conversion round-tripping; validate high-level enchantment component serialization without data loss; replace legacy migration work with this fork's internal persistence verification | `NEXT` |
+| **Milestone 7** | Apothic Spawners Core & Persistence | Port `BaseSpawner` hooks, modifier items, Silk Touch drop table, redstone control modes, tooltip deltas, and save-compatible spawner block entity data | `PENDING` |
+| **Milestone 8** | Apothic Adventure Core & Affixes/Gems | Affix data system, gem definitions, socketing mechanics, forging/reforging tables, data components, and item persistence | `PENDING` |
+| **Milestone 9** | Boss Generation, Worldgen & Loot Integration | Rogue spawners, boss dungeons, wanderer/invader boss entities, Fabric Loot API v3 integration (Gateways to Eternity completely excluded) | `PENDING` |
+| **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points (Patchouli / Chronicle of Shadows deferred TBD; no replacement book system) | `PENDING` |
+| **Milestone 11** | End-to-End GameTests & Multiplayer Validation | Automated Minecraft GameTests for combat, enchanting, spawners, and affix systems; dedicated-server round-trip verification; copied representative world upgrade testing | `PENDING` |
+| **Milestone 12** | Ecosystem Polish, Documentation & Release Readiness | Full ecosystem distributable verification, strict duplicate checks, dependency audit, final user documentation, release packaging | `PENDING` |

@@ -12,6 +12,31 @@ explicitly approved in `docs/DEPENDENCY_MATRIX.md`.
 Use Fabric API and YACL. Use Minecraft 26.3 rendering abstractions,
 including public RenderPearl APIs where needed.
 
+## Scope Boundaries & Save Policy
+
+- Gateways to Eternity is completely out of scope. Remove it from planned
+  work and release requirements.
+- Patchouli / Chronicle of Shadows is deferred, TBD. It is not an initial
+  release requirement. Do not plan a replacement book system.
+- Migration from upstream Apotheosis, Zenith, other ports, legacy configs,
+  or unrelated older versions is not required.
+- Compatibility IS required between future versions of THIS fork and
+  worlds created using its supported earlier versions.
+- Preparing for a future 26.4 port means maintaining stable saved data
+  and testing upgrades when the actual target is available. Do not claim
+  26.4 compatibility in advance.
+- Follow all save compatibility requirements documented in `docs/SAVE_COMPATIBILITY.md`.
+- Existing migration code in the codebase remains in place pending future
+  review and removal; do not remove now.
+
+## Roadmap & Milestone Structure
+
+- Use one substantial prompt per numbered milestone.
+- Do not split milestones into A/B/C sub-prompts.
+- Subsequent milestones are numbered 7–12.
+- Consolidate proposed 6A/6B/6C repair tasks into one "Milestone 6 stabilization"
+  task before Milestone 7, focusing on persistence audit and save-compatibility.
+
 ## Starting a task
 
 Before implementation, read:
@@ -19,6 +44,7 @@ Before implementation, read:
 - `docs/DECISIONS.md`
 - `docs/UPSTREAM_LOCK.md`
 - `docs/REFERENCE_INDEX.md`
+- `docs/SAVE_COMPATIBILITY.md`
 - Relevant sections of `docs/FEATURE_PARITY.md`
 - Relevant source and migration audit documents
 

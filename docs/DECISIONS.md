@@ -41,21 +41,21 @@
 
 ---
 
-## ADR-005: Scope Boundary on Gateways to Eternity
+## ADR-005: Scope Boundary: Gateways to Eternity Completely Out of Scope
 
 - **Status**: Accepted
-- **Context**: Gateways to Eternity is an optional boss wave mod with 43 Java classes, custom entity rendering, and complex state management.
-- **Decision**: Exclude Gateways to Eternity from the initial core 1-JAR port. Maintain conditional integration hooks (`PlatformHelper.isModLoaded("gateways")`) so that if Gateways is ported separately, compatibility works immediately.
-- **Consequences**: Reduces initial porting surface, prevents timeline bloat, and keeps the core Apotheosis experience focused.
+- **Context**: Gateways to Eternity was historically an optional boss wave mod with custom entity lifecycles, wave progression state, and separate renderers.
+- **Decision**: Gateways to Eternity is **completely out of scope**. Remove it from all planned work, dependency requirements, and release criteria.
+- **Consequences**: Streamlines project scope, eliminates 43 unrelated Java classes and custom entity renderers from scope, and focuses the port solely on the core Apotheosis ecosystem.
 
 ---
 
-## ADR-006: Documentation & Chronicle of Shadows Licensing Separation
+## ADR-006: Chronicle of Shadows & Documentation Support Deferred (TBD)
 
 - **Status**: Accepted
 - **Context**: The Chronicle of Shadows is authored in Patchouli's book format. Patchouli is licensed under CC-BY-NC-SA 3.0.
-- **Decision**: Do not shade or flatten Patchouli into the combined mod JAR. Treat Patchouli as an external optional integration. The book JSON assets remain in `assets/apotheosis/patchouli_books/` and activate automatically when Patchouli Fabric is present.
-- **Consequences**: Avoids license contamination across the MIT-licensed Apotheosis codebase.
+- **Decision**: Chronicle of Shadows / Patchouli integration is **deferred (TBD)** and is not an initial release requirement. Do not plan a replacement book system. Book JSON assets remain untouched in `assets/apotheosis/patchouli_books/` without active runtime hooks.
+- **Consequences**: Avoids license contamination across the MIT-licensed Apotheosis codebase and removes external book engine blockers from initial release readiness.
 
 ---
 
@@ -140,3 +140,17 @@
   - Migrate component-based recipe ingredients to `"fabric:type": "fabric:components"`.
   - Fix `DeferredHelper` registry collisions by indexing on `ResourceKey<?>` (`(RegistryKey, Identifier)`) instead of bare `Identifier`, safely supporting items and blocks sharing the same ID.
 - **Consequences**: Zero legacy ASM/coremods, full compatibility with 26.3 data-driven enchantments and recipes, clean dedicated-server loading, and thread-safe dynamic registry reloading.
+
+---
+
+## ADR-013: Fork-Internal Save Compatibility & Upgrade Policy
+
+- **Status**: Accepted
+- **Context**: Upstream mod migrations often attempt broad backwards compatibility across different mod loaders, third-party forks (such as Zenith), and legacy `.cfg` configs. Attempting unverified migrations from external ecosystems introduces instability and unpredictable data loss.
+- **Decision**:
+  - Migration from upstream Apotheosis, Zenith, other ports, legacy configs, or unrelated older versions is **not required**.
+  - Strict backward compatibility **is required** between future versions of **this Fabric fork** and worlds created using supported earlier versions of this fork.
+  - Preparing for a future Minecraft 26.4 port means maintaining stable saved data and testing upgrades when the actual target is available. Compatibility with 26.4 will not be claimed in advance.
+  - Existing migration code in the codebase remains untouched pending future review and removal.
+  - Enforce explicit schema versioning, preserve all state across upgrades (items, affixes, gems, library points, spawners), prevent silent deletion/reset of unresolved data, and require world backups prior to testing. See `docs/SAVE_COMPATIBILITY.md`.
+- **Consequences**: Eliminates fragile external legacy migration paths while guaranteeing world persistence integrity and reliable upgrade paths within this Fabric ecosystem.

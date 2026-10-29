@@ -103,7 +103,7 @@ Status Definitions:
 
 | Subsystem | Status | Target Scope / Plan |
 | :--- | :--- | :--- |
-| **Gateways to Eternity** | `investigated` | Excluded from initial core 1-JAR release; kept as optional companion integration. |
-| **Patchouli / Chronicle of Shadows**| `investigated` | Retain complete `patchouli_books` asset tree; optional runtime dependency. |
+| **Gateways to Eternity** | `out of scope` | Completely out of scope; removed from planned work and release requirements. |
+| **Patchouli / Chronicle of Shadows**| `deferred` | Deferred (TBD); not an initial release requirement; no replacement book system planned. |
 | **ModMenu Config Integration** | `investigated` | Entrypoint hook to open YACL config screen from ModMenu list. |
 | **RenderPearl GPU Pipelines** | `investigated` | Reserved for boss health bars, gem render passes, and custom screen shaders. |
