@@ -16,6 +16,12 @@ public interface DrawsOnLeft {
         }
     }
 
+    default void drawOnLeft(GuiGraphicsExtractor gfx, List<? extends FormattedText> list, int y, int maxWidth) {
+        if (this instanceof AbstractContainerScreen<?> screen) {
+            draw(screen, gfx, list, y);
+        }
+    }
+
     static void draw(AbstractContainerScreen<?> screen, GuiGraphicsExtractor gfx, List<? extends FormattedText> text, int y) {
         if (text == null || text.isEmpty()) return;
         Font font = screen.getFont();

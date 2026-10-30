@@ -1,0 +1,20 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "group": "apotheosis",
+    "key": {
+        "A": "apotheosis:arcane_sands",
+        "E": "minecraft:echo_shard",
+        "I": "apotheosis:infused_spawner_rune",
+        "P": "minecraft:phantom_membrane",
+        "S": "apotheosis:sigil_of_malice"
+    },
+    "pattern": [
+        "AEA",
+        "PIP",
+        "ASA"
+    ],
+    "result": {
+        "id": "apotheosis:summit_spawner_upgrade_rune"
+    }
+}

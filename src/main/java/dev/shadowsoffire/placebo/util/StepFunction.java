@@ -71,6 +71,10 @@ public record StepFunction(float min, int steps, float step, float max) {
         return (int) this.get(level);
     }
 
+    public boolean isConstant() {
+        return this.min == this.max || (this.steps == 1 && this.step == 0);
+    }
+
     private Either<StepFunction, StepFunction> toEither() {
         if (this.steps == 1 && this.step == 0) {
             return Either.left(this);

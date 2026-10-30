@@ -1,0 +1,18 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "group": "apotheosis",
+    "key": {
+        "C": "minecraft:conduit",
+        "E": "#c:ender_pearls",
+        "I": "apotheosis:infused_spawner_rune"
+    },
+    "pattern": [
+        " C ",
+        "EIE",
+        " E "
+    ],
+    "result": {
+        "id": "apotheosis:ignore_conditions_spawner_rune"
+    }
+}

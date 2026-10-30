@@ -23,6 +23,8 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 
+import dev.shadowsoffire.placebo.dynreg.tag.DynamicHolderSet;
+import dev.shadowsoffire.placebo.dynreg.tag.DynamicTagKey;
 import dev.shadowsoffire.placebo.network.PayloadHelper;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resources.FileToIdConverter;
@@ -53,10 +55,15 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
 
     protected volatile Map<Identifier, R> registry = Collections.emptyMap();
     protected final Map<Identifier, DynamicHolder<R>> holders = new ConcurrentHashMap<>();
+    protected final Map<Identifier, DynamicHolderSet.Named<R>> tags = new ConcurrentHashMap<>();
     protected final List<Runnable> callbacks = new ArrayList<>();
 
     // Client-side staged map during network sync
     protected final Map<Identifier, R> clientStaged = new ConcurrentHashMap<>();
+
+    public DynamicRegistry(Logger logger, Identifier id, RegistrySerializer<R> serializer) {
+        this(logger, id, id.getPath(), serializer);
+    }
 
     public DynamicRegistry(Logger logger, Identifier id, String path, RegistrySerializer<R> serializer) {
         this.logger = logger;
@@ -90,6 +97,14 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         return Collections.unmodifiableCollection(ALL_REGISTRIES.values());
     }
 
+    public static Map<Identifier, DynamicRegistry<?>> allRegistries() {
+        return Collections.unmodifiableMap(ALL_REGISTRIES);
+    }
+
+    public Logger getLogger() {
+        return this.logger;
+    }
+
     public Identifier getId() {
         return this.id;
     }
@@ -116,8 +131,47 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         return this.registry.get(key);
     }
 
+    @Nullable
+    public R getValue(Identifier key) {
+        return this.get(key);
+    }
+
+    public DynamicHolderSet.Named<R> getOrCreateTag(DynamicTagKey<R> key) {
+        return this.tags.computeIfAbsent(key.id(), id -> new DynamicHolderSet.Named<>(this, key));
+    }
+
+    @Nullable
+    public DynamicHolderSet.Named<R> getTag(DynamicTagKey<R> key) {
+        return this.tags.get(key.id());
+    }
+
+    public void bindTags(Map<Identifier, List<Identifier>> resolvedTags) {
+        for (DynamicHolderSet.Named<R> named : this.tags.values()) {
+            named.unbind();
+        }
+        for (Map.Entry<Identifier, List<Identifier>> entry : resolvedTags.entrySet()) {
+            DynamicTagKey<R> key = DynamicTagKey.create(this, entry.getKey());
+            DynamicHolderSet.Named<R> named = this.getOrCreateTag(key);
+            List<DynamicHolder<R>> holderList = new ArrayList<>();
+            for (Identifier id : entry.getValue()) {
+                holderList.add(this.holder(id));
+            }
+            named.bind(holderList);
+        }
+    }
+
     public Set<Identifier> getKeys() {
         return this.registry.keySet();
+    }
+
+    @Nullable
+    public Identifier getKey(R value) {
+        for (Map.Entry<Identifier, R> entry : this.registry.entrySet()) {
+            if (entry.getValue() == value) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     public Collection<R> getValues() {
@@ -132,8 +186,21 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         return this.holders.computeIfAbsent(key, id -> new DynamicHolder<>(this, id));
     }
 
+    public DynamicHolder<R> holder(R value) {
+        Identifier key = this.getKey(value);
+        return key != null ? this.holder(key) : this.emptyHolder();
+    }
+
     public DynamicHolder<R> emptyHolder() {
         return this.holder(DynamicHolder.EMPTY);
+    }
+
+    public com.mojang.serialization.Codec<DynamicHolder<R>> holderCodec() {
+        return Identifier.CODEC.xmap(this::holder, DynamicHolder::getId);
+    }
+
+    public net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, DynamicHolder<R>> holderStreamCodec() {
+        return Identifier.STREAM_CODEC.map(this::holder, DynamicHolder::getId);
     }
 
     public synchronized void addCallback(Runnable callback) {
@@ -163,6 +230,7 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
 
     @Override
     protected void apply(Map<Identifier, JsonElement> prepared, ResourceManager manager, ProfilerFiller profiler) {
+        this.beginReload(ReloadType.SERVER);
         this.logger.info("Applying dynamic registry '{}' ({} entries prepared)", this.id, prepared.size());
 
         Map<Identifier, R> staged = new HashMap<>();
@@ -213,6 +281,9 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
             holder.unbind();
             holder.bind();
         }
+        for (DynamicHolderSet.Named<R> named : this.tags.values()) {
+            named.unbind();
+        }
 
         // 3. Fire cache invalidation callbacks
         for (Runnable callback : this.callbacks) {
@@ -224,7 +295,20 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         }
 
         this.onReload();
+        this.onReload(ReloadType.SERVER);
         this.logger.info("Dynamic registry '{}' reload complete ({} entries active)", this.id, this.registry.size());
+    }
+
+    public enum ReloadType {
+        SERVER,
+        CLIENT,
+        INTEGRATED_CLIENT
+    }
+
+    protected void beginReload(ReloadType type) {
+    }
+
+    protected void onReload(ReloadType type) {
     }
 
     protected void onReload() {

@@ -16,6 +16,9 @@ import dev.shadowsoffire.apotheosis.spawners.SpawnersModule;
 import dev.shadowsoffire.placebo.network.PayloadHelper;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -69,7 +72,21 @@ public class Apotheosis implements ModInitializer {
         LOGGER.info("Fabricated Apotheosis core initialization complete");
     }
 
+    public static final boolean STAGES_LOADED = false;
+
     public static Identifier loc(String path) {
         return Identifier.fromNamespaceAndPath(MODID, path);
+    }
+
+    public static MutableComponent lang(String type, String path, Object... args) {
+        return Component.translatable(langKey(type, path), args);
+    }
+
+    public static String langKey(String type, String path) {
+        return type + "." + MODID + "." + path;
+    }
+
+    public static MutableComponent sysMessageHeader() {
+        return Component.translatable("[%s] ", Component.literal("Apoth").withStyle(ChatFormatting.GOLD));
     }
 }

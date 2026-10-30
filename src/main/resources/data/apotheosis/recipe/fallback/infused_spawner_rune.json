@@ -1,0 +1,18 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "group": "apotheosis",
+    "key": {
+        "E": "minecraft:experience_bottle",
+        "G": "apotheosis:gem_dust",
+        "S": "apotheosis:spawner_rune"
+    },
+    "pattern": [
+        "GEG",
+        "ESE",
+        "GEG"
+    ],
+    "result": {
+        "id": "apotheosis:infused_spawner_rune"
+    }
+}

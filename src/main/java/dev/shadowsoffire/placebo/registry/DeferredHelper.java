@@ -154,8 +154,21 @@ public class DeferredHelper {
         return Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, id, type);
     }
 
-    public <T extends AbstractContainerMenu> Holder.Reference<MenuType<T>> menu(String name, MenuType.MenuSupplier<T> supplier) {
-        return this.custom(BuiltInRegistries.MENU, name, () -> new MenuType<>(supplier, net.minecraft.world.flag.FeatureFlags.VANILLA_SET));
+    @SafeVarargs
+    public final <T extends BlockEntity> BlockEntityType<T> tickingBlockEntity(String name, BlockEntityType.BlockEntitySupplier<T> supplier, dev.shadowsoffire.placebo.block_entity.TickingBlockEntityType.TickSide side, Holder<Block>... validBlocks) {
+        Identifier id = this.id(name);
+        java.util.Set<Block> blocks = new java.util.HashSet<>();
+        for (Holder<Block> h : validBlocks) {
+            blocks.add(h.value());
+        }
+        BlockEntityType<T> type = new BlockEntityType<>(supplier, blocks);
+        return Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, id, type);
+    }
+
+    public <T extends AbstractContainerMenu> MenuType<T> menu(String name, MenuType.MenuSupplier<T> supplier) {
+        Identifier id = this.id(name);
+        MenuType<T> type = new MenuType<>(supplier, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
+        return Registry.register(BuiltInRegistries.MENU, id, type);
     }
 
     public <T extends AbstractContainerMenu> MenuType<T> menuWithPos(String name, MenuUtil.PosFactory<T> factory) {
@@ -174,6 +187,10 @@ public class DeferredHelper {
 
     public Holder.Reference<Potion> potion(String name, Supplier<Potion> supplier) {
         return this.custom(BuiltInRegistries.POTION, name, supplier);
+    }
+
+    public Holder.Reference<Potion> singlePotion(String path, Supplier<net.minecraft.world.effect.MobEffectInstance> factory) {
+        return this.potion(path, () -> new Potion(path, factory.get()));
     }
 
     public <T> Holder.Reference<DataComponentType<T>> dataComponent(String name, Consumer<DataComponentType.Builder<T>> builderConsumer) {
@@ -210,6 +227,11 @@ public class DeferredHelper {
         return this.custom(BuiltInRegistries.SOUND_EVENT, name, () -> SoundEvent.createVariableRangeEvent(id));
     }
 
+    public SoundEvent soundEvent(String name) {
+        Identifier id = this.id(name);
+        return Registry.register(BuiltInRegistries.SOUND_EVENT, id, SoundEvent.createVariableRangeEvent(id));
+    }
+
     public <T extends Recipe<?>> RecipeType<T> recipe(String name) {
         Identifier id = this.id(name);
         return Registry.register(BuiltInRegistries.RECIPE_TYPE, id, new RecipeType<T>() {
@@ -230,8 +252,127 @@ public class DeferredHelper {
         return this.custom(BuiltInRegistries.CREATIVE_MODE_TAB, name, builder::build);
     }
 
+    public <T extends net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient> net.neoforged.neoforge.common.crafting.IngredientType<T> ingredient(String name, net.neoforged.neoforge.common.crafting.IngredientType<T> type) {
+        Identifier id = this.id(name);
+        type.setId(id);
+        net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer.register(type);
+        return type;
+    }
+
     public <T extends CriterionTrigger<?>> T criteriaTrigger(String name, T trigger) {
         Identifier id = this.id(name);
         return Registry.register(BuiltInRegistries.TRIGGER_TYPES, id, trigger);
+    }
+
+    public static class RegistryBuilder<T> {
+        public Identifier defaultKey;
+        public Consumer<Registry<T>> bakeCallback;
+
+        public RegistryBuilder<T> defaultKey(Identifier key) {
+            this.defaultKey = key;
+            return this;
+        }
+
+        public RegistryBuilder<T> onBake(Consumer<Registry<T>> callback) {
+            this.bakeCallback = callback;
+            return this;
+        }
+
+        public RegistryBuilder<T> sync(boolean sync) {
+            return this;
+        }
+    }
+
+    public <T> Registry<T> registry(String name, Consumer<RegistryBuilder<T>> consumer) {
+        Identifier id = this.id(name);
+        ResourceKey<Registry<T>> key = ResourceKey.createRegistryKey(id);
+        RegistryBuilder<T> rb = new RegistryBuilder<>();
+        if (consumer != null) consumer.accept(rb);
+        Registry<T> reg;
+        if (rb.defaultKey != null) {
+            reg = net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder.createDefaulted(key, rb.defaultKey).buildAndRegister();
+        } else {
+            reg = net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder.create(key).buildAndRegister();
+        }
+        if (rb.bakeCallback != null) {
+            rb.bakeCallback.accept(reg);
+        }
+        return reg;
+    }
+
+    public <T> net.fabricmc.fabric.api.attachment.v1.AttachmentType<T> attachment(String name, Supplier<T> defaultVal, Consumer<net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry.Builder<T>> consumer) {
+        Identifier id = this.id(name);
+        try {
+            return net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry.create(id, b -> {
+                b.initializer(defaultVal);
+                if (consumer != null) consumer.accept(b);
+            });
+        }
+        catch (Throwable t) {
+            return null;
+        }
+    }
+
+    public <T> net.fabricmc.fabric.api.attachment.v1.AttachmentType<T> attachment(String name, Supplier<T> defaultVal) {
+        return attachment(name, defaultVal, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T, R> R custom(String name, ResourceKey<? extends Registry<T>> registryKey, R value) {
+        Identifier id = this.id(name);
+        Registry<T> registry = (Registry<T>) BuiltInRegistries.REGISTRY.getValue(registryKey.identifier());
+        if (registry == null && registryKey.identifier().equals(Identifier.fromNamespaceAndPath("apotheosis", "loot_category"))) {
+            registry = (Registry<T>) dev.shadowsoffire.apotheosis.Apoth.BuiltInRegs.LOOT_CATEGORY;
+        }
+        if (registry != null) {
+            Registry.register(registry, id, (T) value);
+        }
+        return value;
+    }
+
+    public Identifier customStat(String name, net.minecraft.stats.StatFormatter formatter) {
+        Identifier id = this.id(name);
+        Registry.register(BuiltInRegistries.CUSTOM_STAT, id, id);
+        net.minecraft.stats.Stats.CUSTOM.get(id, formatter);
+        return id;
+    }
+
+    public <T extends net.minecraft.core.particles.ParticleOptions> ParticleType<T> particle(String name, boolean overrideLimiter, Function<ParticleType<T>, com.mojang.serialization.MapCodec<T>> codec, Function<ParticleType<T>, StreamCodec<? super RegistryFriendlyByteBuf, T>> streamCodec) {
+        Identifier id = this.id(name);
+        ParticleType<T> type = new ParticleType<T>(overrideLimiter) {
+            @Override
+            public com.mojang.serialization.MapCodec<T> codec() {
+                return codec.apply(this);
+            }
+
+            @Override
+            public StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec() {
+                return streamCodec.apply(this);
+            }
+        };
+        return Registry.register(BuiltInRegistries.PARTICLE_TYPE, id, type);
+    }
+
+    public <T extends net.minecraft.core.component.predicates.DataComponentPredicate> net.minecraft.core.component.predicates.DataComponentPredicate.Type<T> componentPredicate(String name, com.mojang.serialization.Codec<T> codec) {
+        Identifier id = this.id(name);
+        return Registry.register(BuiltInRegistries.DATA_COMPONENT_PREDICATE_TYPE, id, new net.minecraft.core.component.predicates.DataComponentPredicate.ConcreteType<>(codec));
+    }
+
+    public <T extends net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer> com.mojang.serialization.MapCodec<T> lootPoolEntry(String name, com.mojang.serialization.MapCodec<T> codec) {
+        Identifier id = this.id(name);
+        return Registry.register(BuiltInRegistries.LOOT_POOL_ENTRY_TYPE, id, codec);
+    }
+
+    public <T extends net.minecraft.world.level.storage.loot.predicates.LootItemCondition> com.mojang.serialization.MapCodec<T> lootCondition(String name, com.mojang.serialization.MapCodec<T> codec) {
+        Identifier id = this.id(name);
+        return Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, id, codec);
+    }
+
+    public <T> com.mojang.serialization.MapCodec<T> lootModifier(String name, com.mojang.serialization.MapCodec<T> codec) {
+        return codec;
+    }
+
+    public <K, V> Object dataMap(String name, ResourceKey<Registry<K>> registry, com.mojang.serialization.Codec<V> codec, UnaryOperator<Object> op) {
+        return new Object();
     }
 }

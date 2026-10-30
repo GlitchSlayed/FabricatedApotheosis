@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "group": "apotheosis",
+    "key": {
+        "S": "apotheosis:spawner_rune",
+        "W": "#minecraft:wool"
+    },
+    "pattern": [
+        " W ",
+        "WSW",
+        " W "
+    ],
+    "result": {
+        "id": "apotheosis:silent_spawner_rune"
+    }
+}

@@ -53,6 +53,11 @@ public class CodecMap<V extends CodecProvider<? super V>> implements Codec<V> {
         return Collections.unmodifiableSet(this.registry.keySet());
     }
 
+    @Nullable
+    public Identifier getKey(Codec<?> codec) {
+        return this.registry.inverse().get(codec);
+    }
+
     @Override
     public <T> DataResult<Pair<V, T>> decode(DynamicOps<T> ops, T input) {
         return this.codec.decode(ops, input);

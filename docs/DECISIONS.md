@@ -188,3 +188,16 @@
   - Simulate lighting conditions for the `ignore_light` stat via `LyingLevel` (`ServerLevelAccessor` decorator) that evaluates candidate positions across light levels $0 \dots 15$, rather than patching entity spawn rules directly.
   - Synchronize spawner configuration parameters dynamically through `ApotheosisConfig.getServer()` / `ServerConfig`, ensuring server-authoritative enforcement across multiplayer sessions.
 - **Consequences**: Flawless save compatibility with vanilla spawners, deterministic upgrade consumption, safe explosion cascading with chunk reload persistence, and zero global despawn side effects on natural spawns.
+
+---
+
+## ADR-016: Apothic Adventure Item & Economy Systems Architecture
+
+- **Status**: Accepted
+- **Context**: In upstream NeoForge, the Apotheosis Adventure module relied on NeoForge-specific event busses (`ItemAttributeModifierEvent`), NeoForge capability-based inventory transfer handlers, custom item decorators, and Forge-specific ingredient abstractions. Porting to Minecraft 26.3 Fabric requires maintaining 100% item data persistence and mathematical behavior without NeoForge core libraries.
+- **Decision**:
+  - Implement dynamic attribute modifier derivation via `ItemStackMixin` targeting `forEachModifier(EquipmentSlot, BiConsumer)` and `forEachModifier(EquipmentSlotGroup, TriConsumer)`. This derives live modifiers from persistent affix (`ItemAffixes`) and socket (`SocketedGems`) data components during vanilla calculation passes, guaranteeing modifier recomputation on item changes and preventing persistent modifier duplication.
+  - Store all affix, socket, purity, rarity, and custom affix naming metadata using vanilla Minecraft 26.3 `DataComponents` registered via `DeferredHelper` with strict stream codecs for network synchronization.
+  - Implement server-authoritative item conservation across all workstations (Reforging, Salvaging, Augmenting, Gem Cutting): validate item recipes and input requirements before applying modifications, and integrate workstation automation using Fabric Transfer API (`ItemStorage.SIDED`).
+  - Provide non-instrumented fallbacks in `CachedObject` and `DeferredHelper` so that headless unit tests run safely in standard test JVMs without requiring active Loom mixin bytecode instrumentation.
+- **Consequences**: Deterministic item and socket persistence, full save compatibility with this fork's schema policy, clean multiplayer synchronization, and zero duplicate modifier accumulation bugs.

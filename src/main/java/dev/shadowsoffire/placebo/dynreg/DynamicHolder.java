@@ -65,6 +65,10 @@ public class DynamicHolder<R> implements Supplier<R> {
         return this.value;
     }
 
+    public java.util.Optional<R> getOptional() {
+        return java.util.Optional.ofNullable(this.getOrNull());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

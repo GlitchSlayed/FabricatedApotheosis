@@ -133,6 +133,97 @@ public class ALObjects {
         }
     }
 
+    public static class Potions {
+        public static Holder<net.minecraft.world.item.alchemy.Potion> RESISTANCE;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_RESISTANCE;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_RESISTANCE;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> ABSORPTION;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_ABSORPTION;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_ABSORPTION;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> HASTE;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_HASTE;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_HASTE;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> FATIGUE;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_FATIGUE;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_FATIGUE;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> WITHER;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_WITHER;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_WITHER;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> SUNDERING;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_SUNDERING;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_SUNDERING;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> KNOWLEDGE;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_KNOWLEDGE;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_KNOWLEDGE;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> VITALITY;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_VITALITY;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_VITALITY;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> GRIEVOUS;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_GRIEVOUS;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> STRONG_GRIEVOUS;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LEVITATION;
+
+        public static Holder<net.minecraft.world.item.alchemy.Potion> FLYING;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> LONG_FLYING;
+        public static Holder<net.minecraft.world.item.alchemy.Potion> EXTRA_LONG_FLYING;
+
+        public static void bootstrap() {
+            if (RESISTANCE == null) {
+                MobEffects.bootstrap();
+                RESISTANCE = R.singlePotion("resistance", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.RESISTANCE, 3600));
+                LONG_RESISTANCE = R.singlePotion("long_resistance", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.RESISTANCE, 9600));
+                STRONG_RESISTANCE = R.singlePotion("strong_resistance", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.RESISTANCE, 1800, 1));
+
+                ABSORPTION = R.singlePotion("absorption", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.ABSORPTION, 1200, 1));
+                LONG_ABSORPTION = R.singlePotion("long_absorption", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.ABSORPTION, 3600, 1));
+                STRONG_ABSORPTION = R.singlePotion("strong_absorption", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.ABSORPTION, 600, 3));
+
+                HASTE = R.singlePotion("haste", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.HASTE, 3600));
+                LONG_HASTE = R.singlePotion("long_haste", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.HASTE, 9600));
+                STRONG_HASTE = R.singlePotion("strong_haste", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.HASTE, 1800, 1));
+
+                FATIGUE = R.singlePotion("fatigue", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MINING_FATIGUE, 3600));
+                LONG_FATIGUE = R.singlePotion("long_fatigue", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MINING_FATIGUE, 9600));
+                STRONG_FATIGUE = R.singlePotion("strong_fatigue", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MINING_FATIGUE, 1800, 1));
+
+                WITHER = R.singlePotion("wither", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WITHER, 3600));
+                LONG_WITHER = R.singlePotion("long_wither", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WITHER, 9600));
+                STRONG_WITHER = R.singlePotion("strong_wither", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WITHER, 1800, 1));
+
+                SUNDERING = R.singlePotion("sundering", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.SUNDERING, 3600));
+                LONG_SUNDERING = R.singlePotion("long_sundering", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.SUNDERING, 9600));
+                STRONG_SUNDERING = R.singlePotion("strong_sundering", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.SUNDERING, 1800, 1));
+
+                KNOWLEDGE = R.singlePotion("knowledge", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.KNOWLEDGE, 2400));
+                LONG_KNOWLEDGE = R.singlePotion("long_knowledge", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.KNOWLEDGE, 4800));
+                STRONG_KNOWLEDGE = R.singlePotion("strong_knowledge", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.KNOWLEDGE, 1200, 3));
+
+                VITALITY = R.singlePotion("vitality", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.VITALITY, 4800));
+                LONG_VITALITY = R.singlePotion("long_vitality", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.VITALITY, 14400));
+                STRONG_VITALITY = R.singlePotion("strong_vitality", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.VITALITY, 3600, 1));
+
+                GRIEVOUS = R.singlePotion("grievous", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.GRIEVOUS, 4800));
+                LONG_GRIEVOUS = R.singlePotion("long_grievous", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.GRIEVOUS, 14400));
+                STRONG_GRIEVOUS = R.singlePotion("strong_grievous", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.GRIEVOUS, 3600, 1));
+
+                LEVITATION = R.singlePotion("levitation", () -> new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.LEVITATION, 2400));
+
+                FLYING = R.singlePotion("flying", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.FLYING, 9600));
+                LONG_FLYING = R.singlePotion("long_flying", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.FLYING, 18000));
+                EXTRA_LONG_FLYING = R.singlePotion("extra_long_flying", () -> new net.minecraft.world.effect.MobEffectInstance(MobEffects.FLYING, 36000));
+            }
+        }
+    }
+
     public static class Particles {
         public static Holder<SimpleParticleType> APOTH_CRIT;
 
@@ -209,6 +300,7 @@ public class ALObjects {
     public static void bootstrap() {
         Attributes.bootstrap();
         MobEffects.bootstrap();
+        Potions.bootstrap();
         Particles.bootstrap();
         Sounds.bootstrap();
         DamageTypes.bootstrap();

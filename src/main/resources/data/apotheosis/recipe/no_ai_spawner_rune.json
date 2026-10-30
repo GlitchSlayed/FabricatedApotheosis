@@ -1,0 +1,26 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "group": "apotheosis",
+    "key": {
+        "C": "minecraft:chorus_fruit",
+        "I": "apotheosis:infused_spawner_rune",
+        "P": {
+            "fabric:type": "fabric:components",
+            "base": "minecraft:potion",
+            "components": {
+                "minecraft:potion_contents": {
+                    "potion": "apothic_attributes:fatigue"
+                }
+            }
+        }
+    },
+    "pattern": [
+        " C ",
+        "CIC",
+        " P "
+    ],
+    "result": {
+        "id": "apotheosis:no_ai_spawner_rune"
+    }
+}

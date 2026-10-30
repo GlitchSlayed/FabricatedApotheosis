@@ -124,6 +124,21 @@
   - [x] Verified with 10 automated unit tests in `SpawnerTests.java` (49/49 total project unit tests passing).
   - [x] Verified dedicated server launch (`./gradlew runServer --args="--nogui"`): 100% chunks loaded, clean recipe/advancement loading, zero errors, and clean shutdown.
 
+### Milestone 8: Apothic Adventure Core Items & Economy Systems
+- **Status**: **COMPLETE** (2026-10-29)
+- **Key Achievements**:
+  - [x] Audited full feature inventory documented in `docs/ADVENTURE_INVENTORY.md` covering dynamic registries, rarities, affixes, gems, sockets, purity weights, workstations, recipes, and UI screens.
+  - [x] Ported dynamic data registries via Placebo: `RarityRegistry`, `RarityOverrideRegistry`, `AffixRegistry`, `ExtraGemBonusRegistry`, `GemRegistry`, `AffixLootRegistry`, `PurityWeightsRegistry`, and `TierAugmentRegistry`.
+  - [x] Ported data components: `ItemAffixes` (`apotheosis:affixes`), `DynamicHolder<LootRarity>` (`apotheosis:rarity`), `SocketedGems` (`apotheosis:sockets`), `Purity` (`apotheosis:purity`), and `Component` (`apotheosis:affix_name`) with stream codecs.
+  - [x] Implemented attribute derivation via targeted `ItemStackMixin` injecting into `forEachModifier(EquipmentSlot, ...)` and `forEachModifier(EquipmentSlotGroup, ...)` to cleanly supply attribute modifiers from affixes and socketed gems without persisting derived modifiers or causing duplicate applications.
+  - [x] Ported full workstation suite: Reforging Table (`ReforgingTableBlock`, `ReforgingTableTile`, `ReforgingMenu`), Salvaging Table (`SalvagingTableBlock`, `SalvagingTableTile`, `SalvagingMenu`), Augmenting Table (`AugmentingTableBlock`, `AugmentingTableTile`, `AugmentingMenu`), Gem Cutting Table (`GemCuttingBlock`, `GemCuttingMenu`), and Gem Case (`GemCaseBlock`, `GemCaseTile`, `GemCaseMenu`).
+  - [x] Implemented server-authoritative item conservation: strict cost and material checking before applying outputs or consuming resources; Fabric Transfer API (`ItemStorage.SIDED`) automation for workstations.
+  - [x] Ported all specialized items and recipes: Sigil of Unnaming, Sigil of Withdrawal, Sigil of Socketing, Superior Sigil of Socketing, Sigil of Enhancement, Potion Charms, and Infusion recipes.
+  - [x] Ported client screens and tooltips using vanilla 26.3 / RenderPearl pipeline abstractions: `ReforgingScreen`, `SalvagingScreen`, `AugmentingScreen`, `GemCuttingScreen`, `GemCaseScreen`, `WorldTierSelectScreen`, `WorldTierDetailScreen`, `WorldTierTutorialScreen`, `SocketTooltipRenderer`, and functional item comparison tooltips.
+  - [x] Built non-instrumented resilience into `CachedObject` and `DeferredHelper` to allow headless JUnit tests to run without Loom mixin instrumentation.
+  - [x] Verified with 7 automated unit tests in `AdventureTests.java` (56/56 total project unit tests passing) covering loot categories, item conservation, purity evaluation, socketing round-trip serialization, and affix exclusivity.
+  - [x] Verified full build (`./gradlew build`), access widener validation, duplicate class check, and dedicated server startup (`./gradlew runServer --args="--nogui"`) with 100% chunks loaded, 1910 advancements parsed, and clean shutdown.
+
 ---
 
 ## 2. Upcoming Milestones
@@ -133,8 +148,7 @@
 
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 8** | Apothic Adventure Core & Affixes/Gems | Affix data system, gem definitions, socketing mechanics, forging/reforging tables, data components, and item persistence | `NEXT` |
-| **Milestone 9** | Boss Generation, Worldgen & Loot Integration | Rogue spawners, boss dungeons, wanderer/invader boss entities, Fabric Loot API v3 integration (Gateways to Eternity completely excluded) | `PENDING` |
+| **Milestone 9** | Boss Generation, Worldgen & Progression | Rogue spawners, boss dungeons, wanderer/invader boss entities, Fabric Loot API v3 integration, World Tier locking (Gateways to Eternity completely excluded) | `NEXT` |
 | **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points (Patchouli / Chronicle of Shadows deferred TBD; no replacement book system) | `PENDING` |
 | **Milestone 11** | End-to-End GameTests & Multiplayer Validation | Automated Minecraft GameTests for combat, enchanting, spawners, and affix systems; dedicated-server round-trip verification; copied representative world upgrade testing | `PENDING` |
 | **Milestone 12** | Ecosystem Polish, Documentation & Release Readiness | Full ecosystem distributable verification, strict duplicate checks, dependency audit, final user documentation, release packaging | `PENDING` |

@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "group": "apotheosis",
+    "key": {
+        "G": "minecraft:golden_dandelion",
+        "S": "apotheosis:spawner_rune"
+    },
+    "pattern": [
+        " G ",
+        "GSG",
+        " G "
+    ],
+    "result": {
+        "id": "apotheosis:youthful_spawner_rune"
+    }
+}

@@ -81,6 +81,11 @@ public abstract class RegistrySerializer<R> {
             return this.codecMap;
         }
 
+        public Subtyped<R> register(net.minecraft.resources.Identifier id, Codec<? extends R> codec) {
+            this.codecMap.register(id, codec);
+            return this;
+        }
+
         @Override
         public Codec<R> codec() {
             return this.codecMap;

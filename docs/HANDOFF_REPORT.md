@@ -1,6 +1,6 @@
-# Handoff Report — Milestone 7: Apothic Spawners Core, Persistence & Instability
+# Handoff Report — Milestone 8: Apothic Adventure Core Items & Economy Systems
 
-- **Date**: 2026-10-28
+- **Date**: 2026-10-29
 - **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.19.5, YACL 3.9.6)
 
 ## 1. Current Repository Tree
@@ -24,6 +24,7 @@ FabricatedApotheosis/
 │   ├── gradle-wrapper.jar
 │   └── gradle-wrapper.properties
 ├── docs/
+│   ├── ADVENTURE_INVENTORY.md
 │   ├── ARCHITECTURE.md
 │   ├── DAMAGE_PIPELINE.md
 │   ├── DECISIONS.md
@@ -47,142 +48,123 @@ FabricatedApotheosis/
 │   │   ├── java/dev/shadowsoffire/
 │   │   │   ├── apotheosis/
 │   │   │   │   ├── Apotheosis.java
+│   │   │   │   ├── Apoth.java
+│   │   │   │   ├── AdventureConfig.java
 │   │   │   │   ├── adventure/AdventureModule.java
-│   │   │   │   ├── attributes/
-│   │   │   │   ├── config/
-│   │   │   │   ├── enchanting/EnchantingModule.java
-│   │   │   │   ├── integrations/
-│   │   │   │   ├── placebo/
-│   │   │   │   ├── platform/
-│   │   │   │   └── spawners/SpawnersModule.java
+│   │   │   │   ├── affix/
+│   │   │   │   ├── attachments/
+│   │   │   │   ├── commands/
+│   │   │   │   ├── compat/
+│   │   │   │   ├── event/
+│   │   │   │   ├── item/
+│   │   │   │   ├── loot/
+│   │   │   │   ├── mixin/ItemStackMixin.java
+│   │   │   │   ├── recipe/
+│   │   │   │   ├── socket/
+│   │   │   │   └── util/
+│   │   │   ├── apothic_attributes/
 │   │   │   ├── apothic_enchanting/
 │   │   │   ├── apothic_spawners/
-│   │   │   │   ├── ApothicSpawners.java
-│   │   │   │   ├── ASConfig.java
-│   │   │   │   ├── ASObjects.java
-│   │   │   │   ├── advancements/
-│   │   │   │   │   ├── ModifierTrigger.java
-│   │   │   │   │   └── SpawnEggItemPredicate.java
-│   │   │   │   ├── block/
-│   │   │   │   │   ├── ApothSpawnerBlock.java
-│   │   │   │   │   ├── ApothSpawnerItem.java
-│   │   │   │   │   ├── ApothSpawnerTile.java
-│   │   │   │   │   └── LyingLevel.java
-│   │   │   │   ├── enchantments/
-│   │   │   │   │   └── CapturingEnchantmentEffect.java
-│   │   │   │   ├── mixin/
-│   │   │   │   │   ├── BlockEntityTypesMixin.java
-│   │   │   │   │   ├── BlocksMixin.java
-│   │   │   │   │   ├── EntityTeleportMixin.java
-│   │   │   │   │   ├── ItemStackMixin.java
-│   │   │   │   │   ├── ItemsMixin.java
-│   │   │   │   │   ├── MobDespawnMixin.java
-│   │   │   │   │   ├── MobTickMixin.java
-│   │   │   │   │   └── SlimeSplitMixin.java
-│   │   │   │   ├── modifiers/
-│   │   │   │   │   ├── SpawnerModifier.java
-│   │   │   │   │   ├── SpawnerRecipeCache.java
-│   │   │   │   │   └── StatModifier.java
-│   │   │   │   └── stats/
-│   │   │   │       ├── BooleanStat.java
-│   │   │   │       ├── CustomStat.java
-│   │   │   │       ├── LevelStat.java
-│   │   │   │       ├── PercentageStat.java
-│   │   │   │       ├── SpawnerStat.java
-│   │   │   │       ├── SpawnerStats.java
-│   │   │   │       └── VanillaStat.java
 │   │   │   └── placebo/
 │   │   └── resources/
+│   │       ├── assets/apotheosis/
+│   │       ├── data/apotheosis/
 │   │       ├── fabric.mod.json
 │   │       ├── apotheosis.accesswidener
-│   │       ├── apothic_enchanting.mixins.json
-│   │       ├── apothic_spawners.mixins.json
-│   │       ├── assets/apothic_spawners/
-│   │       └── data/apothic_spawners/
+│   │       └── apotheosis.mixins.json
 │   ├── client/
-│   │   ├── java/dev/shadowsoffire/
-│   │   │   ├── apotheosis/client/
-│   │   │   ├── apothic_enchanting/
-│   │   │   ├── apothic_spawners/client/
-│   │   │   │   └── ASClient.java
-│   │   │   └── placebo/
-│   │   └── resources/
+│   │   └── java/dev/shadowsoffire/
+│   │       ├── apotheosis/
+│   │       │   ├── client/
+│   │       │   │   ├── ApotheosisClient.java
+│   │       │   │   ├── AdventureModuleClient.java
+│   │       │   │   ├── AdventureContainerScreen.java
+│   │       │   │   ├── SimpleTexButton.java
+│   │       │   │   ├── BeamRenderer.java
+│   │       │   │   ├── EquipmentComparePositioner.java
+│   │       │   │   ├── SocketTooltipRenderer.java
+│   │       │   │   ├── StoneformingTooltipRenderer.java
+│   │       │   │   ├── WorldTierSelectScreen.java
+│   │       │   │   └── WorldTierDetailScreen.java
+│   │       │   └── socket/
+│   │       └── placebo/
 │   └── test/
 │       └── java/dev/shadowsoffire/
 │           ├── apotheosis/
+│           │   ├── adventure/AdventureTests.java
+│           │   ├── attributes/
+│           │   └── config/
 │           ├── apothic_enchanting/
-│           └── apothic_spawners/
-│               └── SpawnerTests.java
+│           ├── apothic_spawners/
+│           └── placebo/
 ```
 
 ---
 
-## 2. Milestone 7 Deliverables
+## 2. Milestone 8 Implementation Highlights
 
-1. **Feature Inventory & Specifications**:
-   - Authored `docs/SPAWNERS_INVENTORY.md` covering all 16 spawner stats, 32 modifier recipes, instability mechanics, drops, tags, data, and World Tier integration points.
-2. **16 Spawner Statistics (`SpawnerStats`)**:
-   - `min_delay` [20, 1600], `max_delay` [20, 1600], `spawn_count` [1, 16], `max_nearby_entities` [1, 32], `req_player_range` [1, 48], `spawn_range` [1, 16], `initial_health` [0.05, 1.00], `ignore_players`, `ignore_conditions`, `redstone_control`, `ignore_light`, `no_ai`, `silent`, `youthful`, `burning`, `echoing` [0, 3].
-3. **32 Spawner Modifier Recipes**:
-   - 16 base and 16 inverse recipes (quartz in offhand) with exact clamping bounds and server-authoritative item consumption preventing waste.
-4. **Vanilla In-Place Replacement**:
-   - Subclassed `SpawnerBlock`, `SpawnerBlockEntity`, and `BlockItem` replacing vanilla constants via `BlocksMixin`, `BlockEntityTypesMixin`, and `ItemsMixin` while maintaining vanilla identifiers (`minecraft:spawner`, `minecraft:mob_spawner`).
-5. **Silk Touch Harvest & Placement State Restoration**:
-   - `ApothSpawnerBlock.playerDestroy`: requires `spawnerSilkLevel` (1), inflicts `spawnerSilkDamage` (100) tool damage, and drops `minecraft:spawner` with full `DataComponents.BLOCK_ENTITY_DATA`.
-   - `setPlacedBy`: restores all custom stats, delay, and entity spawn potentials.
-6. **Explosive Instability & Cascade Detonation**:
-   - Intercepted `onExplosionHit` to snapshot `nextSpawnData`, cancel instant destruction, and initiate a 60-tick countdown (`unstableTicks`) culminating in an 8-radius explosion, 12-entity cluster spawn, and `apothic_spawners:gameplay/unstable_spawner` loot drops.
-7. **LyingLevel Light Simulation**:
-   - Simulated light levels $0 \dots 15$ for `ignore_light` condition checks using `LyingLevel` (`ServerLevelAccessor` decorator).
-8. **Entity Behavior Modifiers**:
-   - `no_ai` mobs receive `apotheosis:movable` (physics velocity in `MobTickMixin`, teleport cancellation in `EntityTeleportMixin`, split cube inheritance in `SlimeSplitMixin`).
-   - `youthful` baby state, `silent`, `initial_health` scaling, `burning` fire ticks, and `echoing` bonus loot drops and XP multiplier ($1 + \text{level}$).
-9. **Spawner-Origin Despawn Protection**:
-   - Spawner-spawned entities tagged with `apothic_spawners:from_spawner`. `MobDespawnMixin` prevents premature despawn during `tickCount <= entityDespawnDelay` (600 ticks) without altering natural mob spawns or Peaceful checks.
-10. **Capturing Enchantment & Blacklist Protection**:
-    - `CapturingEnchantmentEffect` (0.5% per level egg drop chance).
-    - Entities in `#apothic_spawners:blacklisted_from_spawners` (e.g. Ender Dragon, Wither, Elder Guardian, Warden) cannot be dropped via Capturing or inserted into spawners via spawn eggs.
-11. **Client Tooltip Integration**:
-    - Category-colored spawner item names (Monster, Creature, Water, Ambient) and Shift hover stat modification summary via client tooltip handlers.
+1. **Feature Inventory & Baseline**:
+   - Created comprehensive inventory in `docs/ADVENTURE_INVENTORY.md` capturing all registries, codecs, components, affixes, gems, sockets, purity weights, workstations, items, recipes, commands, and screens.
+
+2. **Dynamic Registries & Codecs**:
+   - Ported dynamic data registries managed through Placebo: `RarityRegistry`, `RarityOverrideRegistry`, `AffixRegistry`, `ExtraGemBonusRegistry`, `GemRegistry`, `AffixLootRegistry`, `PurityWeightsRegistry`, `TierAugmentRegistry`.
+   - Built full codec and stream codec representations for network and save persistence.
+
+3. **Data Components & Modifier Derivation**:
+   - Registered `ItemAffixes` (`apotheosis:affixes`), `DynamicHolder<LootRarity>` (`apotheosis:rarity`), `SocketedGems` (`apotheosis:sockets`), `Purity` (`apotheosis:purity`), and `Component` (`apotheosis:affix_name`) as Minecraft 26.3 `DataComponents`.
+   - Created `ItemStackMixin` injecting into `forEachModifier(EquipmentSlot, BiConsumer)` and `forEachModifier(EquipmentSlotGroup, TriConsumer)` to derive attribute modifiers dynamically from affixes and socketed gems without persisting derived modifiers or causing duplicate applications.
+
+4. **Workstations & Item Conservation**:
+   - Implemented Reforging Table (`ReforgingTableBlock`, `ReforgingTableTile`, `ReforgingMenu`), Salvaging Table (`SalvagingTableBlock`, `SalvagingTableTile`, `SalvagingMenu`), Augmenting Table (`AugmentingTableBlock`, `AugmentingTableTile`, `AugmentingMenu`), Gem Cutting Table (`GemCuttingBlock`, `GemCuttingMenu`), and Gem Case (`GemCaseBlock`, `GemCaseTile`, `GemCaseMenu`).
+   - Enforced server-authoritative item conservation: recipes validate all inputs, costs, and player levels before applying outputs or consuming resources.
+   - Integrated workstation automation via Fabric Transfer API (`ItemStorage.SIDED`).
+
+5. **Items, Sigils & Recipes**:
+   - Ported Sigil of Unnaming, Sigil of Withdrawal, Sigils of Socketing, Potion Charms, and Infusion recipes (`CharmInfusionRecipe`, `PotionCharmRecipe`).
+   - Ported Potions of Mining Fatigue (`apothic_attributes:fatigue`, `long_fatigue`, `strong_fatigue`) into `ALObjects.Potions`.
+
+6. **Client Screens & UI**:
+   - Ported all container screens to vanilla 26.3 / RenderPearl pipeline abstractions: `ReforgingScreen`, `SalvagingScreen`, `AugmentingScreen`, `GemCuttingScreen`, `GemCaseScreen`, `WorldTierSelectScreen`, `WorldTierDetailScreen`, and `WorldTierTutorialScreen`.
+   - Implemented functional socket and gem tooltip rendering (`SocketTooltipRenderer`) and equipment comparison overlay (`EquipmentComparePositioner`).
+
+7. **Non-Instrumented Unit Test Resilience**:
+   - Added fallbacks in `CachedObject` and `DeferredHelper` to permit running headless JUnit unit tests without requiring Loom mixin transformation agents.
 
 ---
 
 ## 3. Verification & Test Evidence
 
 1. **Automated Unit Tests**:
-   - Executed `./gradlew test --rerun-tasks`: 49 tests executed across 12 test classes, 49 passed in 4s.
-   - 10 comprehensive tests in `SpawnerTests.java`:
-     - `testStatClampingAndBounds`: Verified clamping across min/max bounds and quartz inverse modifiers.
-     - `testModifierRecipeSerialization`: Verified JSON and StreamCodec serialization for modifier recipes.
-     - `testSilkTouchHarvestLogic`: Verified tool damage, silk touch requirement, and empty spawner config.
-     - `testPlacementStateRestoration`: Verified stat and nextSpawnData restoration on placement.
-     - `testRedstoneActivationControl`: Verified neighbor signal requirement.
-     - `testInstabilityDetonationCountdown`: Verified 60-tick countdown, cluster spawning, and loot table drop.
-     - `testSpawnerOriginDespawnTagging`: Verified persistent tag and despawn delay threshold.
-     - `testSpecialEntityModifiers`: Verified movable, youthful, burning, and echoing modifiers.
-     - `testBlacklistAndCapturingEnchantment`: Verified blacklist rejection and egg drop calculations.
-     - `testBooleanAndPercentageStatMath`: Verified boolean toggles and percentage scaling formulas.
+   - Executed `./gradlew test --rerun-tasks`: 56 tests executed across 13 test classes, 56 passed in 6s.
+   - Comprehensive tests in `AdventureTests.java`:
+     - `LootCategory accurately categorizes vanilla equipment`
+     - `Inventory operations and item conservation for ReforgingTableTile`
+     - `Purity ordinal ordering and upgrade mechanics`
+     - `SalvagingRecipe item conservation and output derivation`
+     - `Inventory operations and item conservation for SalvagingTableTile`
+     - `Socket management, empty checks, and SocketedGems serialization`
+     - `Affix exclusivity rules and ItemAffixes serialization round-trip`
 
 2. **Compilation & Packaging**:
-   - `./gradlew compileJava compileClientJava`: Succeeded.
+   - `./gradlew compileJava compileClientJava`: Succeeded with 0 errors.
    - `./gradlew build`: Succeeded (including `validateAccessWidener` and `verifyNoDuplicateClasses`).
 
 3. **Dedicated Server Launch**:
-   - Executed `./gradlew runServer --args="--nogui"` with live shutdown handling.
-   - Output evidence:
-     `[Apotheosis/Spawners] Apothic Spawners module initialized successfully`
-     `Loaded 1904 advancements`
-     `Done (0.198s)! For help, type "help"`
-     `Stopping the server... Saving worlds... Saving chunks`
-   - Clean shutdown with exit code 0; zero errors, zero unbound registry keys, zero client class leakage.
+   - Executed `./gradlew runServer --args="--nogui"`.
+   - Verified log output:
+     `[Apotheosis/Adventure] Adventure module initialized`
+     `Loaded 1910 advancements`
+     `Done (0.279s)! For help, type "help"`
+     `Saving chunks for level 'ServerLevel[world]'/minecraft:overworld`
+   - Clean shutdown; zero missing registry entries, zero client leakage.
 
 ---
 
 ## 4. Next Concrete Implementation Task
 
-Proceed to **Milestone 8: Apothic Adventure Core & Affixes/Gems**:
-1. Implement the Affix data system, Affix types, categories, and rarity definitions.
-2. Implement Gem data system, gem definitions, socketing mechanics, and gem cutting/upgrading.
-3. Implement forging, salvage, and reforging tables and menus.
-4. Implement custom Adventure item data components and serialization.
-5. Implement adventure item persistence adhering to `docs/SAVE_COMPATIBILITY.md`.
+Proceed to **Milestone 9: Boss Generation, Worldgen & Progression**:
+1. Implement Rogue Spawners and Boss Dungeons world generation.
+2. Implement Wanderer and Invader boss entities, boss gear generation, and attribute buffs.
+3. Implement World Tier progression locks, criteria verification, and dynamic difficulty scaling.
+4. Integrate Fabric Loot API v3 for adventure loot tables and world drop modifiers.
+5. Gateways to Eternity remains completely out of scope.

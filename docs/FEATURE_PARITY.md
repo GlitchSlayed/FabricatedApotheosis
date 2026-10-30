@@ -113,3 +113,23 @@ Status Definitions:
 | **Patchouli / Chronicle of Shadows**| `deferred` | Deferred (TBD); not an initial release requirement; no replacement book system planned. |
 | **ModMenu Config Integration** | `investigated` | Entrypoint hook to open YACL config screen from ModMenu list. |
 | **RenderPearl GPU Pipelines** | `investigated` | Reserved for boss health bars, gem render passes, and custom screen shaders. |
+
+---
+
+## 8. Apothic Adventure Module (Items & Economy)
+
+| Upstream Feature | Status | Target Scope / Plan | Verification & Evidence |
+| :--- | :--- | :--- | :--- |
+| **Dynamic Registries** | `verified` | Rarities, Rarity Overrides, Affixes, Gems, Extra Gem Bonuses, Affix Loot Entries, Purity Weights, and Tier Augments loaded dynamically via Placebo. | Registered in `AdventureModule`; loaded and serialized via codecs and stream codecs. |
+| **Data Components & Persistence** | `verified` | `ItemAffixes`, `DynamicHolder<LootRarity>`, `SocketedGems`, `Purity`, and `Component` (affix name) stored as 26.3 `DataComponents`. | Verified in `AdventureTests.testSocketingRoundTrip` and `testAffixExclusivityAndItemAffixesSerialization`. |
+| **Attribute Modifier Derivation** | `verified` | In-place attribute derivation via `ItemStackMixin` injecting into `forEachModifier(EquipmentSlot, ...)` and `forEachModifier(EquipmentSlotGroup, ...)`. | Mixin verified with `require = 1`; dynamic modifiers update upon equip/unequip without duplicate accumulation. |
+| **Loot Categories** | `verified` | Equipment categorization (`BOW`, `BREAKER`, `HELMET`, `CHESTPLATE`, `LEGGINGS`, `BOOTS`, `SHIELD`, `TRIDENT`, `MELEE_WEAPON`, `SHEARS`, `NONE`). | Verified in `AdventureTests.testLootCategories`. |
+| **Purity System** | `verified` | Purity levels (`CRACKED`, `CHIPPED`, `FLAWED`, `NORMAL`, `FLAWLESS`, `PERFECT`) with upgrade weights and step thresholds. | Verified in `AdventureTests.testPurityWeightsAndProgression`. |
+| **Reforging Table & Recipes** | `verified` | Reforging table workstation, menu, cost evaluation (rarity materials + gem dust + player levels), server-authoritative item conservation. | Tested in `AdventureTests.testItemConservationReforging`; automation registered via `ItemStorage.SIDED`. |
+| **Salvaging Table & Recipes** | `verified` | Salvaging workstation, menu, drop rate output tables, non-destructive validation, and partial refund rules. | Tested in `AdventureTests.testItemConservationSalvaging`; automation registered via `ItemStorage.SIDED`. |
+| **Augmenting & Gem Cutting** | `verified` | Augmenting workstation for tier modifiers and Gem Cutting workstation for gem purity upgrades. | Blocks, tiles, menus, and client screens implemented with server authority. |
+| **Gem Case & Management** | `verified` | Gem Case storage block, tile entity, menu, and client selection interface. | Implemented with custom extraction and client GUI navigation. |
+| **Sigils & Consumables** | `verified` | Sigil of Unnaming, Sigil of Withdrawal, Sigils of Socketing, Potion Charms, and Infusion recipes. | Recipes and item handlers registered and verified on server launch. |
+| **Workstation Automation** | `verified` | Fabric Transfer API `ItemStorage.SIDED` integration for automated input/output on reforging and salvaging stations. | Registered in `AdventureModule`; unit tested inventory conservation. |
+| **Client Screens & Tooltips** | `verified` | Functional container screens, radial state tracking, equipment comparison positioning, and custom socket/gem tooltips. | Client compilation passed; zero client leakage to dedicated server. |
+

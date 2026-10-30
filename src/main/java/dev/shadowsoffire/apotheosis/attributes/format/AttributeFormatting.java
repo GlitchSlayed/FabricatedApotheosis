@@ -86,10 +86,7 @@ public class AttributeFormatting {
         };
     }
 
-    /**
-     * Formats an attribute value or modifier total into a styled Component.
-     */
-    public static MutableComponent toValueComponent(Holder<Attribute> attr, AttributeModifier.Operation op, double value, TooltipFlag flag) {
+    public static MutableComponent toValueComponent(Attribute attr, AttributeModifier.Operation op, double value, TooltipFlag flag) {
         FormatType type = getFormatType(attr);
         if (op == null) {
             return switch (type) {
@@ -107,6 +104,41 @@ public class AttributeFormatting {
         } else {
             return Component.literal((value >= 0 ? "+" : "") + PERCENT_FORMAT.format(value));
         }
+    }
+
+    public static MutableComponent toComponent(Attribute attr, AttributeModifier modifier, TooltipFlag flag) {
+        String formatted = formatBonus(attr, modifier);
+        double amount = modifier.amount();
+        ChatFormatting color = attr.getStyle(amount > 0);
+        String key = amount > 0 ? "neoforge.modifier.plus" : "neoforge.modifier.take";
+        return Component.translatable(key, Component.literal(formatted), Component.translatable(attr.getDescriptionId())).withStyle(color);
+    }
+
+    public static String formatBonus(Attribute attr, AttributeModifier modifier) {
+        double amount = modifier.amount();
+        FormatType type = getFormatType(attr);
+
+        if (modifier.operation() == AttributeModifier.Operation.ADD_VALUE) {
+            if (type == FormatType.PERCENTAGE) {
+                String prefix = amount >= 0 ? "+" : "";
+                return prefix + PERCENT_FORMAT.format(amount);
+            } else if (type == FormatType.BOOLEAN) {
+                return amount >= 1.0 ? "+Enabled" : "-Disabled";
+            } else {
+                String prefix = amount >= 0 ? "+" : "";
+                return prefix + DECIMAL_FORMAT.format(amount);
+            }
+        } else {
+            String prefix = amount >= 0 ? "+" : "";
+            return prefix + PERCENT_FORMAT.format(amount);
+        }
+    }
+
+    /**
+     * Formats an attribute value or modifier total into a styled Component.
+     */
+    public static MutableComponent toValueComponent(Holder<Attribute> attr, AttributeModifier.Operation op, double value, TooltipFlag flag) {
+        return toValueComponent(attr.value(), op, value, flag);
     }
 
     /**
@@ -136,8 +168,7 @@ public class AttributeFormatting {
      * Creates a formatted text component describing the modifier for tooltips.
      */
     public static MutableComponent toComponent(Holder<Attribute> attr, AttributeModifier modifier, TooltipFlag flag) {
-        String formatted = formatBonus(attr, modifier);
-        return Component.literal(formatted);
+        return toComponent(attr.value(), modifier, flag);
     }
 
     public static int getValueColor(AttributeInstance inst, int fallbackColor) {

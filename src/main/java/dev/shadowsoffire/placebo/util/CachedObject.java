@@ -58,4 +58,16 @@ public final class CachedObject<T> {
         List<DataComponentType<?>> typeList = Arrays.asList(types);
         return stack -> Arrays.hashCode(typeList.stream().map(stack::get).filter(Objects::nonNull).toArray());
     }
+
+    public interface CachedObjectSource {
+
+        <T> T getOrCreate(Identifier id, Function<ItemStack, T> deserializer, ToIntFunction<ItemStack> hasher);
+
+        public static <T> T getOrCreate(ItemStack stack, Identifier id, Function<ItemStack, T> deserializer, ToIntFunction<ItemStack> hasher) {
+            if ((Object) stack instanceof CachedObjectSource cos) {
+                return cos.getOrCreate(id, deserializer, hasher);
+            }
+            return deserializer.apply(stack);
+        }
+    }
 }
