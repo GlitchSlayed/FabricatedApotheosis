@@ -6,7 +6,7 @@ public class ApothEnchConfig {
 
     public static boolean showEnchantedBookMetadata = true;
     public static int sculkShelfNoiseChance = 200;
-    public static boolean enableInlineEnchDescs = false;
+    public static boolean enableInlineEnchDescs = true;
 
     public static void syncFromClientConfig() {
         showEnchantedBookMetadata = ApotheosisConfig.getClient().showEnchantedBookMetadata;

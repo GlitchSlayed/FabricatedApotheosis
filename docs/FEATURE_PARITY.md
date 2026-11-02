@@ -151,4 +151,36 @@ Status Definitions:
 | **Biome Modification** | `verified` | Fabric Biome API v1 (`BiomeModifications.addFeature`) replacing NeoForge BiomeModifiers, registering boss dungeons and rogue spawners across biome selectors. | 342 biome modifications applied across 57 biomes verified on dedicated server boot. |
 | **Loot Tables & Injection** | `verified` | Boss drop tables, dungeon chests, and wandering trader loot tables migrated to 26.3 schema (`TagEntry.items`). | Server boot verified without loot table parse errors. |
 
+---
+
+## 10. Client-Facing Behavior & Visual Rendering (Milestone 10)
+
+| Upstream Feature | Status | Target Scope / Plan | Verification & Evidence |
+| :--- | :--- | :--- | :--- |
+| **Client Feature Checklist** | `verified` | Complete inventory and interaction checklist documented in `docs/CLIENT_FEATURE_CHECKLIST.md`. | Verified all 16 client subsystem components, UI controls, and text formatting. |
+| **Workstation UI Interactions** | `verified` | Menus, buttons, text inputs, search filtering, and scroll dragging across Reforging, Salvaging, Augmenting, Gem Cutting, and Gem Case. | Code audit and boundary fix in `SalvagingScreen` (`i < 12`); keyboard focus suppression verified in `EnchLibraryScreen` and `GemCaseScreen`. |
+| **Screen Navigation & Focus** | `verified` | Keyboard focus, recipe-book coexistence, and ESC key handling. | Added `onClose()` overrides to `WorldTierDetailScreen` and `WorldTierTutorialScreen`; verified attributes GUI repositioning via `InventoryScreenMixin`. |
+| **Loot Beams & Item Effects** | `verified` | Dropped affix item beacon beams and colored shadows rendered in-world with rarity tinting and grow-in animations. | Implemented in `AffixItemEffectRenderer`, `ItemEntityRenderStateMixin`, and `ItemEntityRendererMixin` via 26.3 `submitCustomGeometry` and `ApothRenderTypes.BEAM`; origin centered without block offset. |
+| **Rarity Particles** | `verified` | Ambient sparkle particles emitted from grounded affix items. | Client tick handler in `AdventureModuleClient` rate-limits emission per item; particles clear cleanly on disconnect. |
+| **Localization Completeness** | `verified` | All client screens and tooltips mapped to Fabric-native translatable strings in JSON language files. | Replaced NeoForge translation key in `ApothEnchantmentScreen`; added missing `title.apotheosis.world_tier_tutorial` in `en_us.json`. |
+| **Config UI (YACL & ModMenu)** | `verified` | YetAnotherConfigLib configuration screen accessible via ModMenu with Client Preferences and server rule separation. | Tested `ApotheosisConfigScreen`; added "Enable Affix Item Effects" toggle; verified atomic saving and remote server read-only rules. |
+| **Zero Raw GL / Vulkan Calls** | `verified` | Mod rendering uses exclusively Mojang high-level abstractions (`SubmitNodeCollector`, `RenderPipelines`, `GuiGraphicsExtractor`). | Codebase audited for zero raw OpenGL/Vulkan driver calls; dedicated-server isolation preserved. |
+
+---
+
+## 11. Optional Integrations & Packaging Polish (Milestone 11)
+
+| Upstream Feature | Status | Target Scope / Plan | Verification & Evidence |
+| :--- | :--- | :--- | :--- |
+| **Recipe Viewer (JEI)** | `verified` | Recipe viewer integration via `ApotheosisJeiPlugin` (`IModPlugin`): custom categories (`SpawnerCategory`, `SalvagingCategory`, `GemCuttingCategory` with purity and basic extensions, `InfusionRecipeCategory`), catalysts, and ingredient info. | Verified with JEI `31.17.0.108` on 26.3; compiles cleanly with zero dedicated server leakage. |
+| **Recipe Transfer Handler** | `verified` | `RavenTransferHandler` (`IRecipeTransferHandler<RavenEnchantmentMenu, InfusionRecipe>`): transfers inputs to slot 0 and syncs server-validated `SetRavenStatsPayload` clamping against surrounding bookcases. | Tested transfer bounds (0, 1, 2, 36); server validation in `SetRavenStatsPayload.handleServer`. |
+| **GUI Exclusion Zones** | `verified` | Registered JEI exclusion zones for `InventoryScreen` (`AttributesGui` sheet and sword toggle button) and `ApothEnchantmentScreen` (upper info tab). | Tested in `ApotheosisJeiPlugin.registerGuiHandlers`. |
+| **HUD Inspection (Jade)** | `verified` | Jade inspection via `ApotheosisJadePlugin` (`IWailaPlugin`): `SpawnerServerDataProvider` and `EnchantingServerDataProvider` on common side; `SpawnerClientProvider` and `EnchantingClientProvider` on client side. | Verified with Jade `26.3.5+fabric` on 26.3; reflection delegation ensures zero client classes loaded on dedicated server. |
+| **Accessory Slot Bridge** | `verified` | Open extension point `ModifierSourceType` prevents duplicate attribute applications. Trinkets and Accessories have 0 published 26.3 releases (reported as deferred). `PotionCharmItem` falls back to inventory ticking when absent. | Audited in `ModifierSourceType.java` and `PotionCharmItem.java`; tests pass cleanly. |
+| **Tooltip Cooperation** | `verified` | Inline enchantment descriptions in `ApothEnchClient` controlled by `enableInlineEnchDescs` config toggle; yields automatically when standalone description mods (`enchdesc`, `idwtialsimmofg`, `enchantmentdescriptions`) are detected. | Tested in `ApothEnchClient` and `ApotheosisConfigScreen`. |
+| **YACL Packaging (JiJ)** | `verified` | Nested YetAnotherConfigLib (YACL `3.9.6+26.3-fabric`) via Jar-in-Jar (`include`) in `build.gradle`. Bundled in `META-INF/jars/` unshaded with manifest and LGPL-3.0 license intact. | Verified via `unzip -l build/libs/fabricated-apotheosis-1.0.0-alpha.1.jar`. |
+| **Config Audit & Remote Safety**| `verified` | Audited `ServerConfig`, `ClientConfig`, and `AdventureConfig`. Enforced read-only display on remote servers (`.available(!isRemote)`); cleared remote state on disconnect (`clearRemoteServerConfig`). | Tested in `ApotheosisConfigTest` (all 62 tests pass). |
+
+
+
 

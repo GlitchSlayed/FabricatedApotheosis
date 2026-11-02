@@ -217,3 +217,37 @@
   - Update loot table definitions to Minecraft 26.3 schema where `TagEntry` uses `"items": "#tag"` rather than `"name": "tag"`.
 - **Consequences**: Seamless end-to-end progression across all modules, zero modifier stacking on tier transitions, clean world generation in compliance with 26.3 registry structures, and full save compatibility.
 
+---
+
+## ADR-018: Client UI Interactions, Rendering Decoupling, and Custom Geometry Architecture
+
+- **Status**: Accepted
+- **Context**: In upstream NeoForge 26.1, client rendering for screens and entity flair (dropped affix item beams and colored shadows) utilized Forge/NeoForge render stage events (`RenderLevelStageEvent`), raw OpenGL state manipulation, and direct Forge localization keys. In Minecraft 26.3 Fabric, rendering has been strictly decoupled into state extraction (`extractRenderState`) and geometry submission (`submit`), and standard rendering must use Mojang high-level abstractions (`SubmitNodeCollector`, `RenderPipelines`) without raw GL or Vulkan driver calls.
+- **Decision**:
+  - Implement dropped affix item visual effects (beacon beams and shadows) by extending `ItemEntityRenderState` with interface `AffixItemRenderState` via `ItemEntityRenderStateMixin`. Extract `RarityRenderData`, color, and ground state in `ItemEntityRenderer.extractRenderState`, and submit custom geometry during `ItemEntityRenderer.submit` using 26.3 `SubmitNodeCollector.submitCustomGeometry` with `ApothRenderTypes.BEAM` (backed by `RenderTypes.eyes(...)`).
+  - Align beacon beam coordinate origins by eliminating legacy block-level $(0.5, 0.5)$ translations in `BeamRenderer`, ensuring vertical loot beams center perfectly on floating and dropped item entities.
+  - Rate-limit particle emissions per item entity via entity attachment (`AFFIX_EFFECT_NEXT_PARTICLE_TIME`) within client tick events (`ClientTickEvents.END_CLIENT_TICK`), preventing particle spam and ensuring clean clearance on chunk unload or disconnect.
+  - Standardize all client translations on Fabric-native namespace keys (`info.apothic_enchanting.limited_enchantability`, `title.apotheosis.world_tier_tutorial`), removing remaining NeoForge translation references.
+  - Enforce hierarchical screen navigation: override `onClose()` on modal and sub-screens (`WorldTierDetailScreen`, `WorldTierTutorialScreen`, `EnchantingInfoScreen`) to cleanly restore the parent menu upon ESC keypress.
+  - Protect container interactions: fix input slot loop bounds in `SalvagingScreen` ($i < 12$), suppress inventory key closes when text filter boxes have focus, and provide dynamic recipe-viewer exclusion bounds (`getExclusionAreas()`) for non-standard panels like the Gem Case upgrade drawer.
+  - Add client configuration toggle ("Enable Affix Item Effects") to `ClientConfig` and YACL `ApotheosisConfigScreen` with live runtime updates.
+- **Consequences**: Flawless visual coherence across all GUI scales and window sizes, zero raw GPU/driver calls, strict adherence to 26.3 render state extraction lifecycles, and zero client leakage into dedicated server execution.
+
+---
+
+## ADR-019: Optional Integrations (JEI, Jade, ModMenu) and Packaging Strategy
+
+- **Status**: Accepted
+- **Context**: In upstream NeoForge 26.1, optional integrations with recipe viewers (JEI/EMI), block inspection HUDs (Jade/Waila), accessory slots (Curios), and configuration libraries (YACL) relied on NeoForge-specific plugin annotations and loose jar distribution. On Minecraft 26.3 Fabric, third-party libraries require strict handling: YACL must preserve LGPL licensing without shading; JEI and Jade must be optional compile-only dependencies with zero dedicated server classloading leakage; and absent accessory/recipe mods must degrade gracefully without crashing or duplicating attribute modifiers.
+- **Decision**:
+  - **Single JAR Packaging**: Include YetAnotherConfigLib (YACL) `3.9.6+26.3-fabric` via Fabric Loom's `include` (Jar-in-Jar) configuration. YACL is bundled inside `META-INF/jars/` completely unshaded, with its original `fabric.mod.json`, JAR manifest, and LGPL-3.0 license metadata intact.
+  - **Recipe Viewer Integration (JEI)**: Implement custom recipe categories (`SpawnerCategory`, `SalvagingCategory`, `GemCuttingCategory`, `InfusionRecipeCategory`) implementing `IRecipeCategory`. Register custom catalysts, recipe caches, ingredient info (spawner silk touch behavior, gems, sigils, libraries), and GUI exclusion zones (`AttributesGui` on `InventoryScreen`, info tab on `ApothEnchantmentScreen`).
+  - **Server-Authoritative Recipe Transfer**: Implement `RavenTransferHandler` (`IRecipeTransferHandler<RavenEnchantmentMenu, InfusionRecipe>`) to transfer infusion recipe items to slot 0 and dispatch `SetRavenStatsPayload` to the server, which validates and clamps slider stats against surrounding bookcases before applying.
+  - **Jade Inspection Providers**: Register `SpawnerServerDataProvider` and `EnchantingServerDataProvider` on the common side (`src/main`) and delegate client component rendering to `SpawnerClientProvider` and `EnchantingClientProvider` on the client side (`src/client`) using dynamic reflection across environments to guarantee zero client classloading on dedicated servers.
+  - **Accessory & Equipment Safety**: Maintain `ModifierSourceType` as an open decoupled extension point. Because Trinkets and Accessories have 0 releases published for Fabric 26.3, mark them as deferred. Ensure `PotionCharmItem` falls back to inventory ticking when accessory mods are absent, and ensure equipment bonuses cannot be duplicated when items are inspected across multiple slots.
+  - **Tooltip Cooperation**: Implement inline enchantment descriptions in `ApothEnchClient` controlled by `enableInlineEnchDescs` config toggle, automatically yielding if standalone description mods (`enchdesc`, `idwtialsimmofg`, `enchantmentdescriptions`) are detected.
+  - **Configuration Polish**: Expose all client preferences and server gameplay rules via YACL with clear descriptions and impact tags. Disable server-authoritative options with `.available(!isRemote)` when connected to remote servers, and restore local singleplayer configuration cleanly on `ClientPlayConnectionEvents.DISCONNECT`.
+- **Consequences**: Robust optional integrations that never crash when dependencies are absent, full compliance with Fabric packaging standards, verified server-side validation on all recipe transfers, and pristine dedicated server safety.
+
+
+

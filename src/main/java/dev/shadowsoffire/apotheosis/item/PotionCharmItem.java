@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import dev.shadowsoffire.apotheosis.AdventureConfig;
 import dev.shadowsoffire.apotheosis.Apoth;
 import dev.shadowsoffire.apotheosis.Apoth.Components;
+import dev.shadowsoffire.apotheosis.platform.PlatformHelper;
 import dev.shadowsoffire.placebo.tabs.ITabFiller;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
@@ -50,9 +51,13 @@ public class PotionCharmItem extends Item implements ITabFiller {
         return PotionContents.createItemStack(this, Potions.LONG_INVISIBILITY);
     }
 
+    public static boolean isCharmsInCuriosOnly() {
+        return AdventureConfig.charmsInCuriosOnly && (PlatformHelper.isModLoaded("accessories") || PlatformHelper.isModLoaded("trinkets"));
+    }
+
     @Override
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @org.jetbrains.annotations.Nullable EquipmentSlot slot) {
-        if (!hasEffect(stack) || AdventureConfig.charmsInCuriosOnly && slot != null) {
+        if (!hasEffect(stack) || isCharmsInCuriosOnly()) {
             return;
         }
         if (stack.get(Components.CHARM_ENABLED) && entity instanceof ServerPlayer player) {
@@ -101,7 +106,7 @@ public class PotionCharmItem extends Item implements ITabFiller {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, net.minecraft.world.item.component.TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
-        if (AdventureConfig.charmsInCuriosOnly) {
+        if (isCharmsInCuriosOnly()) {
             tooltip.accept(Component.translatable(this.getDescriptionId() + ".curios_only").withStyle(ChatFormatting.RED));
         }
         if (hasEffect(stack)) {

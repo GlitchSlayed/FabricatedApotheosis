@@ -25,6 +25,12 @@
     ],
     "modmenu": [
       "dev.shadowsoffire.apotheosis.client.ModMenuIntegration"
+    ],
+    "jei_mod_plugin": [
+      "dev.shadowsoffire.apotheosis.client.compat.jei.ApotheosisJeiPlugin"
+    ],
+    "jade": [
+      "dev.shadowsoffire.apotheosis.compat.jade.ApotheosisJadePlugin"
     ]
   },
   "mixins": [
@@ -55,6 +61,7 @@
   },
   "suggests": {
     "modmenu": "*",
-    "patchouli": "*"
+    "jei": "*",
+    "jade": "*"
   }
 }

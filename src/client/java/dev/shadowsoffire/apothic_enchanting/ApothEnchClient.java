@@ -116,7 +116,10 @@ public class ApothEnchClient {
                     Holder<Enchantment> ench = entry.getKey();
                     int level = entry.getIntValue();
 
-                    if (!FabricLoader.getInstance().isModLoaded("enchdesc")) {
+                    boolean hasExternalDescMod = FabricLoader.getInstance().isModLoaded("enchdesc")
+                        || FabricLoader.getInstance().isModLoaded("idwtialsimmofg")
+                        || FabricLoader.getInstance().isModLoaded("enchantmentdescriptions");
+                    if (ApothEnchConfig.enableInlineEnchDescs && !hasExternalDescMod) {
                         String key = ench.unwrapKey().map(k -> k.identifier().toLanguageKey("enchantment") + ".desc").orElse("");
                         if (!key.isEmpty() && Language.getInstance().has(key)) {
                             tooltip.add(Component.translatable(key).withStyle(ChatFormatting.DARK_GRAY));

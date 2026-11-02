@@ -44,11 +44,18 @@ dependencies {
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	// YetAnotherConfigLib for configuration screen
+	// YetAnotherConfigLib for configuration screen (nested via Jar-in-Jar preserving metadata)
 	implementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
+	include "dev.isxander:yet-another-config-lib:${project.yacl_version}"
 
 	// Optional ModMenu integration
 	compileOnly "com.terraformersmc:modmenu:22.0.0-alpha.3"
+
+	// Optional JEI recipe viewer integration
+	compileOnly "maven.modrinth:jei:31.17.0.108"
+
+	// Optional Jade block/entity inspection integration
+	compileOnly "maven.modrinth:jade:26.3.5+fabric"
 
 	// Testing dependencies
 	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"

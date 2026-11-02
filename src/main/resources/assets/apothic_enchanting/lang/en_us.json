@@ -268,6 +268,7 @@
     "info.apothic_enchanting.item_ench": "Item Enchantability: %s",
     "info.apothic_enchanting.num_clues": "Enchanting Clues: %s",
     "info.apothic_enchanting.infusion_failed": "Infusion Criteria Not Met",
+    "info.apothic_enchanting.limited_enchantability": "Item has limited enchantability",
     "info.apothic_enchanting.anvil_at": "Forging at Level %s",
     "info.apothic_enchanting.anvil_xp_cost": "Raw XP Cost: %s",
 

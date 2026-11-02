@@ -50,6 +50,7 @@
     "button.apotheosis.next_tutorial": "Next",
     "button.apotheosis.done": "Done",
     "button.apotheosis.open_world_tier_tutorial": "Open the World Tier tutorial",
+    "title.apotheosis.world_tier_tutorial": "World Tier Tutorial",
 
     "tutorial.apotheosis.world_tier.introduction.title": "Introduction",
     "tutorial.apotheosis.world_tier.introduction.desc": "Welcome to the tutorial for Apothic World Tiers! In this tutorial, you will learn about the new World Tier system, and how to progress through it. Click \"Next\" to continue, or click \"Skip Tutorial\" to skip this tutorial.",

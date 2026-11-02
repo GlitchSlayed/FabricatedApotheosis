@@ -78,6 +78,11 @@ public class WorldTierTutorialScreen extends Screen {
     }
 
     @Override
+    public void onClose() {
+        this.closeTutorial();
+    }
+
+    @Override
     public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
         int imgLeft = (this.width - WorldTierSelectScreen.IMAGE_WIDTH) / 2;
         int imgTop = (this.height - WorldTierSelectScreen.IMAGE_HEIGHT) / 2;

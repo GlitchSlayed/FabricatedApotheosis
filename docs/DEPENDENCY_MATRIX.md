@@ -10,16 +10,17 @@ Every discovered dependency in the Apotheosis ecosystem has been evaluated and c
 | **Apothic Attributes** | Ecosystem Code to Combine | 3.1.0 | 1.0.0-alpha.1 | MIT / ARR Assets | Integrated into `dev.shadowsoffire.apotheosis.attributes` |
 | **Apothic Enchanting** | Ecosystem Code to Combine | 2.1.0 | 1.0.0-alpha.1 | MIT / ARR Assets | Integrated into `dev.shadowsoffire.apotheosis.enchanting` |
 | **Apothic Spawners** | Ecosystem Code to Combine | 2.0.1 | 1.0.0-alpha.1 | MIT / ARR Assets | Integrated into `dev.shadowsoffire.apotheosis.spawners` |
-| **Placebo (Required Subsets)**| Ecosystem Code to Combine | 10.0.2 | 1.0.0-alpha.1 | MIT | Only required codecs, dynamic registries, and config bridges ported into `placebo` package |
+| **Placebo (Required Subsets)**| Ecosystem Code to Combine | 10.0.2 | 1.0.0-alpha.1 | MIT | Required codecs, dynamic registries, and network bridges ported into `placebo` package |
 | **Fabric Loader** | External Platform Dependency | N/A | `>=0.19.5` | Apache-2.0 | Standard loader runtime |
-| **Fabric API** | External Platform Dependency | N/A | `0.161.0+26.3` | Apache-2.0 | Platform hooks, events, and networking |
-| **YetAnotherConfigLib (YACL)** | Embedded / External Library | N/A | `3.9.6+26.3` | LGPL-3.0 | Evaluated as external platform dependency or Jar-in-Jar (JiJ) with preserved metadata |
+| **Fabric API** | External Platform Dependency | N/A | `0.161.0+26.3` | Apache-2.0 | Platform hooks, events, transfer API, and networking |
+| **YetAnotherConfigLib (YACL)** | Nested Library (JiJ) | N/A | `3.9.6+26.3` | LGPL-3.0 | Nested via Jar-in-Jar (`include`). Unshaded with manifest and license intact in `META-INF/jars/` |
+| **Just Enough Items (JEI)** | Optional Integration | 19.21.0 | `31.17.0.108` | MIT | Verified on 26.3. Custom categories, catalysts, recipe transfer, and exclusion zones |
+| **Jade / Waila** | Optional Integration | 26.0.9 | `26.3.5+fabric` | MIT | Verified on 26.3. Spawner stats and enchanting bookshelf/table data providers |
+| **EMI** | Optional Integration | 1.1.18 | Deferred (TBD) | MIT | No 26.3 release published. Covered automatically via EMI's built-in JEI bridge |
+| **Accessories / Trinkets** | Optional Integration | N/A | Deferred (TBD) | LGPL / MIT | No 26.3 releases published. Open `ModifierSourceType` extension points ready |
 | **Patchouli (Fabric)** | Optional Integration | 26.1-94 | Deferred (TBD) | CC-BY-NC-SA 3.0 | Deferred; not an initial release requirement; no replacement book system planned |
 | **Gateways to Eternity** | Out of Scope | 6.0.2 | Excluded | MIT | Completely out of scope; removed from planned work and release requirements |
-| **Curios API** | Unrelated Sibling Mod (NeoForge)| 15.0.0 | N/A | LGPL-3.0 | Dropped; replaced on Fabric by Trinkets/Accessories or native components |
-| **Jade / Waila** | Optional Integration | 26.0.9 | Compatible | MIT | Optional tooltip display provider |
-| **EMI / JEI** | Optional Integration | 29.5.0 | Compatible | MIT | Optional recipe viewer integration |
-| **Fabric Loom** | Development-Only Dependency | 1.17-SNAPSHOT| 1.17.21 | Apache-2.0 | Gradle plugin |
+| **Fabric Loom** | Development-Only Dependency | 1.17-SNAPSHOT| 1.17.21 | Apache-2.0 | Gradle build plugin |
 
 ---
 
@@ -34,19 +35,19 @@ Every discovered dependency in the Apotheosis ecosystem has been evaluated and c
 - **Decision**: Patchouli / Chronicle of Shadows is deferred and is not an initial release requirement. Do not plan a replacement book system. Book JSON assets remain untouched in `assets/apotheosis/patchouli_books/` without active runtime hooks.
 
 ### 2.3 Single JAR Packaging & YACL Strategy
-- **YACL Packaging**: YACL is licensed under LGPL-3.0. In Fabric, third-party libraries should never be flattened (shaded) into the mod jar, as shading breaks Fabric mod discovery and violates LGPL separation requirements.
-- **Decision**: YACL will be distributed either via Fabric's standard Jar-in-Jar (`include`) mechanism or declared as a runtime dependency. In both approaches, YACL retains its own `fabric.mod.json`, JAR manifest, and LGPL license intact.
+- **YACL Packaging**: YACL is licensed under LGPL-3.0. In Fabric, third-party libraries must never be flattened (shaded) into the mod jar, as shading breaks Fabric mod discovery and violates LGPL separation requirements.
+- **Decision**: YACL `3.9.6+26.3-fabric` is properly nested via Fabric's standard Jar-in-Jar (`include`) mechanism in `build.gradle`. It sits intact in `META-INF/jars/` with its original `fabric.mod.json`, JAR manifest, and LGPL license metadata fully preserved.
 
 ---
 
-## 3. Final Proposed Installation Set
+## 3. Actual Installation Set
 
 For players and modpack authors:
-1. **`fabricated-apotheosis-1.0.0.jar`** (Single combined ecosystem download containing Apotheosis, Apothic Attributes, Apothic Enchanting, Apothic Spawners, and required Placebo utilities).
+1. **`fabricated-apotheosis-1.0.0-alpha.1.jar`** (Single combined ecosystem download containing Apotheosis, Apothic Attributes, Apothic Enchanting, Apothic Spawners, required Placebo utilities, and nested YACL).
 2. **Platform Prerequisites**:
    - Fabric Loader `>=0.19.5`
    - Fabric API `0.161.0+26.3`
-   - YetAnotherConfigLib (YACL) `3.9.6+26.3-fabric` (or embedded via JiJ)
 3. **Optional Enhancements**:
-   - Patchouli Fabric (for in-game Chronicle of Shadows guidebook)
-   - ModMenu (for accessing the YACL in-game config screen from the main menu)
+   - Just Enough Items (JEI) `31.17.0.108+` (in-game recipe viewer and transfer)
+   - Jade `26.3.5+fabric` (in-game HUD block/spawner inspection)
+   - ModMenu (for accessing the in-game configuration screen from the title menu)

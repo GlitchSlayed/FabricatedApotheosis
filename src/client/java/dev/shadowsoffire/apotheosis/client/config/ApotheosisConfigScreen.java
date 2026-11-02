@@ -73,6 +73,15 @@ public class ApotheosisConfigScreen {
                     .controller(opt -> IntegerSliderControllerBuilder.create(opt).range(0, 2000).step(20))
                     .build())
                 .option(Option.<Boolean>createBuilder()
+                    .name(Component.literal("Enable Affix Item Effects"))
+                    .description(OptionDescription.of(
+                        Component.literal("Renders loot beams, colored particles, and custom shadows for dropped affix items."),
+                        Component.literal("[Impact: Live]").withStyle(ChatFormatting.DARK_AQUA)
+                    ))
+                    .binding(true, () -> client.enableAffixItemEffects, val -> client.enableAffixItemEffects = val)
+                    .controller(BooleanControllerBuilder::create)
+                    .build())
+                .option(Option.<Boolean>createBuilder()
                     .name(Component.literal("Display Attribute Deltas"))
                     .description(OptionDescription.of(
                         Component.literal("Displays comparative stat differences (e.g. +2.5 Armor) in item tooltips."),
@@ -97,6 +106,15 @@ public class ApotheosisConfigScreen {
                         Component.literal("[Impact: Live]").withStyle(ChatFormatting.DARK_AQUA)
                     ))
                     .binding(true, () -> client.showEnchantedBookMetadata, val -> client.showEnchantedBookMetadata = val)
+                    .controller(BooleanControllerBuilder::create)
+                    .build())
+                .option(Option.<Boolean>createBuilder()
+                    .name(Component.literal("Enable Inline Enchantment Descriptions"))
+                    .description(OptionDescription.of(
+                        Component.literal("Shows inline descriptions for enchanted books when no standalone description mod is present."),
+                        Component.literal("[Impact: Live]").withStyle(ChatFormatting.DARK_AQUA)
+                    ))
+                    .binding(true, () -> client.enableInlineEnchDescs, val -> client.enableInlineEnchDescs = val)
                     .controller(BooleanControllerBuilder::create)
                     .build())
                 .option(Option.<Boolean>createBuilder()

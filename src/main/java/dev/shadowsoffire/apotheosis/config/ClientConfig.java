@@ -23,13 +23,14 @@ public class ClientConfig {
     public boolean bossHealthBarGlow = true;
     public boolean sculkShelfParticles = true;
     public int sculkShelfNoiseChance = 200;
+    public boolean enableAffixItemEffects = true;
 
     // --- Tooltip Details (LIVE) ---
     public boolean displayAttributeDeltas = true;
     public boolean enablePotionTooltips = true;
     public boolean showEnchantedBookMetadata = true;
     public boolean detailedSpawnerTooltips = true;
-    public boolean enableInlineEnchDescs = false;
+    public boolean enableInlineEnchDescs = true;
 
     // --- Screen Positioning & GUI (LIVE) ---
     public boolean enableAttributesGui = true;

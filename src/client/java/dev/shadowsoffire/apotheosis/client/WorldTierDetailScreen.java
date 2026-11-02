@@ -69,6 +69,16 @@ public class WorldTierDetailScreen extends Screen {
     }
 
     @Override
+    public void onClose() {
+        if (this.parent != null) {
+            Minecraft.getInstance().gui.setScreen(this.parent);
+        }
+        else {
+            super.onClose();
+        }
+    }
+
+    @Override
     public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
         int leftPos = (this.width - WorldTierSelectScreen.IMAGE_WIDTH) / 2 + 26;
         int topPos = (this.height - WorldTierSelectScreen.IMAGE_HEIGHT) / 2 + 30;

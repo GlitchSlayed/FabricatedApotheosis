@@ -13,11 +13,14 @@ public class IntegrationsModule {
     private static final Logger LOGGER = LoggerFactory.getLogger("Apotheosis/Integrations");
 
     public static void init() {
-        if (PlatformHelper.isModLoaded("patchouli")) {
-            LOGGER.info("Patchouli detected, enabling book documentation bridge");
+        if (PlatformHelper.isModLoaded("jei")) {
+            LOGGER.info("Just Enough Items (JEI) detected, enabling recipe viewer support");
         }
-        if (PlatformHelper.isModLoaded("gateways")) {
-            LOGGER.info("Gateways To Eternity detected, enabling gateway compatibility");
+        if (PlatformHelper.isModLoaded("jade")) {
+            LOGGER.info("Jade detected, enabling block & spawner inspection support");
+        }
+        if (PlatformHelper.isModLoaded("accessories") || PlatformHelper.isModLoaded("trinkets")) {
+            LOGGER.info("Accessory slot provider detected, enabling accessory modifier bridge");
         }
     }
 }

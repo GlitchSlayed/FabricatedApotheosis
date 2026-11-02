@@ -65,7 +65,7 @@ public class SalvagingScreen extends AdventureContainerScreen<SalvagingMenu> {
 
         var matches = new ArrayList<OutputData>();
 
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 12; i++) {
             Slot s = this.menu.getSlot(i);
             ItemStack stack = s.getItem();
             for (RecipeHolder<SalvagingRecipe> recipe : SalvagingMenu.findMatch(Minecraft.getInstance().level, stack)) {

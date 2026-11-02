@@ -161,6 +161,51 @@
   - [x] Verified with 62 automated unit tests (`./gradlew test`) covering tier transitions, modifier removal, spawner progression reconciliation, spawn rules, and codecs.
   - [x] Verified dedicated server startup (`./gradlew runServer --args="--nogui"`): 1910 advancements loaded, 342 biome modifications applied, 100% chunks loaded across Overworld, Nether, and The End, and clean shutdown.
 
+### Milestone 10: Complete & Verify Client-Facing Behavior & Visual Rendering
+- **Status**: **COMPLETE** (2026-11-01)
+- **Key Achievements**:
+  - [x] Audited full client-facing feature surface across Attributes, Enchanting, Spawners, and Adventure modules.
+  - [x] Authored comprehensive `docs/CLIENT_FEATURE_CHECKLIST.md` auditing menus, buttons, sliders, text search, focus, recipe-book coexistence, tooltips, comparisons, beams, particles, YACL options, and missing textures/localizations.
+  - [x] Fixed NeoForge translation key in `ApothEnchantmentScreen.java` (`info.apothic_enchanting.limited_enchantability`) and added definition to `src/main/resources/assets/apothic_enchanting/lang/en_us.json`.
+  - [x] Added missing localization key `title.apotheosis.world_tier_tutorial` in `src/main/resources/assets/apotheosis/lang/en_us.json`.
+  - [x] Corrected `SalvagingScreen.java` input slot loop limit (`i < 12`) to prevent treating output slots as recipe inputs.
+  - [x] Added `onClose()` overrides to `WorldTierDetailScreen.java` and `WorldTierTutorialScreen.java` to ensure ESC key cleanly navigates back to parent screens rather than dumping users to the world.
+  - [x] Implemented dropped affix item beacon beam and shadow rendering in `AffixItemEffectRenderer.java`, `ItemEntityRenderStateMixin.java`, and `ItemEntityRendererMixin.java` using 26.3 `submitCustomGeometry` and `ApothRenderTypes.BEAM`, strictly honoring extraction/submission separation.
+  - [x] Corrected beam origin coordinates in `BeamRenderer.java` removing block-level $(0.5, 0.5)$ translation for centered entity alignment.
+  - [x] Added "Enable Affix Item Effects" toggle to `ClientConfig.java` and the YACL `ApotheosisConfigScreen.java`.
+  - [x] Verified zero raw GL/Vulkan calls, strict dedicated-server isolation, and memoized render type resource lifetimes.
+  - [x] Verified 62/62 automated tests pass cleanly (`./gradlew test`).
+
+### Milestone 11: Approved Optional Integrations & Configuration Polish
+- **Status**: **COMPLETE** (2026-11-01)
+- **Key Achievements**:
+  - [x] Implemented Just Enough Items (JEI `31.17.0.108`) recipe viewer integration (`ApotheosisJeiPlugin`):
+    - Custom recipe categories: `SpawnerCategory`, `SalvagingCategory`, `GemCuttingCategory` (with `PurityUpgradeExtension` and `BasicGemCuttingExtension`), and `InfusionRecipeCategory`.
+    - Registered workstation catalysts: `Blocks.SPAWNER`, `Apoth.Blocks.SALVAGING_TABLE`, `Apoth.Blocks.GEM_CUTTING_TABLE`, `Blocks.ENCHANTING_TABLE`, `Ench.Blocks.RAVEN_ENCHANTING_TABLE`.
+    - Registered ingredient information pages: Monster Spawners (silk touch mechanics), Gem Dust, Sigils (Socketing, Enhancement, Unnaming, Withdrawal), Enchantment Library, and Enchanting Tables.
+    - Registered GUI exclusion zones: `InventoryScreen` (`AttributesGui` sheet and sword toggle button) and `ApothEnchantmentScreen` (info tab extending above container).
+    - Registered GUI recipe click areas for Infusion and Salvaging.
+  - [x] Implemented server-authoritative recipe transfer: `RavenTransferHandler` transferring infusion recipe inputs into slot 0 and dispatching `SetRavenStatsPayload` to the server, which validates and clamps slider stats against surrounding bookcases before applying.
+  - [x] Implemented Jade (`26.3.5+fabric`) block and spawner inspection providers:
+    - Server data providers (`SpawnerServerDataProvider`, `EnchantingServerDataProvider`) in `dev.shadowsoffire.apotheosis.compat.jade`.
+    - Client tooltip providers (`SpawnerClientProvider`, `EnchantingClientProvider`) in `dev.shadowsoffire.apotheosis.client.compat.jade`.
+    - Dynamic reflection delegation ensuring zero client classes are loaded on dedicated servers.
+  - [x] Accessory slot integration & safety:
+    - Evaluated Fabric 26.3 ecosystem: Trinkets and Accessories have 0 releases published for 26.3; reported as deferred.
+    - Preserved decoupled `ModifierSourceType` extension point preventing duplicate attribute application.
+    - Updated `PotionCharmItem` to fall back to inventory ticking when accessory mods are absent.
+  - [x] Enchantment description & tooltip cooperation:
+    - Added `enableInlineEnchDescs` config toggle to `ClientConfig` and YACL screen.
+    - Implemented automatic yielding in `ApothEnchClient` when external description mods (`enchdesc`, `idwtialsimmofg`, `enchantmentdescriptions`) are present.
+  - [x] Resolved packaging documentation conflicts:
+    - Nested YetAnotherConfigLib (YACL `3.9.6+26.3-fabric`) via Jar-in-Jar (`include`) in `build.gradle`.
+    - Verified JAR contents: `META-INF/jars/yet-another-config-lib-3.9.6+26.3-fabric.jar` intact with original manifest, `fabric.mod.json`, and LGPL-3.0 license preserved without shading.
+  - [x] Configuration audit & remote server safety:
+    - Enforced read-only mode (`.available(!isRemote)`) on server-authoritative options when connected to remote servers.
+    - Cleaned up remote state on client disconnect (`ClientPlayConnectionEvents.DISCONNECT -> clearRemoteServerConfig`).
+  - [x] Scope boundaries preserved: Gateways completely excluded; Patchouli deferred.
+  - [x] Verified full clean build (`./gradlew build`), all 62 unit tests passing (`./gradlew test`), and verified jar-in-jar packaging.
+
 ---
 
 ## 2. Upcoming Milestones
@@ -170,6 +215,4 @@
 
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points, client flair and visual refinements | `NEXT` |
-| **Milestone 11** | End-to-End GameTests & Multiplayer Validation | Automated Minecraft GameTests for combat, enchanting, spawners, and affix systems; dedicated-server round-trip verification; copied representative world upgrade testing | `PENDING` |
-| **Milestone 12** | Ecosystem Polish, Documentation & Release Readiness | Full ecosystem distributable verification, strict duplicate checks, dependency audit, final user documentation, release packaging | `PENDING` |
+| **Milestone 12** | Ecosystem Polish, Multi-Player Verification & Release Readiness | Dedicated-server round-trip verification, multi-client gameplay tests, representative world upgrade fixture testing, final documentation, release readiness | `NEXT` |

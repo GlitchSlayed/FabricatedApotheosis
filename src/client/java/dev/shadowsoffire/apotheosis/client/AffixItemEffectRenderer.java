@@ -9,6 +9,7 @@ import dev.shadowsoffire.apotheosis.affix.AffixHelper;
 import dev.shadowsoffire.apotheosis.loot.LootRarity;
 import dev.shadowsoffire.apotheosis.loot.RarityRenderData;
 import dev.shadowsoffire.apotheosis.loot.RarityRenderData.ShadowData;
+import dev.shadowsoffire.apotheosis.config.ApotheosisConfig;
 import dev.shadowsoffire.apotheosis.particle.RarityParticleData;
 import dev.shadowsoffire.placebo.dynreg.DynamicHolder;
 import net.minecraft.client.Minecraft;
@@ -16,6 +17,8 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.client.renderer.entity.state.ItemEntityRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +26,6 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Specialized visual effect renderer for dropped affix items (beams, particles, colored shadows).
- * Specialized visual refinement deferred to Milestone 10.
  */
 public class AffixItemEffectRenderer {
 
@@ -32,14 +34,37 @@ public class AffixItemEffectRenderer {
     private static final int ALPHA_LOW = 0x1F;
     private static final int ALPHA_MAX = 0x9F;
 
-    // Beams and shadows geometry submission deferred to Milestone 10 visual refinement
+    public static void renderEffects(ItemEntityRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
+        if (!AdventureConfig.enableAffixItemEffects || !ApotheosisConfig.getClient().enableAffixItemEffects) {
+            return;
+        }
+
+        AffixItemRenderState airs = (AffixItemRenderState) state;
+        RarityRenderData data = airs.apoth$getRarityRenderData();
+        if (data == null) {
+            return;
+        }
+
+        int color = airs.apoth$getColor();
+
+        // Beam rendering
+        if (data.beamHeight() > 0 && data.beamRadius() > 0) {
+            float age = state.ageInTicks;
+            float grow = Math.min(1.0F, age / GROW_IN_TICKS);
+            float height = data.beamHeight() * grow;
+            int colorBot = ARGB.color((int) (ALPHA_MAX * grow), color);
+            int colorTop = ARGB.color(ALPHA_ZERO, color);
+            long gameTime = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
+            BeamRenderer.renderBeaconBeam(poseStack, collector, data.beamTexture(), data.glowTexture(), 0.0F, 1.0F, gameTime, 0.0F, height, colorBot, colorTop, data.beamRadius(), data.glowRadius());
+        }
+    }
 
     private static int color(int alpha, int color) {
         return ARGB.color(alpha, color);
     }
 
     public static void spawnParticles(Minecraft mc) {
-        if (!AdventureConfig.enableAffixItemEffects) {
+        if (!AdventureConfig.enableAffixItemEffects || !ApotheosisConfig.getClient().enableAffixItemEffects) {
             return;
         }
 
