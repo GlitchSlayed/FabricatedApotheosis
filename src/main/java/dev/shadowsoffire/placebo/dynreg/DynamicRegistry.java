@@ -60,6 +60,7 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
 
     // Client-side staged map during network sync
     protected final Map<Identifier, R> clientStaged = new ConcurrentHashMap<>();
+    protected final Set<Identifier> dependencies = new java.util.concurrent.CopyOnWriteArraySet<>();
 
     public DynamicRegistry(Logger logger, Identifier id, RegistrySerializer<R> serializer) {
         this(logger, id, id.getPath(), serializer);
@@ -70,7 +71,30 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         this.id = id;
         this.path = path;
         this.serializer = serializer;
+
+        if (!this.id.equals(Identifier.fromNamespaceAndPath("apotheosis", "rarities"))
+            && !this.id.equals(Identifier.fromNamespaceAndPath("apotheosis", "gear_sets"))
+            && !this.id.getNamespace().equals("apothic_enchanting")
+            && !this.id.getNamespace().equals("test")) {
+            this.dependencies.add(Identifier.fromNamespaceAndPath("apotheosis", "rarities"));
+        }
+
         registerRegistry(this);
+    }
+
+    public DynamicRegistry<R> dependsOn(Identifier id) {
+        this.dependencies.add(id);
+        return this;
+    }
+
+    public DynamicRegistry<R> dependsOn(DynamicRegistry<?> other) {
+        this.dependencies.add(other.getId());
+        return this;
+    }
+
+    @Override
+    public Collection<Identifier> getFabricDependencies() {
+        return Collections.unmodifiableCollection(this.dependencies);
     }
 
     public void registerToBus() {
@@ -86,6 +110,12 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
             throw new IllegalArgumentException("Duplicate dynamic registry registered with ID: " + reg.getId());
         }
         ALL_REGISTRIES.put(reg.getId(), reg);
+        try {
+            net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.server.packs.PackType.SERVER_DATA).registerReloadListener(reg);
+            reg.logger.info("Registered dynamic registry '{}' as server data reload listener", reg.getId());
+        } catch (Throwable t) {
+            reg.logger.error("Failed to register reload listener for dynamic registry '{}'", reg.getId(), t);
+        }
     }
 
     @Nullable
@@ -210,22 +240,73 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
     @Override
     protected Map<Identifier, JsonElement> prepare(ResourceManager manager, ProfilerFiller profiler) {
         Map<Identifier, JsonElement> prepared = new HashMap<>();
-        FileToIdConverter converter = FileToIdConverter.json(this.path);
+        Set<String> searchPaths = new java.util.LinkedHashSet<>();
+        searchPaths.add(this.id.getNamespace() + "/" + this.id.getPath());
+        if (this.path != null && !this.path.equals(this.id.getPath())) {
+            searchPaths.add(this.path);
+        }
+        searchPaths.add(this.id.getPath());
 
-        for (Map.Entry<Identifier, Resource> entry : converter.listMatchingResources(manager).entrySet()) {
-            Identifier fullPath = entry.getKey();
-            Identifier resourceId = converter.fileToId(fullPath);
+        for (String searchPath : searchPaths) {
+            FileToIdConverter converter = FileToIdConverter.json(searchPath);
+            for (Map.Entry<Identifier, Resource> entry : converter.listMatchingResources(manager).entrySet()) {
+                Identifier fullPath = entry.getKey();
+                Identifier resourceId = converter.fileToId(fullPath);
 
-            try (Reader reader = entry.getValue().openAsReader()) {
-                JsonElement json = JsonParser.parseReader(reader);
-                if (prepared.put(resourceId, json) != null) {
-                    this.logger.warn("Duplicate resource detected for ID '{}' across packs, replacing with pack: {}", resourceId, entry.getValue().sourcePackId());
+                if (resourceId.getPath().startsWith(this.id.getNamespace() + "/")) {
+                    resourceId = Identifier.fromNamespaceAndPath(resourceId.getNamespace(), resourceId.getPath().substring(this.id.getNamespace().length() + 1));
                 }
-            } catch (Exception e) {
-                this.logger.error("Failed to parse JSON file '{}' for dynamic registry '{}': {}", fullPath, this.id, e.getMessage(), e);
+
+                if (prepared.containsKey(resourceId)) {
+                    continue;
+                }
+
+                try (Reader reader = entry.getValue().openAsReader()) {
+                    JsonElement json = JsonParser.parseReader(reader);
+                    prepared.put(resourceId, json);
+                } catch (Exception e) {
+                    this.logger.error("Failed to parse JSON file '{}' for dynamic registry '{}': {}", fullPath, this.id, e.getMessage(), e);
+                }
             }
         }
+        this.logger.info("Dynamic registry '{}' discovered {} entries from datapacks across search paths {}", this.id, prepared.size(), searchPaths);
         return prepared;
+    }
+
+    protected static volatile net.minecraft.core.HolderLookup.Provider activeLookup = null;
+    private static volatile java.util.function.Supplier<net.minecraft.core.HolderLookup.Provider> clientLookupSupplier = null;
+
+    public static void setActiveLookup(net.minecraft.core.HolderLookup.Provider lookup) {
+        activeLookup = lookup;
+    }
+
+    public static void setClientLookupSupplier(java.util.function.Supplier<net.minecraft.core.HolderLookup.Provider> supplier) {
+        clientLookupSupplier = supplier;
+    }
+
+    public static net.minecraft.core.HolderLookup.Provider getActiveLookup() {
+        if (activeLookup != null) {
+            return activeLookup;
+        }
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            return server.registryAccess();
+        }
+        if (clientLookupSupplier != null) {
+            try {
+                var lookup = clientLookupSupplier.get();
+                if (lookup != null) {
+                    return lookup;
+                }
+            } catch (Throwable ignored) {
+                // Client not initialized or running in dedicated server environment
+            }
+        }
+        return net.minecraft.core.RegistryAccess.fromRegistryOfRegistries(net.minecraft.core.registries.BuiltInRegistries.REGISTRY);
+    }
+
+    protected com.mojang.serialization.DynamicOps<JsonElement> createOps() {
+        return net.minecraft.resources.RegistryOps.create(JsonOps.INSTANCE, getActiveLookup());
     }
 
     @Override
@@ -235,13 +316,14 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
 
         Map<Identifier, R> staged = new HashMap<>();
         List<String> errors = new ArrayList<>();
+        com.mojang.serialization.DynamicOps<JsonElement> ops = this.createOps();
 
         // Atomic validation & deserialization
         for (Map.Entry<Identifier, JsonElement> entry : prepared.entrySet()) {
             Identifier entryId = entry.getKey();
             JsonElement json = entry.getValue();
 
-            DataResult<R> result = this.serializer.codec().parse(JsonOps.INSTANCE, json);
+            DataResult<R> result = this.serializer.codec().parse(ops, json);
             if (result.isError()) {
                 String errorMsg = "Error decoding element '" + entryId + "' in registry '" + this.id + "': " + result.error().get().message();
                 errors.add(errorMsg);
@@ -335,7 +417,10 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
     }
 
     public synchronized void acceptClientContent(Identifier entryId, JsonElement json) {
-        DataResult<R> result = this.serializer.codec().parse(JsonOps.INSTANCE, json);
+        if (net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
+            return;
+        }
+        DataResult<R> result = this.serializer.codec().parse(this.createOps(), json);
         if (result.isSuccess()) {
             this.clientStaged.put(entryId, result.getOrThrow());
         } else {
@@ -344,6 +429,12 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
     }
 
     public synchronized void completeClientSync() {
+        if (net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
+            this.clientStaged.clear();
+            this.onReload(ReloadType.INTEGRATED_CLIENT);
+            this.logger.info("Integrated client sync preserved authoritative server registry for '{}'", this.id);
+            return;
+        }
         this.commitReload(ImmutableMap.copyOf(this.clientStaged));
         this.clientStaged.clear();
         this.logger.info("Client synchronization complete for dynamic registry '{}'", this.id);

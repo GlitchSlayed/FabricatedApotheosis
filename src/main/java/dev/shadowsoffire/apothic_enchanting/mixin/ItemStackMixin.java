@@ -68,25 +68,26 @@ public class ItemStackMixin {
             realLevels = EnchantmentHelper.getEnchantmentsForCrafting(ths);
         }
 
-        Consumer<Holder<Enchantment>> applyTooltip = ench -> TooltipUtil.applyEnchTooltip(ench, enchants, realLevels, tooltip, tooltipFlag);
-
-        iterationOrder.forEach(applyTooltip);
-
         Set<Holder<Enchantment>> seen = new HashSet<>();
+        Consumer<Holder<Enchantment>> applyTooltip = ench -> {
+            if (seen.add(ench)) {
+                TooltipUtil.applyEnchTooltip(ench, enchants, realLevels, tooltip, tooltipFlag);
+            }
+        };
 
-        enchants.entrySet().stream()
-            .map(Entry::getKey)
-            .filter(ench -> !iterationOrder.contains(ench))
-            .forEach(ench -> {
+        for (Holder<Enchantment> ench : iterationOrder) {
+            if (enchants.getLevel(ench) > 0 || realLevels.getLevel(ench) > 0) {
                 applyTooltip.accept(ench);
-                seen.add(ench);
-            });
+            }
+        }
 
-        realLevels.entrySet().stream()
-            .map(Entry::getKey)
-            .filter(ench -> !iterationOrder.contains(ench))
-            .filter(ench -> !seen.contains(ench))
-            .forEach(applyTooltip);
+        for (Entry<Holder<Enchantment>> entry : enchants.entrySet()) {
+            applyTooltip.accept(entry.getKey());
+        }
+
+        for (Entry<Holder<Enchantment>> entry : realLevels.entrySet()) {
+            applyTooltip.accept(entry.getKey());
+        }
 
         ci.cancel();
     }

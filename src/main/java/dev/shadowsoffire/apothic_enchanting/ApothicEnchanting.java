@@ -24,6 +24,7 @@ import dev.shadowsoffire.placebo.network.PayloadHelper;
 import dev.shadowsoffire.placebo.payloads.ButtonClickPayload;
 import dev.shadowsoffire.placebo.util.PlaceboTaskQueue;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.core.Holder;
@@ -63,6 +64,10 @@ public class ApothicEnchanting {
     public static void init() {
         Ench.bootstrap();
         writeMigratedConfigNotice();
+
+        FabricBlockEntityType enchantingTableType = (FabricBlockEntityType) net.minecraft.world.level.block.entity.BlockEntityTypes.ENCHANTING_TABLE;
+        enchantingTableType.addValidBlock(Ench.Blocks.APOTHIC_ENCHANTING_TABLE.value());
+        enchantingTableType.addValidBlock(Ench.Blocks.RAVEN_ENCHANTING_TABLE.value());
 
         EnchantmentInfoLoader.init();
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(EnchantmentInfoLoader.INSTANCE);

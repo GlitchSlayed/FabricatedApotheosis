@@ -3,6 +3,7 @@ accessWidener	v1	official
 extendable	class	net/minecraft/network/chat/TextColor
 accessible	method	net/minecraft/network/chat/TextColor	<init>	(ILjava/lang/String;)V
 accessible	method	net/minecraft/network/chat/TextColor	<init>	(I)V
+accessible	field	net/minecraft/network/chat/TextColor	NAMED_COLORS	Ljava/util/Map;
 
 accessible	field	net/minecraft/world/inventory/EnchantmentMenu	enchantSlots	Lnet/minecraft/world/Container;
 accessible	field	net/minecraft/world/inventory/EnchantmentMenu	access	Lnet/minecraft/world/inventory/ContainerLevelAccess;
@@ -48,6 +49,7 @@ mutable	field	net/minecraft/world/level/BaseSpawner	spawnRange	I
 accessible	field	net/minecraft/world/level/BaseSpawner	spin	D
 mutable	field	net/minecraft/world/level/BaseSpawner	spin	D
 accessible	field	net/minecraft/world/level/BaseSpawner	oSpin	D
+accessible	field	net/minecraft/client/renderer/item/ItemModels	ID_MAPPER	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
 mutable	field	net/minecraft/world/level/BaseSpawner	oSpin	D
 accessible	method	net/minecraft/world/level/BaseSpawner	isNearPlayer	(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
 accessible	method	net/minecraft/world/level/BaseSpawner	getOrCreateNextSpawnData	(Lnet/minecraft/world/level/Level;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/SpawnData;

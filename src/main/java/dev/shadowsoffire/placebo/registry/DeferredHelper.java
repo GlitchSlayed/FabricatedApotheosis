@@ -78,6 +78,15 @@ public class DeferredHelper {
         Identifier id = this.id(name);
         this.checkDuplicate(id, registry);
         T value = supplier.get();
+        if (registry instanceof net.minecraft.core.MappedRegistry<?> mapped) {
+            try {
+                java.lang.reflect.Field frozenField = net.minecraft.core.MappedRegistry.class.getDeclaredField("frozen");
+                frozenField.setAccessible(true);
+                if (frozenField.getBoolean(mapped)) {
+                    frozenField.set(mapped, false);
+                }
+            } catch (Throwable ignored) {}
+        }
         Holder.Reference<T> ref = Registry.registerForHolder((Registry<T>) registry, id, value);
         if (!ref.isBound()) {
             try {

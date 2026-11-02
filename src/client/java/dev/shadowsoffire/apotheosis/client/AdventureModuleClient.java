@@ -105,6 +105,32 @@ public class AdventureModuleClient {
         // Register key mappings
         AdventureKeys.init();
 
+        ApothMiscUtil.clientPlayerSupplier = () -> Minecraft.getInstance().player;
+        ApothMiscUtil.clientAdvancementChecker = key -> {
+            var conn = Minecraft.getInstance().getConnection();
+            if (conn != null) {
+                var advs = conn.getAdvancements();
+                var holder = advs.get(key);
+                if (holder != null) {
+                    var progress = advs.progress().get(holder);
+                    return progress != null && progress.isDone();
+                }
+            }
+            return false;
+        };
+        WorldTier.clientTutorialChecker = player -> {
+            return WorldTier.getTier(player) == WorldTier.HAVEN;
+        };
+
+        // Wire client dynamic registry lookup
+        dev.shadowsoffire.placebo.dynreg.DynamicRegistry.setClientLookupSupplier(() -> {
+            Minecraft client = Minecraft.getInstance();
+            if (client != null && client.getConnection() != null) {
+                return client.getConnection().registryAccess();
+            }
+            return null;
+        });
+
         // Bootstrap modifier source
         TierAugmentModifierSource.bootstrap();
 

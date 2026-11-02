@@ -2,7 +2,7 @@
     "parent": "block/cube_column",
 	"render_type": "cutout",
     "textures": {
-        "end": "apothic_enchanting:blocks/boss_spawner_top",
-        "side": "apothic_enchanting:blocks/boss_spawner"
+        "end": "apotheosis:blocks/boss_spawner_top",
+        "side": "apotheosis:blocks/boss_spawner"
     }
 }

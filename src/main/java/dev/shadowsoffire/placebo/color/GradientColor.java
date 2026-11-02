@@ -30,10 +30,20 @@ public class GradientColor extends TextColor {
         super(gradient[0], id);
         this.gradient = gradient;
         this.speed = speed;
+        try {
+            TextColor.NAMED_COLORS.put(id, this);
+        }
+        catch (Throwable ignored) {
+        }
     }
 
     public GradientColor(int[] gradient, String id) {
         this(gradient, id, 1);
+    }
+
+    @Override
+    public String serialize() {
+        return String.format(java.util.Locale.ROOT, "#%06X", this.getValue());
     }
 
     @Override

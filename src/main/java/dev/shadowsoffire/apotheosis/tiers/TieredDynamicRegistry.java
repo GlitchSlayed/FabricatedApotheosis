@@ -63,7 +63,8 @@ public abstract class TieredDynamicRegistry<V extends Weighted> extends DynamicR
     public final V getRandomItem(GenContext ctx, Set<V> pool) {
         V v = this.getRandomItem(ctx, pool.isEmpty() ? s -> true : pool::contains);
         if (v == null) {
-            return ApothMiscUtil.getRandomElement(pool.isEmpty() ? this.getValues() : pool, ctx.rand());
+            java.util.Collection<V> candidates = pool.isEmpty() ? this.getValues() : pool;
+            return candidates.isEmpty() ? null : ApothMiscUtil.getRandomElement(candidates, ctx.rand());
         }
         return v;
     }

@@ -49,14 +49,14 @@ public class AttributesTest {
     }
 
     @Test
-    public void testAll21AttributesPresentAndSyncable() {
-        assertEquals(21, ALObjects.Attributes.ALL.size(), "Must have exactly 21 registered custom attributes");
+    public void testAll22AttributesPresentAndSyncable() {
+        assertEquals(22, ALObjects.Attributes.ALL.size(), "Must have exactly 22 registered custom attributes");
 
         for (Holder<Attribute> holder : ALObjects.Attributes.ALL) {
             Attribute attr = holder.value();
             assertTrue(attr.isClientSyncable(), "Attribute " + attr.getDescriptionId() + " must have client synchronization enabled");
             assertTrue(attr.getDescriptionId().startsWith("apothic_attributes:"), "Attribute must use apothic_attributes namespace");
-            assertTrue(attr instanceof RangedAttribute, "All 21 attributes should be RangedAttribute instances");
+            assertTrue(attr instanceof RangedAttribute, "All 22 attributes should be RangedAttribute instances");
         }
     }
 

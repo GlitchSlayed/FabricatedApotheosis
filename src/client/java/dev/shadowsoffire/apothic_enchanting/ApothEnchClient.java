@@ -92,22 +92,7 @@ public class ApothEnchClient {
             else if (i instanceof BlockItem bi) {
                 Block block = bi.getBlock();
                 BlockState state = block.defaultBlockState();
-
-                Level level = Minecraft.getInstance().level;
-                if (level != null && Minecraft.getInstance().player != null) {
-                    BlockPlaceContext ctx = new BlockPlaceContext(level, Minecraft.getInstance().player, InteractionHand.MAIN_HAND, stack, MISS);
-                    try {
-                        state = block.getStateForPlacement(ctx);
-                    }
-                    catch (Exception ignored) {}
-                }
-
-                if (state == null) {
-                    state = block.defaultBlockState();
-                }
-
-                BlockGetter getter = level != null ? level : EmptyBlockGetter.INSTANCE;
-                TooltipUtil.appendBlockStats(getter, state, BlockPos.ZERO, tooltip::add);
+                TooltipUtil.appendBlockStats(EmptyBlockGetter.INSTANCE, state, BlockPos.ZERO, tooltip::add);
             }
             else if (i == Items.ENCHANTED_BOOK) {
                 ItemEnchantments enchMap = EnchantmentHelper.getEnchantmentsForCrafting(stack);
@@ -115,16 +100,6 @@ public class ApothEnchClient {
                     Object2IntMap.Entry<Holder<Enchantment>> entry = enchMap.entrySet().iterator().next();
                     Holder<Enchantment> ench = entry.getKey();
                     int level = entry.getIntValue();
-
-                    boolean hasExternalDescMod = FabricLoader.getInstance().isModLoaded("enchdesc")
-                        || FabricLoader.getInstance().isModLoaded("idwtialsimmofg")
-                        || FabricLoader.getInstance().isModLoaded("enchantmentdescriptions");
-                    if (ApothEnchConfig.enableInlineEnchDescs && !hasExternalDescMod) {
-                        String key = ench.unwrapKey().map(k -> k.identifier().toLanguageKey("enchantment") + ".desc").orElse("");
-                        if (!key.isEmpty() && Language.getInstance().has(key)) {
-                            tooltip.add(Component.translatable(key).withStyle(ChatFormatting.DARK_GRAY));
-                        }
-                    }
 
                     if (ApothEnchConfig.showEnchantedBookMetadata) {
                         EnchantmentInfo info = ApothicEnchanting.getEnchInfo(ench);

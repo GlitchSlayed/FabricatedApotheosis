@@ -146,11 +146,14 @@ public class ApothMiscUtil {
      * Returns a random element from the set, using the provided random source.
      */
     public static <T> T getRandomElement(Collection<T> set, RandomSource rand) {
+        if (set == null || set.isEmpty()) {
+            return null;
+        }
         int index = rand.nextInt(set.size());
         Iterator<T> iter = set.iterator();
         for (int i = 0; i < index; i++) {
             iter.next();
         }
-        return iter.next();
+        return iter.hasNext() ? iter.next() : null;
     }
 }

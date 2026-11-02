@@ -82,6 +82,8 @@
     "text.apotheosis.world_tier_tutorial": "This item has an unknown power",
     "text.apotheosis.world_tier_tutorial.2": "Press %s and activate World Tier: Haven to unlock it",
 
+    "key.category.apotheosis.keys": "Apotheosis",
+    "key.category.apotheosis": "Apotheosis",
     "key.apotheosis.toggle_radial_mining": "Change Radial Mining Mode",
     "key.apotheosis.toggle_attribute_bonuses": "Toggle Boots Attribute Bonuses",
     "key.apotheosis.open_world_tier_select": "Open World Tier Select",

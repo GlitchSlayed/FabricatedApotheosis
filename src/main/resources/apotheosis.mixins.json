@@ -20,6 +20,7 @@
     "NearestAttackableTargetGoalAccessor",
     "NearestAttackableTargetGoalMixin",
     "PlayerMixin",
+    "ReloadableServerResourcesMixin",
     "ServerPlayerGameModeMixin",
     "StructureTemplateMixin",
     "ThrownTridentMixin"

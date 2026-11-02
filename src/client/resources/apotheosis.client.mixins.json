@@ -9,7 +9,8 @@
     "AbstractContainerScreenMixin",
     "InventoryScreenMixin",
     "ItemEntityRenderStateMixin",
-    "ItemEntityRendererMixin"
+    "ItemEntityRendererMixin",
+    "ItemModelsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -31,9 +31,12 @@ public class RarityOverrideRegistry extends DynamicRegistry<RarityOverride> {
     @Override
     protected void validateItem(Identifier key, RarityOverride value) {
         String path = key.getPath().replace('/', ':');
-        Identifier cat = Identifier.tryParse(path);
+        Identifier cat = path.contains(":") ? Identifier.tryParse(path) : Identifier.fromNamespaceAndPath(key.getNamespace(), path);
         Preconditions.checkNotNull(cat, "Invalid category path: " + path);
         LootCategory category = BuiltInRegs.LOOT_CATEGORY.getValue(cat);
+        if (category == null || category.isNone()) {
+            category = value.category();
+        }
         Preconditions.checkArgument(category != null && !category.isNone(), "Category not found: " + cat);
         Preconditions.checkArgument(value.category() == category, "Category mismatch: " + value.category() + " != " + category);
     }
@@ -48,12 +51,17 @@ public class RarityOverrideRegistry extends DynamicRegistry<RarityOverride> {
     protected void onReload(ReloadType type) {
         super.onReload(type);
         this.registry.forEach((key, value) -> {
-            String path = key.getPath().replace('/', ':');
-            Identifier cat = Identifier.tryParse(path);
-            LootCategory category = BuiltInRegs.LOOT_CATEGORY.getValue(cat);
-            RarityOverride old = this.byCategory.put(category, value);
-            if (old != null) {
-                this.logger.warn("Duplicate rarity override for category {}: Old: {}, New: {}", path, this.getKey(old), key);
+            LootCategory category = value.category();
+            if (category == null || category.isNone()) {
+                String path = key.getPath().replace('/', ':');
+                Identifier cat = path.contains(":") ? Identifier.tryParse(path) : Identifier.fromNamespaceAndPath(key.getNamespace(), path);
+                category = BuiltInRegs.LOOT_CATEGORY.getValue(cat);
+            }
+            if (category != null && !category.isNone()) {
+                RarityOverride old = this.byCategory.put(category, value);
+                if (old != null) {
+                    this.logger.warn("Duplicate rarity override for category {}: Old: {}, New: {}", category, this.getKey(old), key);
+                }
             }
         });
     }

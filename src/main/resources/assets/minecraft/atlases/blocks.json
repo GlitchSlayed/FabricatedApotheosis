@@ -7,6 +7,16 @@
         {
             "type": "minecraft:single",
             "resource": "apothic_enchanting:entity/raven_book"
+        },
+        {
+            "type": "minecraft:directory",
+            "source": "blocks",
+            "prefix": "blocks/"
+        },
+        {
+            "type": "minecraft:directory",
+            "source": "blocks",
+            "prefix": "block/"
         }
     ]
 }

@@ -685,6 +685,7 @@ public class Apoth {
         public static final LootCategory MELEE_WEAPON = register("melee_weapon", s -> s.is(ItemTags.SWORDS) || getDefaultModifiers(s).compute(Attributes.ATTACK_DAMAGE, 1, EquipmentSlot.MAINHAND) > 1,
             ALObjects.EquipmentSlotGroups.MAINHAND, 2000);
         public static final LootCategory SHEARS = register("shears", s -> s.getItem() instanceof ShearsItem, ALObjects.EquipmentSlotGroups.MAINHAND, 2500);
+        public static final LootCategory CHARM = register("charm", s -> s.getItem() instanceof dev.shadowsoffire.apotheosis.item.PotionCharmItem, ALObjects.EquipmentSlotGroups.HAND, 2500);
         public static final LootCategory NONE = register("none", Predicates.alwaysFalse(), ALObjects.EquipmentSlotGroups.ANY, Integer.MAX_VALUE);
 
         private static LootCategory register(String path, Predicate<ItemStack> filter, EntitySlotGroup slots, int priority) {

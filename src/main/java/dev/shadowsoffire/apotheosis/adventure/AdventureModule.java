@@ -84,6 +84,8 @@ public class AdventureModule {
         // Codecs
         EntityModifier.initCodecs();
         SpawnCondition.initCodecs();
+        dev.shadowsoffire.apotheosis.loot.LootRule.initCodecs();
+        dev.shadowsoffire.apotheosis.socket.gem.bonus.GemBonus.initCodecs();
 
         // Dynamic registries
         RarityRegistry.INSTANCE.registerToBus();
@@ -99,6 +101,11 @@ public class AdventureModule {
         EliteRegistry.INSTANCE.registerToBus();
         AugmentRegistry.INSTANCE.registerToBus();
         RogueSpawnerRegistry.INSTANCE.registerToBus();
+
+        AffixLootRegistry.INSTANCE.dependsOn(AffixRegistry.INSTANCE);
+        ExtraGemBonusRegistry.INSTANCE.dependsOn(GemRegistry.INSTANCE);
+        InvaderRegistry.INSTANCE.dependsOn(AffixRegistry.INSTANCE).dependsOn(GearSetRegistry.INSTANCE);
+        EliteRegistry.INSTANCE.dependsOn(AffixRegistry.INSTANCE).dependsOn(GearSetRegistry.INSTANCE);
 
         // Network payloads
         PayloadHelper.registerPayload(new BossSpawnPayload.Provider());
@@ -124,6 +131,9 @@ public class AdventureModule {
 
         // Biome modifications for worldgen features
         registerBiomeFeatures();
+
+        // Creative mode tabs
+        registerCreativeTabs();
 
         // Commands
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -239,6 +249,81 @@ public class AdventureModule {
                 if (slot == EquipmentSlot.FEET) {
                     AttributeToggleAffix.prune(player);
                 }
+            }
+        });
+    }
+
+    private static void registerCreativeTabs() {
+        net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(Apoth.Tabs.ADVENTURE.unwrapKey().get()).register(entries -> {
+            entries.accept(Apoth.Items.MYSTERIOUS_SCRAP_METAL.value());
+            entries.accept(Apoth.Items.TIMEWORN_FABRIC.value());
+            entries.accept(Apoth.Items.LUMINOUS_CRYSTAL_SHARD.value());
+            entries.accept(Apoth.Items.ARCANE_SANDS.value());
+            entries.accept(Apoth.Items.GODFORGED_PEARL.value());
+            entries.accept(Apoth.Items.GOD_FUSED_PEARL.value());
+            entries.accept(Apoth.Items.GEM_DUST.value());
+            entries.accept(Apoth.Items.GEM_FUSED_SLATE.value());
+
+            entries.accept(Apoth.Items.SIGIL_OF_SOCKETING.value());
+            entries.accept(Apoth.Items.SIGIL_OF_WITHDRAWAL.value());
+            entries.accept(Apoth.Items.SIGIL_OF_REBIRTH.value());
+            entries.accept(Apoth.Items.SIGIL_OF_ENHANCEMENT.value());
+            entries.accept(Apoth.Items.SIGIL_OF_UNNAMING.value());
+            entries.accept(Apoth.Items.SIGIL_OF_MALICE.value());
+            entries.accept(Apoth.Items.SIGIL_OF_SUPREMACY.value());
+
+            entries.accept(Apoth.Items.SALVAGING_TABLE.value());
+            entries.accept(Apoth.Items.GEM_CUTTING_TABLE.value());
+            entries.accept(Apoth.Items.SIMPLE_REFORGING_TABLE.value());
+            entries.accept(Apoth.Items.REFORGING_TABLE.value());
+            entries.accept(Apoth.Items.AUGMENTING_TABLE.value());
+            entries.accept(Apoth.Items.GEM_CASE.value());
+            entries.accept(Apoth.Items.ENDER_GEM_CASE.value());
+
+            entries.accept(Apoth.Items.IRON_UPGRADE_SMITHING_TEMPLATE.value());
+            entries.accept(Apoth.Items.GOLD_UPGRADE_SMITHING_TEMPLATE.value());
+            entries.accept(Apoth.Items.DIAMOND_UPGRADE_SMITHING_TEMPLATE.value());
+
+            entries.accept(Apoth.Items.MUSIC_DISC_FLASH.value());
+            entries.accept(Apoth.Items.MUSIC_DISC_GLIMMER.value());
+            entries.accept(Apoth.Items.MUSIC_DISC_SHIMMER.value());
+
+            if (dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableSpawners) {
+                entries.accept(Apoth.Items.SPAWNER_CHAIN.value());
+                entries.accept(Apoth.Items.SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.INFUSED_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.FRONTIER_SPAWNER_UPGRADE_RUNE.value());
+                entries.accept(Apoth.Items.ASCENT_SPAWNER_UPGRADE_RUNE.value());
+                entries.accept(Apoth.Items.SUMMIT_SPAWNER_UPGRADE_RUNE.value());
+                entries.accept(Apoth.Items.PINNACLE_SPAWNER_UPGRADE_RUNE.value());
+                entries.accept(Apoth.Items.SPAWN_RANGE_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.REDSTONE_CONTROL_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.IGNORE_LIGHT_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.INITIAL_HEALTH_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.SILENT_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.YOUTHFUL_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.BURNING_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.NO_AI_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.IGNORE_CONDITIONS_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.IGNORE_PLAYERS_SPAWNER_RUNE.value());
+                entries.accept(Apoth.Items.ECHOING_SPAWNER_RUNE.value());
+            }
+
+            net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event = new net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent(entries);
+            if (Apoth.Items.GEM.value() instanceof dev.shadowsoffire.placebo.tabs.ITabFiller filler) {
+                filler.fillItemCategory(Apoth.Tabs.ADVENTURE.value(), event);
+            }
+            if (GemRegistry.INSTANCE.getValues().isEmpty()) {
+                entries.accept(Apoth.Items.GEM.value());
+            }
+
+            entries.accept(Apoth.Items.BOSS_SUMMONER.value());
+        });
+
+        net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.FOOD_AND_DRINKS).register(entries -> {
+            net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event = new net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent(entries);
+            if (Apoth.Items.POTION_CHARM.value() instanceof dev.shadowsoffire.placebo.tabs.ITabFiller filler) {
+                filler.fillItemCategory(null, event);
             }
         });
     }

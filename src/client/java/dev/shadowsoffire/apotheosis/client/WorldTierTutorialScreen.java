@@ -83,7 +83,21 @@ public class WorldTierTutorialScreen extends Screen {
     }
 
     @Override
+    public void resize(int width, int height) {
+        if (this.parent != null) {
+            this.parent.resize(width, height);
+        }
+        super.resize(width, height);
+    }
+
+    @Override
     public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
+        if (this.parent != null) {
+            this.parent.extractBackground(gfx, mouseX, mouseY, partialTick);
+        } else {
+            super.extractBackground(gfx, mouseX, mouseY, partialTick);
+        }
+
         int imgLeft = (this.width - WorldTierSelectScreen.IMAGE_WIDTH) / 2;
         int imgTop = (this.height - WorldTierSelectScreen.IMAGE_HEIGHT) / 2;
 
@@ -92,6 +106,9 @@ public class WorldTierTutorialScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
+        if (this.parent != null) {
+            this.parent.extractRenderState(gfx, mouseX, mouseY, partialTick);
+        }
         super.extractRenderState(gfx, mouseX, mouseY, partialTick);
         int imgLeft = (this.width - WorldTierSelectScreen.IMAGE_WIDTH) / 2;
         int imgTop = (this.height - WorldTierSelectScreen.IMAGE_HEIGHT) / 2;

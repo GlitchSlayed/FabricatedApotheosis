@@ -100,12 +100,15 @@ public class ALObjects {
         public static final Holder<Attribute> COOLDOWN_REDUCTION = R.attribute("cooldown_reduction",
             () -> new RangedAttribute("apothic_attributes:cooldown_reduction", 0.0D, -10.0D, 0.95D).setSyncable(true));
 
+        public static final Holder<Attribute> CREATIVE_FLIGHT = R.attribute("creative_flight",
+            () -> new RangedAttribute("apothic_attributes:creative_flight", 0.0D, 0.0D, 1.0D).setSyncable(true));
+
         public static final List<Holder<Attribute>> ALL = List.of(
             ARMOR_PIERCE, ARMOR_SHRED, ARROW_DAMAGE, ARROW_VELOCITY, COLD_DAMAGE,
             CRIT_CHANCE, CRIT_DAMAGE, CURRENT_HP_DAMAGE, DODGE_CHANCE, DRAW_SPEED,
             EXPERIENCE_GAINED, FIRE_DAMAGE, GHOST_HEALTH, HEALING_RECEIVED, LIFE_STEAL,
             OVERHEAL, PROJECTILE_DAMAGE, PROT_PIERCE, PROT_SHRED, ELYTRA_FLIGHT,
-            COOLDOWN_REDUCTION
+            COOLDOWN_REDUCTION, CREATIVE_FLIGHT
         );
 
         public static void bootstrap() {}

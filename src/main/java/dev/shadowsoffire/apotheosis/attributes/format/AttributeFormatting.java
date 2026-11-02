@@ -52,6 +52,7 @@ public class AttributeFormatting {
 
         // Boolean Attributes
         register(ALObjects.Attributes.ELYTRA_FLIGHT, FormatType.BOOLEAN);
+        register(ALObjects.Attributes.CREATIVE_FLIGHT, FormatType.BOOLEAN);
     }
 
     private static void register(Holder<Attribute> attr, FormatType type) {

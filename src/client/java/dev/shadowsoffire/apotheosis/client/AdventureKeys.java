@@ -67,7 +67,10 @@ public class AdventureKeys {
 
         while (OPEN_WORLD_TIER_SELECT.consumeClick()) {
             if (client.gui.screen() == null) {
-                client.gui.setScreen(new WorldTierSelectScreen());
+                boolean isDefaultT = OPEN_WORLD_TIER_SELECT.matches(OPEN_WORLD_TIER_SELECT.getDefaultKey());
+                if (!isDefaultT || client.hasControlDown()) {
+                    client.gui.setScreen(new WorldTierSelectScreen());
+                }
             }
         }
     }

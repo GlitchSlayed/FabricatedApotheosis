@@ -133,6 +133,12 @@ public enum WorldTier implements StringRepresentable {
     }
 
     public static boolean isUnlocked(Player player, WorldTier tier) {
+        if (tier == HAVEN) {
+            return true;
+        }
+        if (getTier(player).isAtLeast(tier)) {
+            return true;
+        }
         return ApothMiscUtil.hasAdvancement(player, tier.getUnlockAdvancement());
     }
 

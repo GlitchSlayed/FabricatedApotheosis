@@ -53,7 +53,8 @@ public abstract class PlayerMixin {
     private void apoth_creativeFlightTick(CallbackInfo ci) {
         Player self = (Player) (Object) this;
         if (!self.level().isClientSide()) {
-            boolean canFly = self.hasEffect(ALObjects.MobEffects.FLYING);
+            boolean canFly = self.hasEffect(ALObjects.MobEffects.FLYING)
+                || (self.getAttributes().hasAttribute(ALObjects.Attributes.CREATIVE_FLIGHT) && self.getAttributeValue(ALObjects.Attributes.CREATIVE_FLIGHT) > 0);
             if (canFly) {
                 if (!self.getAbilities().mayfly) {
                     self.getAbilities().mayfly = true;

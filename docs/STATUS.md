@@ -224,8 +224,48 @@
   - [x] Authored `docs/RELEASE_READINESS.md` containing completed parity matrix, installation instructions, reproducible build guide, and explicit limitations.
   - [x] Release posture: Release Candidate ready for testing. Do not publish.
 
+### Post-Milestone 12 Hotfix 1: Client Startup & Resource Loading Repairs
+- **Status**: **COMPLETE** (2026-11-01)
+- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.2.jar`
+- **Key Fixes**:
+  - [x] **EnchantTableRendererMixin Injection Repair**: Corrected `@At(value = "INVOKE")` descriptor for `SubmitNodeCollector.submitModel(...)` to match Minecraft 26.3 runtime bytecode (9 arguments instead of 10). Added safe crumbling overlay render type override for custom book textures.
+  - [x] **Gem Model Dynamic Dispatch**: Registered `apotheosis:gem_dispatch` (`GemModel.Unbaked.MAP_CODEC`) into `ItemModels.ID_MAPPER` via `ItemModelsMixin` and accesswidener. Implemented per-gem model dispatch resolving all 23 built-in gem variants.
+  - [x] **Atlas & Sprite Resource Resolution**: Added `blocks` and `items` directory sources to `assets/minecraft/atlases/blocks.json` and `items.json`, resolving all 293 model texture references. Corrected namespaced model paths for stray model duplicates.
+  - [x] **Automated Verification**: Authored `ClientResourceValidationTest` (4 tests). Total test suite: 72/72 tests passing. Dedicated server launch and clean stop verified.
+
+### Post-Milestone 12 Hotfix 2: In-Game Mechanics, UI & Dynamic Data Loading Repairs
+- **Status**: **COMPLETE** (2026-11-01)
+- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.3.jar`
+- **SHA-256**: `94f4841d226200fa263c288cf896f1f339e9d7a9743dc6e8399d7d68b64ddbd6`
+- **Key Fixes**:
+  - [x] **Table Placement Crash (`Invalid block entity`)**: Added `FabricBlockEntityType.addValidBlock(...)` in `ApothicEnchanting.java` for `APOTHIC_ENCHANTING_TABLE` and `RAVEN_ENCHANTING_TABLE` so vanilla enchanting table block entity accepts custom tables.
+  - [x] **Dynamic Registry Server Data Decoding & Datapack Lookup**:
+    - Captured `loadResult.lookupWithUpdatedTags()` from `ReloadableServerResources` constructor into `DynamicRegistry.activeLookup` via `ReloadableServerResourcesMixin`.
+    - Wired `createOps()` to use `getActiveLookup()` and added decoupled client lookup provider via `AdventureModuleClient.init()`.
+    - Initialized `LootRule.initCodecs()` and `GemBonus.initCodecs()` in `AdventureModule.init()`.
+    - Added DAG dependency edges (`AffixLootRegistry -> AffixRegistry`, `ExtraGemBonusRegistry -> GemRegistry`, `InvaderRegistry -> AffixRegistry`).
+    - Added `CHARM` category to `Apoth.LootCategories` and `CREATIVE_FLIGHT` attribute to `ALObjects.Attributes` (with flight tick integration in `PlayerMixin`).
+    - Fixed `ContextAwarePredicate` to handle both `"condition"` and `"type"` JSON fields.
+    - Fixed `RarityOverrideRegistry` category lookup and reload mapping.
+    - Verified 100% of dynamic registry entries loaded cleanly: 99 affixes, 21 gems, 30 gear sets, 23 invaders, 4 elites, 9 rogue spawners, 27 tier augments, 5 rarities, 1 rarity override with 0 errors.
+  - [x] **Loot & Empty Pool Crash Guard**: Added null-safe empty check in `ApothMiscUtil.getRandomElement(...)` and guarded `TieredDynamicRegistry.getRandomItem(...)` against empty candidate sets.
+  - [x] **Gradient Color Network Packet Decoder**: Overrode `GradientColor.serialize()` to format as hex `#%06X` and made `TextColor.NAMED_COLORS` accessible in `apotheosis.accesswidener`, preventing chat/system packet decoder crashes.
+  - [x] **Creative Tabs & Missing Module Content**:
+    - Registered `CreativeModeTabEvents.modifyOutputEvent` for `Apoth.Tabs.ADVENTURE` (scrap, fabric, sigils, workstations, templates, music discs, spawner runes, gems via `ITabFiller`, boss summoners).
+    - Registered `CreativeModeTabs.FOOD_AND_DRINKS` for `POTION_CHARM`.
+    - Applied mixin redirect in `CreativeModeTabsMixin` directing `Enchantment.getMaxLevel()` to `EnchHooks.getMaxLevel(ench)` so creative search indexes uncapped Apotheosis levels.
+    - Fixed thread-safety in `ApothEnchClient` search indexing by using `block.defaultBlockState()` instead of placement contexts.
+  - [x] **Enchanted Book Tooltip Deduplication**: Rebuilt `ItemStackMixin` tooltip generation with `seen` set and `level > 0` guard to eliminate duplicate lines and uncapped enchantment display discrepancies.
+  - [x] **World Tier UI & Keybind**:
+    - Changed default keybind check in `AdventureKeys.OPEN_WORLD_TIER_SELECT` to require `Ctrl` when bound to `T` to prevent chat opening conflicts.
+    - Added `"key.category.apotheosis.keys": "Apotheosis"` in `en_us.json`.
+    - Fixed `WorldTier.HAVEN` unlock state (`isUnlocked` returns true for Haven and for unlocked progression tiers).
+    - Added `WorldTierSelectScreen.updateButtonStatus()` in `tick()` so UI updates live.
+    - Fixed `WorldTierTutorialScreen` background rendering by delegating `extractBackground`, `extractRenderState`, and `resize` to `parent`.
+  - [x] **Automated Verification**: Authored `InGameRepairsTest`, updated `AttributesTest` and `SaveCompatibilityTest`. 75/75 tests passing. Dedicated server launch cleanly verified in 0.205s with 0 errors.
+
 ---
 
 ## 2. Milestone Summary
 
-All 12 project milestones are now **COMPLETE**. The codebase is frozen in Release Candidate state (`1.0.0-alpha.1`) awaiting end-user testing. Releases will not be published without explicit user authorization.
+All 12 project milestones are now **COMPLETE**. The codebase is updated to Release Candidate (`1.0.0-alpha.3`) with client startup, in-world gameplay, and dynamic registry repairs verified. Releases will not be published without explicit user authorization.

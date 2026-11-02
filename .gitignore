@@ -5,13 +5,13 @@ reference/
 upstream/
 
 # Gradle & Build artifacts
-.gradle/
-build/
-bin/
-out/
-run/
-logs/
-config/
+/.gradle/
+/build/
+/bin/
+/out/
+/run/
+/logs/
+/config/
 
 # IDE files
 .idea/

@@ -164,6 +164,7 @@ public class WorldTierSelectScreen extends Screen {
     @Override
     public void tick() {
         this.animTicks++;
+        this.updateButtonStatus();
     }
 
     protected OnPress displayTier(WorldTier tier) {

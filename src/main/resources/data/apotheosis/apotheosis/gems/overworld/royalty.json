@@ -73,6 +73,7 @@
             "type": "apotheosis:drop_transform",
             "conditions": [
                 {
+                    "type": "apotheosis:matches_block",
                     "condition": "apotheosis:matches_block",
                     "valid_blocks": "#c:ores/copper"
                 }

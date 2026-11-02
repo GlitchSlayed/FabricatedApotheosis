@@ -155,6 +155,7 @@ public class SaveCompatibilityTest {
         assertEquals(Identifier.fromNamespaceAndPath("apothic_attributes", "ghost_health"), getHolderId(ALObjects.Attributes.GHOST_HEALTH));
         assertEquals(Identifier.fromNamespaceAndPath("apothic_attributes", "dodge_chance"), getHolderId(ALObjects.Attributes.DODGE_CHANCE));
         assertEquals(Identifier.fromNamespaceAndPath("apothic_attributes", "elytra_flight"), getHolderId(ALObjects.Attributes.ELYTRA_FLIGHT));
+        assertEquals(Identifier.fromNamespaceAndPath("apothic_attributes", "creative_flight"), getHolderId(ALObjects.Attributes.CREATIVE_FLIGHT));
     }
 
     @Test
