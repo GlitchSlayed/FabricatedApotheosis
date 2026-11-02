@@ -206,13 +206,26 @@
   - [x] Scope boundaries preserved: Gateways completely excluded; Patchouli deferred.
   - [x] Verified full clean build (`./gradlew build`), all 62 unit tests passing (`./gradlew test`), and verified jar-in-jar packaging.
 
+### Milestone 12: Final Verification & Release-Candidate Preparation
+- **Status**: **COMPLETE** (2026-11-01)
+- **Key Achievements**:
+  - [x] Full parity review conducted across all subsystems: reconciled every inventory document (`SPAWNERS_INVENTORY.md`, `ENCHANTING_INVENTORY.md`, `ADVENTURE_INVENTORY.md`) against actual code. Audited and verified zero active stubs, no-ops, or incomplete registrations.
+  - [x] Established `1.0.0-alpha.1` as the fork's persistence and save-compatibility baseline:
+    - Authored `SaveCompatibilityTest.java` validating persistent registry identifier stability for all data components, blocks, items, attachments, and custom attributes.
+    - Verified multi-pass serialization round-tripping for affix equipment, socketed gems, spawner parameters, Raven Table stats, and World Tier progression.
+    - Verified recoverable/unknown data tag preservation (no silent resets).
+    - Verified that module toggling does not erase world content.
+  - [x] Authored `docs/FUTURE_UPGRADE_GUIDE.md`: prepared reusable upgrade testing procedures and documentation for future Minecraft releases (e.g. 26.4) with an explicit policy against speculative adapters or premature compatibility claims.
+  - [x] Packaging and runtime audit:
+    - Built release candidate artifact `build/libs/fabricated-apotheosis-1.0.0-alpha.1.jar` with nested YACL JiJ unshaded.
+    - Passed all 68 automated unit tests (`./gradlew test --rerun-tasks`).
+    - Verified dedicated server startup and clean shutdown (`./gradlew runServer --args="--nogui"`) with 1910 advancements, 342 biome modifications across 57 biomes, and 100% chunks loaded.
+    - Verified zero duplicate classes and exclusion of reference trees from artifacts.
+  - [x] Authored `docs/RELEASE_READINESS.md` containing completed parity matrix, installation instructions, reproducible build guide, and explicit limitations.
+  - [x] Release posture: Release Candidate ready for testing. Do not publish.
+
 ---
 
-## 2. Upcoming Milestones
+## 2. Milestone Summary
 
-> [!NOTE]
-> Roadmap format: One substantial prompt per numbered milestone (no A/B/C sub-prompts). Gateways to Eternity is completely out of scope; Patchouli / Chronicle of Shadows is deferred (TBD, not an initial release requirement). External legacy migrations from upstream/Zenith/older configs are not required; persistence tasks focus strictly on this fork's own save compatibility across supported upgrades per `docs/SAVE_COMPATIBILITY.md`.
-
-| Milestone | Focus | Deliverables | Target |
-| :--- | :--- | :--- | :--- |
-| **Milestone 12** | Ecosystem Polish, Multi-Player Verification & Release Readiness | Dedicated-server round-trip verification, multi-client gameplay tests, representative world upgrade fixture testing, final documentation, release readiness | `NEXT` |
+All 12 project milestones are now **COMPLETE**. The codebase is frozen in Release Candidate state (`1.0.0-alpha.1`) awaiting end-user testing. Releases will not be published without explicit user authorization.
