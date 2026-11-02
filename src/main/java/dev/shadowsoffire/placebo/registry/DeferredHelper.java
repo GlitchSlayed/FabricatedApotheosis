@@ -372,6 +372,20 @@ public class DeferredHelper {
         return codec;
     }
 
+    @SuppressWarnings("unchecked")
+    public <T extends net.minecraft.world.level.levelgen.feature.Feature> com.mojang.serialization.MapCodec<T> feature(String name, com.mojang.serialization.MapCodec<T> codec) {
+        Identifier id = this.id(name);
+        this.checkDuplicate(id, BuiltInRegistries.FEATURE_TYPE);
+        Registry.register((Registry<com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.levelgen.feature.Feature>>) BuiltInRegistries.FEATURE_TYPE, id, codec);
+        return codec;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor> com.mojang.serialization.MapCodec<T> structureProcessor(String name, com.mojang.serialization.MapCodec<T> codec) {
+        Identifier id = this.id(name);
+        return (com.mojang.serialization.MapCodec<T>) Registry.register((Registry) BuiltInRegistries.STRUCTURE_PROCESSOR, id, codec);
+    }
+
     public <K, V> Object dataMap(String name, ResourceKey<Registry<K>> registry, com.mojang.serialization.Codec<V> codec, UnaryOperator<Object> op) {
         return new Object();
     }

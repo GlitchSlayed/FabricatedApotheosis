@@ -454,6 +454,11 @@ public class Apoth {
     }
 
     public static class Features {
+        public static final com.mojang.serialization.MapCodec<dev.shadowsoffire.apotheosis.gen.BossDungeonFeature> BOSS_DUNGEON = R.feature("boss_dungeon", dev.shadowsoffire.apotheosis.gen.BossDungeonFeature.CODEC);
+        public static final com.mojang.serialization.MapCodec<dev.shadowsoffire.apotheosis.gen.BossDungeonFeature2> BOSS_DUNGEON_2 = R.feature("boss_dungeon_2", dev.shadowsoffire.apotheosis.gen.BossDungeonFeature2.CODEC);
+        public static final com.mojang.serialization.MapCodec<dev.shadowsoffire.apotheosis.gen.RogueSpawnerFeature> ROGUE_SPAWNER = R.feature("rogue_spawner", dev.shadowsoffire.apotheosis.gen.RogueSpawnerFeature.CODEC);
+        public static final com.mojang.serialization.MapCodec<dev.shadowsoffire.apotheosis.gen.ItemFrameGemsProcessor> ITEM_FRAME_GEMS = R.structureProcessor("item_frame_gems", dev.shadowsoffire.apotheosis.gen.ItemFrameGemsProcessor.CODEC);
+
         private static void bootstrap() {}
     }
 

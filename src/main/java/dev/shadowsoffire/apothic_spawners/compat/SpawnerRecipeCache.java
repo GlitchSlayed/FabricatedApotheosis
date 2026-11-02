@@ -15,9 +15,18 @@ public class SpawnerRecipeCache {
 
     private SpawnerRecipeCache() {}
 
+    public static boolean shouldFilterRecipe(net.minecraft.resources.Identifier recipeId, boolean combinedAdventure) {
+        return combinedAdventure && "apothic_spawners".equals(recipeId.getNamespace());
+    }
+
     public static void rebuildFromMap(RecipeMap map) {
         Collection<RecipeHolder<SpawnerModifier>> holders = map.byType(ASObjects.SPAWNER_MODIFIER);
-        RECIPES = holders.stream().sorted(Comparator.comparing(h -> h.id().identifier(), (id1, id2) -> -id1.compareTo(id2))).map(RecipeHolder::value).toList();
+        boolean combined = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAdventure;
+        RECIPES = holders.stream()
+            .filter(h -> !shouldFilterRecipe(h.id().identifier(), combined))
+            .sorted(Comparator.comparing(h -> h.id().identifier(), (id1, id2) -> -id1.compareTo(id2)))
+            .map(RecipeHolder::value)
+            .toList();
     }
 
     public static List<SpawnerModifier> getRecipes() {

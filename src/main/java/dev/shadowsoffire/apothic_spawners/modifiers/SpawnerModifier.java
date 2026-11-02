@@ -135,8 +135,10 @@ public record SpawnerModifier(Ingredient mainHand, Optional<Ingredient> offHand,
     public static SpawnerModifier findMatch(ApothSpawnerTile tile, ItemStack mainhand, ItemStack offhand) {
         Stream<SpawnerModifier> modifiers;
         if (tile.getLevel() instanceof ServerLevel sl) {
+            boolean combined = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAdventure;
             modifiers = sl.getServer().getRecipeManager().getRecipes().stream()
                 .filter(h -> h.value().getType() == ASObjects.SPAWNER_MODIFIER)
+                .filter(h -> !combined || !"apothic_spawners".equals(h.id().identifier().getNamespace()))
                 .map(h -> (SpawnerModifier) h.value());
         }
         else {

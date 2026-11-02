@@ -146,9 +146,30 @@
 > [!NOTE]
 > Roadmap format: One substantial prompt per numbered milestone (no A/B/C sub-prompts). Gateways to Eternity is completely out of scope; Patchouli / Chronicle of Shadows is deferred (TBD, not an initial release requirement). External legacy migrations from upstream/Zenith/older configs are not required; persistence tasks focus strictly on this fork's own save compatibility across supported upgrades per `docs/SAVE_COMPATIBILITY.md`.
 
+### Milestone 9: Apotheosis Progression, Worldgen & Ecosystem Integration
+- **Status**: **COMPLETE** (2026-10-30)
+- **Key Achievements**:
+  - [x] Implemented World Tiers (Haven, Frontier, Ascent, Summit, Pinnacle): advancement-based unlock requirements (`Apoth.Advancements`), server-authoritative persistence (`Attachments.WORLD_TIER`), multiplayer synchronization (`WorldTierPayload`), `/apotheosis world_tier` command, and full UI screens (`WorldTierSelectScreen`, `WorldTierDetailScreen`, `WorldTierTutorialScreen`).
+  - [x] Implemented Tier Bonus Augment recalculation: `TierAugmentRegistry` dynamically applying player and monster attribute augments across tier transitions, deaths, respawns, dimension changes, and player joins without modifier accumulation.
+  - [x] Reconciled standalone and Apotheosis spawner modifier recipes in `SpawnerRecipeCache` and `SpawnerModifier`: filtered out standalone `apothic_spawners` modifiers when `enableAdventure` is active, enforcing tiered spawner runes and progression pacing.
+  - [x] Ported Invaders, Elites, and Augmentations: dynamic registries (`InvaderRegistry`, `EliteRegistry`, `AugmentRegistry`, `GearSetRegistry`), spawn rules per dimension (`InvaderSpawnRules`), delayed elite initialization, and boss announcement broadcasting.
+  - [x] Ported Boss Spawner block & tile (`BossSpawnerBlock`, `BossSpawnerTile`): proximity player detection, cluster/mount spawning, and block replacement.
+  - [x] Ported Boss Dungeon features (`BossDungeonFeature` cobblestone/brick variant, `BossDungeonFeature2` NBT template variant `boss_1.nbt`) and Rogue Spawners (`RogueSpawnerFeature`, `RogueSpawnerRegistry`).
+  - [x] Ported Tome Towers jigsaw structures (`tower_main`, `tower_leaf`, `tower_sand`, `tower_spruce`) with `ItemFrameGemsProcessor` populating item frames with tiered gems and purity levels.
+  - [x] Integrated worldgen features via Fabric Biome API v1 (`BiomeModifications.addFeature`) replacing NeoForge BiomeModifiers.
+  - [x] Ported boss drops and dungeon chest loot tables with 26.3 `TagEntry` schema migration.
+  - [x] Verified with 62 automated unit tests (`./gradlew test`) covering tier transitions, modifier removal, spawner progression reconciliation, spawn rules, and codecs.
+  - [x] Verified dedicated server startup (`./gradlew runServer --args="--nogui"`): 1910 advancements loaded, 342 biome modifications applied, 100% chunks loaded across Overworld, Nether, and The End, and clean shutdown.
+
+---
+
+## 2. Upcoming Milestones
+
+> [!NOTE]
+> Roadmap format: One substantial prompt per numbered milestone (no A/B/C sub-prompts). Gateways to Eternity is completely out of scope; Patchouli / Chronicle of Shadows is deferred (TBD, not an initial release requirement). External legacy migrations from upstream/Zenith/older configs are not required; persistence tasks focus strictly on this fork's own save compatibility across supported upgrades per `docs/SAVE_COMPATIBILITY.md`.
+
 | Milestone | Focus | Deliverables | Target |
 | :--- | :--- | :--- | :--- |
-| **Milestone 9** | Boss Generation, Worldgen & Progression | Rogue spawners, boss dungeons, wanderer/invader boss entities, Fabric Loot API v3 integration, World Tier locking (Gateways to Eternity completely excluded) | `NEXT` |
-| **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points (Patchouli / Chronicle of Shadows deferred TBD; no replacement book system) | `PENDING` |
+| **Milestone 10** | Platform Integrations & ModMenu | ModMenu configuration screen integration, accessory slot extension points, client flair and visual refinements | `NEXT` |
 | **Milestone 11** | End-to-End GameTests & Multiplayer Validation | Automated Minecraft GameTests for combat, enchanting, spawners, and affix systems; dedicated-server round-trip verification; copied representative world upgrade testing | `PENDING` |
 | **Milestone 12** | Ecosystem Polish, Documentation & Release Readiness | Full ecosystem distributable verification, strict duplicate checks, dependency audit, final user documentation, release packaging | `PENDING` |

@@ -1,6 +1,6 @@
-# Handoff Report — Milestone 8: Apothic Adventure Core Items & Economy Systems
+# Handoff Report — Milestone 9: Progression, World Content & Ecosystem Integration
 
-- **Date**: 2026-10-29
+- **Date**: 2026-10-30
 - **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.19.5, YACL 3.9.6)
 
 ## 1. Current Repository Tree
@@ -54,44 +54,96 @@ FabricatedApotheosis/
 │   │   │   │   ├── affix/
 │   │   │   │   ├── attachments/
 │   │   │   │   ├── commands/
-│   │   │   │   ├── compat/
-│   │   │   │   ├── event/
+│   │   │   │   │   ├── AffixCommand.java
+│   │   │   │   │   ├── BossCommand.java
+│   │   │   │   │   ├── WorldTierCommand.java
+│   │   │   │   │   └── ...
+│   │   │   │   ├── gen/
+│   │   │   │   │   ├── BossDungeonFeature.java
+│   │   │   │   │   ├── BossDungeonFeature2.java
+│   │   │   │   │   ├── RogueSpawnerFeature.java
+│   │   │   │   │   └── ItemFrameGemsProcessor.java
 │   │   │   │   ├── item/
+│   │   │   │   │   ├── BossSummonerItem.java
+│   │   │   │   │   └── ...
 │   │   │   │   ├── loot/
-│   │   │   │   ├── mixin/ItemStackMixin.java
-│   │   │   │   ├── recipe/
-│   │   │   │   ├── socket/
+│   │   │   │   ├── mixin/
+│   │   │   │   │   ├── BaseSpawnerAccessor.java
+│   │   │   │   │   ├── EntityInvoker.java
+│   │   │   │   │   ├── MobMixin.java
+│   │   │   │   │   ├── NearestAttackableTargetGoalAccessor.java
+│   │   │   │   │   ├── NearestAttackableTargetGoalMixin.java
+│   │   │   │   │   ├── StructureTemplateMixin.java
+│   │   │   │   │   └── ...
+│   │   │   │   ├── mobs/
+│   │   │   │   │   ├── ApothMobEvents.java
+│   │   │   │   │   ├── BossSpawnerBlock.java
+│   │   │   │   │   ├── InvaderSpawnRules.java
+│   │   │   │   │   ├── registries/
+│   │   │   │   │   │   ├── AugmentRegistry.java
+│   │   │   │   │   │   ├── EliteRegistry.java
+│   │   │   │   │   │   └── InvaderRegistry.java
+│   │   │   │   │   ├── types/
+│   │   │   │   │   │   ├── Augmentation.java
+│   │   │   │   │   │   ├── Elite.java
+│   │   │   │   │   │   └── Invader.java
+│   │   │   │   │   └── util/
+│   │   │   │   ├── net/
+│   │   │   │   │   ├── BossSpawnPayload.java
+│   │   │   │   │   ├── WorldTierPayload.java
+│   │   │   │   │   └── ...
+│   │   │   │   ├── spawner/
+│   │   │   │   │   ├── RogueSpawner.java
+│   │   │   │   │   └── RogueSpawnerRegistry.java
+│   │   │   │   ├── tiers/
+│   │   │   │   │   ├── GenContext.java
+│   │   │   │   │   ├── WorldTier.java
+│   │   │   │   │   └── augments/
 │   │   │   │   └── util/
 │   │   │   ├── apothic_attributes/
 │   │   │   ├── apothic_enchanting/
 │   │   │   ├── apothic_spawners/
+│   │   │   │   ├── compat/SpawnerRecipeCache.java
+│   │   │   │   └── modifiers/SpawnerModifier.java
 │   │   │   └── placebo/
+│   │   │       ├── json/
+│   │   │       │   ├── ChancedEffectInstance.java
+│   │   │       │   ├── NBTAdapter.java
+│   │   │       │   ├── OptionalTemplateCodec.java
+│   │   │       │   └── WeightedItemStack.java
+│   │   │       └── systems/gear/
+│   │   │           ├── GearSet.java
+│   │   │           └── GearSetRegistry.java
 │   │   └── resources/
-│   │       ├── assets/apotheosis/
 │   │       ├── data/apotheosis/
+│   │       │   ├── loot_table/
+│   │       │   ├── placebo/gear_sets/
+│   │       │   ├── recipe/spawner_modifiers/
+│   │       │   ├── structure/
+│   │       │   ├── tags/
+│   │       │   └── worldgen/
+│   │       │       ├── feature/
+│   │       │       ├── placed_feature/
+│   │       │       ├── processor_list/
+│   │       │       ├── structure/
+│   │       │       ├── structure_set/
+│   │       │       └── template_pool/
 │   │       ├── fabric.mod.json
-│   │       ├── apotheosis.accesswidener
 │   │       └── apotheosis.mixins.json
 │   ├── client/
 │   │   └── java/dev/shadowsoffire/
 │   │       ├── apotheosis/
 │   │       │   ├── client/
-│   │       │   │   ├── ApotheosisClient.java
-│   │       │   │   ├── AdventureModuleClient.java
-│   │       │   │   ├── AdventureContainerScreen.java
-│   │       │   │   ├── SimpleTexButton.java
-│   │       │   │   ├── BeamRenderer.java
-│   │       │   │   ├── EquipmentComparePositioner.java
-│   │       │   │   ├── SocketTooltipRenderer.java
-│   │       │   │   ├── StoneformingTooltipRenderer.java
 │   │       │   │   ├── WorldTierSelectScreen.java
-│   │       │   │   └── WorldTierDetailScreen.java
-│   │       │   └── socket/
-│   │       └── placebo/
+│   │       │   │   ├── WorldTierDetailScreen.java
+│   │       │   │   ├── WorldTierTutorialScreen.java
+│   │       │   │   └── ...
 │   └── test/
 │       └── java/dev/shadowsoffire/
 │           ├── apotheosis/
-│           │   ├── adventure/AdventureTests.java
+│           │   ├── adventure/
+│           │   │   ├── AdventureTests.java
+│           │   │   └── ProgressionAndWorldgenTests.java
 │           │   ├── attributes/
 │           │   └── config/
 │           ├── apothic_enchanting/
@@ -101,70 +153,101 @@ FabricatedApotheosis/
 
 ---
 
-## 2. Milestone 8 Implementation Highlights
+## 2. Milestone 9 Implementation Highlights
 
-1. **Feature Inventory & Baseline**:
-   - Created comprehensive inventory in `docs/ADVENTURE_INVENTORY.md` capturing all registries, codecs, components, affixes, gems, sockets, purity weights, workstations, items, recipes, commands, and screens.
+1. **World Tiers & Advancement Progression**:
+   - Implemented 5 World Tiers (`Haven`, `Frontier`, `Ascent`, `Summit`, `Pinnacle`) with advancement-based unlocks (`Apoth.Advancements.WORLD_TIER_*`).
+   - Managed server-authoritative persistence via `Attachments.WORLD_TIER` and network synchronization via `WorldTierPayload`.
+   - Built full user interfaces: `WorldTierSelectScreen`, `WorldTierDetailScreen`, and `WorldTierTutorialScreen`.
+   - Added `/apotheosis world_tier` command supporting getting, setting, and checking tier unlocks for players.
 
-2. **Dynamic Registries & Codecs**:
-   - Ported dynamic data registries managed through Placebo: `RarityRegistry`, `RarityOverrideRegistry`, `AffixRegistry`, `ExtraGemBonusRegistry`, `GemRegistry`, `AffixLootRegistry`, `PurityWeightsRegistry`, `TierAugmentRegistry`.
-   - Built full codec and stream codec representations for network and save persistence.
+2. **Tier Augment Recalculation**:
+   - Ported `TierAugmentRegistry` for dynamic player and monster augments.
+   - Bound recalculation hooks to player tier change, player join (`ServerPlayConnectionEvents.JOIN`), player respawn (`ServerPlayerEvents.COPY_FROM`), and dimension change (`ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL`).
+   - Strictly removes previous tier modifiers and applies current tier modifiers, preventing modifier accumulation across transitions.
 
-3. **Data Components & Modifier Derivation**:
-   - Registered `ItemAffixes` (`apotheosis:affixes`), `DynamicHolder<LootRarity>` (`apotheosis:rarity`), `SocketedGems` (`apotheosis:sockets`), `Purity` (`apotheosis:purity`), and `Component` (`apotheosis:affix_name`) as Minecraft 26.3 `DataComponents`.
-   - Created `ItemStackMixin` injecting into `forEachModifier(EquipmentSlot, BiConsumer)` and `forEachModifier(EquipmentSlotGroup, TriConsumer)` to derive attribute modifiers dynamically from affixes and socketed gems without persisting derived modifiers or causing duplicate applications.
+3. **Spawner Progression Reconciliation**:
+   - Reconciled standalone vs Apotheosis spawner modifier recipes in `SpawnerRecipeCache` and `SpawnerModifier`.
+   - When `enableAdventure` is active, standalone `apothic_spawners` modifier recipes are filtered out, ensuring that cheaper standalone recipes cannot bypass Apotheosis tier progression and that spawner runes are required.
 
-4. **Workstations & Item Conservation**:
-   - Implemented Reforging Table (`ReforgingTableBlock`, `ReforgingTableTile`, `ReforgingMenu`), Salvaging Table (`SalvagingTableBlock`, `SalvagingTableTile`, `SalvagingMenu`), Augmenting Table (`AugmentingTableBlock`, `AugmentingTableTile`, `AugmentingMenu`), Gem Cutting Table (`GemCuttingBlock`, `GemCuttingMenu`), and Gem Case (`GemCaseBlock`, `GemCaseTile`, `GemCaseMenu`).
-   - Enforced server-authoritative item conservation: recipes validate all inputs, costs, and player levels before applying outputs or consuming resources.
-   - Integrated workstation automation via Fabric Transfer API (`ItemStorage.SIDED`).
+4. **Bosses, Invaders, Elites & Gear Sets**:
+   - Ported dynamic registries: `InvaderRegistry`, `EliteRegistry`, `AugmentRegistry`, and `GearSetRegistry`.
+   - Added dimension-specific spawn rules via `InvaderSpawnRules` with surface/sky condition checks.
+   - Built `BossSpawnerBlock` and `BossSpawnerTile` with player proximity detection, cluster spawning, and block replacement.
+   - Built `BossSummonerItem` and `/apotheosis spawn_boss` command.
+   - Implemented delayed elite initialization and boss spawn announcement broadcasting (`BossSpawnPayload`).
 
-5. **Items, Sigils & Recipes**:
-   - Ported Sigil of Unnaming, Sigil of Withdrawal, Sigils of Socketing, Potion Charms, and Infusion recipes (`CharmInfusionRecipe`, `PotionCharmRecipe`).
-   - Ported Potions of Mining Fatigue (`apothic_attributes:fatigue`, `long_fatigue`, `strong_fatigue`) into `ALObjects.Potions`.
+5. **World Generation & Fabric Biome API Integration**:
+   - Implemented `BossDungeonFeature` (Variant 1: classic cobblestone/brick dungeon) and `BossDungeonFeature2` (Variant 2: NBT structure `boss_1.nbt`), double chests with dungeon loot tables, and boss spawner blocks.
+   - Implemented `RogueSpawnerFeature` and `RogueSpawnerRegistry` for underground covered spawners.
+   - Ported Tome Towers jigsaw structures (`tower_main`, `tower_leaf`, `tower_sand`, `tower_spruce`) using standard biome tags and `ItemFrameGemsProcessor` to populate item frames with tiered gems and purity.
+   - Replaced NeoForge `BiomeModifier` JSONs with Fabric Biome API v1 (`BiomeModifications.addFeature`), cleanly registering features into overworld and cave generation steps.
+   - Migrated all worldgen features to 26.3 `Registries.FEATURE` (`worldgen/feature/`) format.
 
-6. **Client Screens & UI**:
-   - Ported all container screens to vanilla 26.3 / RenderPearl pipeline abstractions: `ReforgingScreen`, `SalvagingScreen`, `AugmentingScreen`, `GemCuttingScreen`, `GemCaseScreen`, `WorldTierSelectScreen`, `WorldTierDetailScreen`, and `WorldTierTutorialScreen`.
-   - Implemented functional socket and gem tooltip rendering (`SocketTooltipRenderer`) and equipment comparison overlay (`EquipmentComparePositioner`).
-
-7. **Non-Instrumented Unit Test Resilience**:
-   - Added fallbacks in `CachedObject` and `DeferredHelper` to permit running headless JUnit unit tests without requiring Loom mixin transformation agents.
+6. **Loot Table & Data Migration**:
+   - Ported boss entity drop tables, dungeon chests, and wandering trader loot.
+   - Migrated loot table `TagEntry` schema from legacy `"name": "tag"` to 26.3 `"items": "#tag"`.
 
 ---
 
 ## 3. Verification & Test Evidence
 
 1. **Automated Unit Tests**:
-   - Executed `./gradlew test --rerun-tasks`: 56 tests executed across 13 test classes, 56 passed in 6s.
-   - Comprehensive tests in `AdventureTests.java`:
-     - `LootCategory accurately categorizes vanilla equipment`
-     - `Inventory operations and item conservation for ReforgingTableTile`
-     - `Purity ordinal ordering and upgrade mechanics`
-     - `SalvagingRecipe item conservation and output derivation`
-     - `Inventory operations and item conservation for SalvagingTableTile`
-     - `Socket management, empty checks, and SocketedGems serialization`
-     - `Affix exclusivity rules and ItemAffixes serialization round-trip`
+   - Executed `./gradlew test --rerun-tasks`: 62 tests executed across 14 test classes, **62 passed in 9s**.
+   - Comprehensive tests in `ProgressionAndWorldgenTests.java`:
+     - `Verify WorldTier ordering and unlock progression`: verified ordinal ordering, unlock checks, and fallback resolution.
+     - `Verify tier bonuses apply and remove without modifier accumulation`: verified clean removal of old tier modifiers and reapplication of new ones on attribute maps.
+     - `Verify Spawner Recipe Cache reconciles standalone and Apotheosis progression recipes`: verified standalone recipe suppression in combined mode and preservation in standalone mode.
+     - `Verify Invader Spawn Rules resolve per dimension`: verified Overworld surface and Nether rules.
+     - `Verify Feature MapCodecs encode and decode correctly`: verified custom and default `success_chance` round-tripping on `BossDungeonFeature`, `BossDungeonFeature2`, and `RogueSpawnerFeature`.
+     - `Verify GearSet serialization round-trip`: verified `GearSet.CODEC` round-trip.
 
 2. **Compilation & Packaging**:
    - `./gradlew compileJava compileClientJava`: Succeeded with 0 errors.
-   - `./gradlew build`: Succeeded (including `validateAccessWidener` and `verifyNoDuplicateClasses`).
 
 3. **Dedicated Server Launch**:
    - Executed `./gradlew runServer --args="--nogui"`.
    - Verified log output:
-     `[Apotheosis/Adventure] Adventure module initialized`
-     `Loaded 1910 advancements`
-     `Done (0.279s)! For help, type "help"`
-     `Saving chunks for level 'ServerLevel[world]'/minecraft:overworld`
-   - Clean shutdown; zero missing registry entries, zero client leakage.
+     `[Worker-Main-1/INFO] (Minecraft) Loaded 1910 advancements`
+     `[BiomeModificationImpl] Applied 342 biome modifications to 57 of 67 new biomes in 10.49 ms`
+     `[Server thread/INFO] (Minecraft) Preparing level "world"`
+     `[Server thread/INFO] (Minecraft) Preparing spawn area: 100%`
+     `[Server thread/INFO] (Minecraft) Done (0.401s)! For help, type "help"`
+     `[Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld`
+     `[Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether`
+     `[Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end`
+     `[Server thread/INFO] (Minecraft) Stopping server`
+     `BUILD SUCCESSFUL in 18s`
+   - Zero registry errors, zero loot table parse errors, zero unmapped biomes, and clean shutdown.
 
 ---
 
-## 4. Next Concrete Implementation Task
+## 4. In-Game Test Procedure for Milestone 9
 
-Proceed to **Milestone 9: Boss Generation, Worldgen & Progression**:
-1. Implement Rogue Spawners and Boss Dungeons world generation.
-2. Implement Wanderer and Invader boss entities, boss gear generation, and attribute buffs.
-3. Implement World Tier progression locks, criteria verification, and dynamic difficulty scaling.
-4. Integrate Fabric Loot API v3 for adventure loot tables and world drop modifiers.
-5. Gateways to Eternity remains completely out of scope.
+To test Milestone 9 functionality in-game:
+1. **World Tiers Progression**:
+   - Open inventory and click the World Tier orb icon, or run `/apotheosis world_tier` to view the current tier (default: `Haven`).
+   - Earn the prerequisite advancement or run `/advancement grant @s only apotheosis:world_tier/frontier` to unlock `Frontier`.
+   - Open the World Tier screen, select `Frontier`, and click Activate. Verify that monster health and damage increase and that the client chat receives the tier transition packet.
+   - Run `/attribute @s ...` to verify that player augments are applied, and change tiers again to verify obsolete modifiers are cleanly removed without accumulation.
+2. **Boss Spawners & Dungeons**:
+   - Locate an underground Boss Dungeon or run `/execute in minecraft:overworld run locate structure ...` or place a `apotheosis:boss_spawner`.
+   - Approach the boss spawner in Survival mode. Observe the spawner detecting the player within 8 blocks, bursting into an invading boss mob with custom equipment, name, and glowing effect, replacing the spawner with air.
+   - Kill the boss and verify that affix-bearing boss equipment and rare boss loot drop.
+3. **Boss Summoner & Commands**:
+   - Run `/apotheosis spawn_boss ~ ~ ~ apotheosis:overworld/zombie apotheosis:mythic` to directly spawn a custom invader boss.
+   - Right-click the ground with a Boss Summoner item to trigger an invader spawn.
+4. **Spawner Progression**:
+   - In combined mode, try using a standalone spawner upgrade item (e.g. Fermented Spider Eye for inverse counts). Verify that the recipe requires Apotheosis progression runes according to the active tier.
+5. **Tome Towers**:
+   - Explore overworld biomes to discover naturally generated Tome Towers. Check the chests and item frames for enchanted tomes and socketable gems with varying purity levels.
+
+---
+
+## 5. Next Concrete Implementation Task
+
+Proceed to **Milestone 10: Platform Integrations & ModMenu**:
+1. Wire ModMenu configuration screen factory to `ApotheosisConfigScreen`.
+2. Implement accessory slot / trinket compatibility extension points (without hard dependencies).
+3. Finalize client flair, visual polish, and custom particle rendering pipelines.
+4. Note: Gateways to Eternity remains completely out of scope; Patchouli / Chronicle of Shadows deferred TBD.

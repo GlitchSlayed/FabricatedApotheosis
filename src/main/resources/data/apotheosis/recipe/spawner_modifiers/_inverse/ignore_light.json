@@ -1,0 +1,12 @@
+{
+    "type": "apothic_spawners:spawner_modifier",
+    "mainhand": "apotheosis:ignore_light_spawner_rune",
+    "offhand": "minecraft:quartz",
+    "stat_changes": [
+        {
+            "type": "apothic_spawners:ignore_light",
+            "mode": "set",
+            "value": false
+        }
+    ]
+}

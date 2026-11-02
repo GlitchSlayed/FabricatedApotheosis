@@ -37,6 +37,7 @@ public class AdventureConfig {
 
     // Generation
     public static float spawnerValueChance = 0.11F;
+    public static boolean worldGenDebug = false;
 
     // Affix
     public static boolean disableQuarkOnAffixItems = true;
@@ -102,6 +103,7 @@ public class AdventureConfig {
         }
 
         spawnerValueChance = c.getFloat("Spawner Value Chance", "spawners", spawnerValueChance, 0, 1, "The chance that a Rogue Spawner has a \"valuable\" chest instead of a standard one. 0 = 0%, 1 = 100%\nServer-authoritative.");
+        worldGenDebug = c.getBoolean("WorldGen Debug", "worldgen", worldGenDebug, "Whether to log world generation debug messages.\nServer-authoritative.");
         undergroundTrader = c.getBoolean("Underground Trader", "wanderer", undergroundTrader, "If the Wandering Trader can attempt to spawn underground.\nServer-authoritative.");
 
         upgradeSigilCost = c.getInt("Upgrade Sigil Cost", "augmenting", upgradeSigilCost, 0, 64, "The number of Sigils of Enhancement it costs to upgrade an affix in the Augmenting Table.\nSynced.");

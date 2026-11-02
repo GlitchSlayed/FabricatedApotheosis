@@ -201,3 +201,19 @@
   - Implement server-authoritative item conservation across all workstations (Reforging, Salvaging, Augmenting, Gem Cutting): validate item recipes and input requirements before applying modifications, and integrate workstation automation using Fabric Transfer API (`ItemStorage.SIDED`).
   - Provide non-instrumented fallbacks in `CachedObject` and `DeferredHelper` so that headless unit tests run safely in standard test JVMs without requiring active Loom mixin bytecode instrumentation.
 - **Consequences**: Deterministic item and socket persistence, full save compatibility with this fork's schema policy, clean multiplayer synchronization, and zero duplicate modifier accumulation bugs.
+
+---
+
+## ADR-017: Progression Pacing, Dynamic Augment Recalculation, and Fabric Biome Worldgen Integration
+
+- **Status**: Accepted
+- **Context**: In upstream NeoForge, Apotheosis progression integrated across multiple standalone modules and used NeoForge-specific BiomeModifiers (`BlacklistModifier`), NeoForge `EntityJoinLevelEvent`, and NeoForge network payloads to manage World Tiers, boss spawning, and structure generation. In combined mode, cheaper standalone spawner upgrade recipes risked bypassing tier progression if not reconciled, and biome generation required adapting to Minecraft 26.3 `Registries.FEATURE` and Fabric Biome API v1.
+- **Decision**:
+  - Implement World Tiers (`WorldTier`) as a server-authoritative attachment (`Attachments.WORLD_TIER`), governed by vanilla advancements (`Apoth.Advancements`), synchronized to clients via `WorldTierPayload`, and managed by `/apotheosis world_tier`.
+  - Reconcile standalone and progression spawner recipes via `SpawnerRecipeCache` and `SpawnerModifier`: when `enableAdventure` is active, suppress standalone `apothic_spawners` modifier recipes, enforcing tiered spawner runes and preventing cheaper recipes from bypassing tier gating.
+  - Recalculate tier augments dynamically via `TierAugmentRegistry`: on player tier changes, deaths, respawns (`ServerPlayerEvents.COPY_FROM`), joins (`ServerPlayConnectionEvents.JOIN`), and dimension changes (`ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL`), remove previous tier modifiers and apply the current tier modifiers to avoid modifier accumulation.
+  - Implement Minecraft 26.3 `Feature` architecture for `BossDungeonFeature`, `BossDungeonFeature2`, and `RogueSpawnerFeature`, registering their `MapCodec` entries in `BuiltInRegistries.FEATURE_TYPE` and placing features via Fabric Biome API v1 (`BiomeModifications.addFeature`), fully replacing NeoForge `BiomeModifier` JSONs.
+  - Migrate structure template entity processing via `StructureTemplateMixin` to run `ItemFrameGemsProcessor`, decorating Tome Tower item frames with tiered gems and purity without NeoForge structure modifiers.
+  - Update loot table definitions to Minecraft 26.3 schema where `TagEntry` uses `"items": "#tag"` rather than `"name": "tag"`.
+- **Consequences**: Seamless end-to-end progression across all modules, zero modifier stacking on tier transitions, clean world generation in compliance with 26.3 registry structures, and full save compatibility.
+

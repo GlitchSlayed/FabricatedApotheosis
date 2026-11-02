@@ -58,6 +58,10 @@ public record StepFunction(float min, int steps, float step, float max) {
         return new StepFunction(val, 1, 0, val);
     }
 
+    public static StepFunction fromBounds(float min, float max) {
+        return fromBounds(min, max, 0.01F);
+    }
+
     public static StepFunction fromBounds(float min, float max, float step) {
         int steps = Math.max(1, Math.round((max - min) / step));
         return new StepFunction(min, steps, step, min + steps * step);

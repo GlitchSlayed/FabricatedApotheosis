@@ -58,6 +58,19 @@ public enum WorldTier implements StringRepresentable {
         return this.name;
     }
 
+    public boolean isAtLeast(WorldTier other) {
+        return this.ordinal() >= other.ordinal();
+    }
+
+    public static WorldTier byName(String name) {
+        for (WorldTier tier : values()) {
+            if (tier.getSerializedName().equalsIgnoreCase(name)) {
+                return tier;
+            }
+        }
+        return HAVEN;
+    }
+
     public MutableComponent toComponent() {
         return Apotheosis.lang("text", "world_tier." + this.getSerializedName());
     }

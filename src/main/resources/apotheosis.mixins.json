@@ -6,17 +6,22 @@
   "mixins": [
     "AbstractArrowAccessor",
     "AbstractArrowMixin",
+    "BaseSpawnerAccessor",
     "BlockMixin",
     "CombatRulesMixin",
     "EntityAccessor",
+    "EntityInvoker",
     "EntityMixin",
     "ItemStackMixin",
     "LivingEntityAccessor",
     "LivingEntityMixin",
     "LootContextMixin",
+    "MobMixin",
+    "NearestAttackableTargetGoalAccessor",
     "NearestAttackableTargetGoalMixin",
     "PlayerMixin",
     "ServerPlayerGameModeMixin",
+    "StructureTemplateMixin",
     "ThrownTridentMixin"
   ],
   "injectors": {

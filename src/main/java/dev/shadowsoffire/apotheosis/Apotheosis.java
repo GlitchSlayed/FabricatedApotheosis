@@ -74,6 +74,12 @@ public class Apotheosis implements ModInitializer {
 
     public static final boolean STAGES_LOADED = false;
 
+    public static void debugLog(net.minecraft.core.BlockPos pos, String name) {
+        if (AdventureConfig.worldGenDebug) {
+            LOGGER.info("Generated {} at [{}, {}, {}]", name, pos.getX(), pos.getY(), pos.getZ());
+        }
+    }
+
     public static Identifier loc(String path) {
         return Identifier.fromNamespaceAndPath(MODID, path);
     }

@@ -133,3 +133,22 @@ Status Definitions:
 | **Workstation Automation** | `verified` | Fabric Transfer API `ItemStorage.SIDED` integration for automated input/output on reforging and salvaging stations. | Registered in `AdventureModule`; unit tested inventory conservation. |
 | **Client Screens & Tooltips** | `verified` | Functional container screens, radial state tracking, equipment comparison positioning, and custom socket/gem tooltips. | Client compilation passed; zero client leakage to dedicated server. |
 
+---
+
+## 9. Apothic Progression & World Content (Milestone 9)
+
+| Upstream Feature | Status | Target Scope / Plan | Verification & Evidence |
+| :--- | :--- | :--- | :--- |
+| **World Tiers** | `verified` | 5 World Tiers (Haven, Frontier, Ascent, Summit, Pinnacle) with advancement unlock requirements, server validation, client selection UI (`WorldTierSelectScreen`, `WorldTierDetailScreen`, `WorldTierTutorialScreen`), and S2C networking sync (`WorldTierPayload`). | Tested in `ProgressionAndWorldgenTests.testWorldTierOrderingAndProgression`; synced via `ServerPlayNetworking`. |
+| **Tier Bonus Augments** | `verified` | Dynamic attribute bonuses for players and monsters (`TierAugmentRegistry`), reapplied on tier transition, join, respawn, and dimension change with clean removal of obsolete modifiers. | Tested in `ProgressionAndWorldgenTests.testTierBonusApplicationAndCleanRemoval`; zero modifier accumulation verified. |
+| **Spawner Progression Reconciliation** | `verified` | Reconciles standalone `apothic_spawners` modifiers with tiered progression; filters out standalone modifier recipes when `enableAdventure` is active to enforce spawner rune progression. | Tested in `ProgressionAndWorldgenTests.testSpawnerRecipeCacheReconciliation`. |
+| **Boss / Invader Spawning** | `verified` | Natural invader spawn rules per dimension (`InvaderSpawnRules`), boss gearsets, enchantments, cursed item rules, cooldown timers (`Attachments.INVADER_COOLDOWN`), and cluster announcement broadcasts (`BossSpawnPayload`). | Tested in `ProgressionAndWorldgenTests.testInvaderSpawnRules`; verified on dedicated server boot. |
+| **Elites & Augmentations** | `verified` | `EliteRegistry` and `AugmentRegistry` for miniboss transformations, passenger loading, delayed elite initialization, and specialized combat augmentations. | Registries registered and loaded dynamically; unit tested codec round-trips. |
+| **Boss Spawner Block & Summoner** | `verified` | `BossSpawnerBlock` and `BossSpawnerTile` detecting players within range, spawning boss with equipment, and replacing with air; `BossSummonerItem` and `/apotheosis spawn_boss` command. | Verified in dedicated server environment; command registered in `AdventureModule`. |
+| **Boss Dungeons (Variants 1 & 2)** | `verified` | Procedural cobblestone/brick boss dungeon (`BossDungeonFeature`) and NBT template structure (`BossDungeonFeature2`, `boss_1.nbt`), double chest loot, and boss spawner block. | Tested in `ProgressionAndWorldgenTests.testFeatureMapCodecs`; worldgen definitions migrated to 26.3 format. |
+| **Rogue Spawners** | `verified` | Underworld spawner features (`RogueSpawnerFeature`, `RogueSpawnerRegistry`) generating tiered spawner blocks with cover blocks and loot chests. | Tested in `ProgressionAndWorldgenTests.testFeatureMapCodecs`; verified in worldgen registry. |
+| **Tome Towers** | `verified` | Jigsaw-based Tome Towers (`tower_main`, `tower_leaf`, `tower_sand`, `tower_spruce`) generating across biome tags; `ItemFrameGemsProcessor` populating item frames with random tiered gems and purity. | Structure templates, pool JSONs, and processor codecs registered and verified on server launch. |
+| **Biome Modification** | `verified` | Fabric Biome API v1 (`BiomeModifications.addFeature`) replacing NeoForge BiomeModifiers, registering boss dungeons and rogue spawners across biome selectors. | 342 biome modifications applied across 57 biomes verified on dedicated server boot. |
+| **Loot Tables & Injection** | `verified` | Boss drop tables, dungeon chests, and wandering trader loot tables migrated to 26.3 schema (`TagEntry.items`). | Server boot verified without loot table parse errors. |
+
+

@@ -1,0 +1,142 @@
+package dev.shadowsoffire.apotheosis.spawner;
+
+import java.util.Optional;
+import java.util.function.UnaryOperator;
+
+import com.google.common.base.Preconditions;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
+import dev.shadowsoffire.apotheosis.AdventureConfig;
+import dev.shadowsoffire.apotheosis.Apoth;
+import dev.shadowsoffire.apotheosis.mixin.BaseSpawnerAccessor;
+import dev.shadowsoffire.apotheosis.util.PresetSpawnerStats;
+import dev.shadowsoffire.placebo.dynreg.WeightedDynamicRegistry.ILuckyWeighted;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Plane;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.random.WeightedList;
+import net.minecraft.world.RandomizableContainer;
+import net.minecraft.world.level.SpawnData;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.storage.loot.LootTable;
+
+public class RogueSpawner implements ILuckyWeighted {
+
+    public static final Codec<RogueSpawner> CODEC = RecordCodecBuilder.create(inst -> inst
+        .group(
+            Codec.INT.fieldOf("weight").forGetter(RogueSpawner::getWeight),
+            PresetSpawnerStats.CODEC.fieldOf("stats").forGetter(RogueSpawner::getStats),
+            ResourceKey.codec(Registries.LOOT_TABLE).fieldOf("loot_table").forGetter(RogueSpawner::getLootTableId),
+            WeightedList.codec(SpawnData.CODEC).fieldOf("spawn_potentials").forGetter(s -> s.spawnPotentials))
+        .apply(inst, RogueSpawner::new));
+
+    protected final int weight;
+    protected final PresetSpawnerStats stats;
+    protected final ResourceKey<LootTable> lootTable;
+    protected final WeightedList<SpawnData> spawnPotentials;
+
+    public RogueSpawner(int weight, PresetSpawnerStats stats, ResourceKey<LootTable> lootTable, WeightedList<SpawnData> potentials) {
+        this.weight = weight;
+        this.stats = stats;
+        this.lootTable = lootTable;
+        this.spawnPotentials = potentials;
+    }
+
+    @Override
+    public int getWeight() {
+        return this.weight;
+    }
+
+    @Override
+    public float getQuality() {
+        return 0;
+    }
+
+    public PresetSpawnerStats getStats() {
+        return this.stats;
+    }
+
+    public ResourceKey<LootTable> getLootTableId() {
+        return this.lootTable;
+    }
+
+    public WeightedList<SpawnData> getSpawnPotentials() {
+        return this.spawnPotentials;
+    }
+
+    @SuppressWarnings("deprecation")
+    public void place(WorldGenLevel level, BlockPos pos, RandomSource rand) {
+        level.setBlock(pos, Blocks.SPAWNER.defaultBlockState(), 2);
+        if (level.getBlockEntity(pos) instanceof SpawnerBlockEntity spawner) {
+            this.stats.apply(spawner);
+            spawner.getSpawner().spawnPotentials = this.spawnPotentials;
+            ((BaseSpawnerAccessor) spawner.getSpawner()).callSetNextSpawnData(null, pos, this.spawnPotentials.getRandom(rand).get());
+
+            level.setBlock(pos.below(), Blocks.CHEST.defaultBlockState(), 2);
+            ResourceKey<LootTable> realLootTable = rand.nextFloat() <= AdventureConfig.spawnerValueChance ? Apoth.LootTables.CHEST_VALUABLE : this.lootTable;
+            RandomizableContainer.setBlockEntityLootTable(level, rand, pos.below(), realLootTable);
+
+            Block cover = BuiltInRegistries.BLOCK.getRandomElementOf(Apoth.Tags.ROGUE_SPAWNER_COVERS, rand).map(Holder::value).orElse(Blocks.STONE);
+            level.setBlock(pos.above(), cover.defaultBlockState(), 2);
+            for (Direction f : Plane.HORIZONTAL) {
+                if (level.getBlockState(pos.relative(f)).isAir()) {
+                    BooleanProperty side = (BooleanProperty) Blocks.VINE.getStateDefinition().getProperty(f.getOpposite().getName());
+                    if (side != null) {
+                        level.setBlock(pos.relative(f), Blocks.VINE.defaultBlockState().setValue(side, true), 2);
+                    }
+                }
+            }
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private int weight;
+        private PresetSpawnerStats stats;
+        private ResourceKey<LootTable> lootTable;
+        private WeightedList.Builder<SpawnData> potentials = WeightedList.builder();
+
+        public Builder weight(int weight) {
+            this.weight = weight;
+            return this;
+        }
+
+        public Builder stats(PresetSpawnerStats stats) {
+            this.stats = stats;
+            return this;
+        }
+
+        public Builder stats(UnaryOperator<PresetSpawnerStats.Builder> config) {
+            return this.stats(config.apply(PresetSpawnerStats.builder()).build());
+        }
+
+        public Builder lootTable(ResourceKey<LootTable> lootTable) {
+            this.lootTable = lootTable;
+            return this;
+        }
+
+        public Builder spawnData(SpawnData data, int weight) {
+            this.potentials.add(data, weight);
+            return this;
+        }
+
+        public RogueSpawner build() {
+            Preconditions.checkNotNull(this.stats, "Stats must not be null");
+            Preconditions.checkNotNull(this.lootTable, "Loot table must not be null");
+            return new RogueSpawner(this.weight, this.stats, this.lootTable, this.potentials.build());
+        }
+    }
+}
