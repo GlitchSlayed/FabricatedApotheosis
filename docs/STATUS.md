@@ -264,8 +264,29 @@
     - Fixed `WorldTierTutorialScreen` background rendering by delegating `extractBackground`, `extractRenderState`, and `resize` to `parent`.
   - [x] **Automated Verification**: Authored `InGameRepairsTest`, updated `AttributesTest` and `SaveCompatibilityTest`. 75/75 tests passing. Dedicated server launch cleanly verified in 0.205s with 0 errors.
 
+### Post-Milestone 12 Hotfix 3: Reforged Weapon Tooltips, Sockets, Jade & Tome Tower Loot Repairs
+- **Status**: **COMPLETE** (2026-11-03)
+- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.4.jar`
+- **SHA-256**: `f87b6df01de159944e395d7edb9b0713041f5c1bb89147b5e6c9b4ab1b2de227`
+- **Key Fixes**:
+  - [x] **Reforged Weapon Tooltip Deduplication**: Replaced multi-group slot testing in `ItemStackMixin.apoth_forEachModifierGroup` with `vanillaGroup == group`, preventing attribute modifiers from being displayed three times under "When equipped:", "When in Main Hand:", and "When held:".
+  - [x] **Affix Item Name & Rarity Color**: Injected `ItemStack.getHoverName` to apply `AffixHelper.getModifiedStackName` and `ItemStack.getStyledHoverName` to recolor item name with `rarity.get().color()`.
+  - [x] **Socket Tooltip Component & Renderer**: Created `SocketTooltipComponent` in common code (`dev.shadowsoffire.apotheosis.socket`) and connected `ItemStack.getTooltipImage()` to `SocketTooltipRenderer` via Fabric's `ClientTooltipComponentCallback.EVENT`.
+  - [x] **Malice Ticking**: Injected `ItemStack.inventoryTick` to process `MALICE_MARKER` on player inventory ticks.
+  - [x] **Jade & JEI Apothic Enchanting Table Support**: Changed block checks in `EnchantingServerDataProvider` and `EnchantingClientProvider` to `state.getBlock() instanceof EnchantingTableBlock`, providing instant Jade HUD data for the Apothic Enchanting Table. Registered the Apothic table as an Infusion crafting station in `ApotheosisJeiPlugin`.
+  - [x] **Tome Tower Chest Loot & Item Frames**:
+    - Guarded `GemLootPoolEntry` against NPE on null gems and added `FRONTIER` tier fallback when rolling in introductory `HAVEN` tier.
+    - Updated `AffixLootPoolEntry` with `FRONTIER` tier fallback for `HAVEN` contexts.
+    - Updated `GenContext.forLoot` with origin/nearest-player fallback when `LootContextParams.THIS_ENTITY` is not a player.
+    - Updated `ItemFrameGemsProcessor` to promote `HAVEN` to `FRONTIER` so tower wall item frames consistently generate visible gems.
+  - [x] **World Tier Tutorial Soft-lock & Models**:
+    - Fixed tutorial screen looping/soft-lock by ensuring clean exit on completion, skip, `Esc`, and `E`.
+    - Restored `gem_case` and `ender_gem_case` models via vanilla JSON parentage (`gem_case_model.json`).
+    - Added `.useBlockDescriptionPrefix()` on block items to inherit proper `block.` translation keys.
+  - [x] **Automated Verification**: Added 3 new tests in `InGameRepairsTest`. Total test suite: 78/78 tests passing. Clean build (`./gradlew build`) verified.
+
 ---
 
 ## 2. Milestone Summary
 
-All 12 project milestones are now **COMPLETE**. The codebase is updated to Release Candidate (`1.0.0-alpha.3`) with client startup, in-world gameplay, and dynamic registry repairs verified. Releases will not be published without explicit user authorization.
+All 12 project milestones are now **COMPLETE**. The codebase is updated to Release Candidate (`1.0.0-alpha.3`+) with all discovered in-game failures repaired and verified. Releases will not be published without explicit user authorization.

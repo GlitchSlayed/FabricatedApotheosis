@@ -10,6 +10,7 @@ import dev.shadowsoffire.apothic_enchanting.util.TooltipUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EnchantingTableBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
@@ -30,7 +31,7 @@ public class EnchantingClientProvider implements IBlockComponentProvider {
         if (!config.get(UID)) return;
 
         BlockState state = accessor.getBlockState();
-        if (state.is(Blocks.ENCHANTING_TABLE) || state.is(Ench.Blocks.RAVEN_ENCHANTING_TABLE.value())) {
+        if (state.getBlock() instanceof EnchantingTableBlock) {
             CompoundTag data = accessor.getServerData();
             if (data != null && data.getCompound("ApothEnchTable").isPresent()) {
                 CompoundTag t = data.getCompound("ApothEnchTable").get();

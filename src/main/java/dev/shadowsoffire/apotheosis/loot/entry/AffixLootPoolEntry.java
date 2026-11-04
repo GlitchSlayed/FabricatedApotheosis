@@ -15,6 +15,7 @@ import dev.shadowsoffire.apotheosis.loot.LootRarity;
 import dev.shadowsoffire.apotheosis.loot.RarityRegistry;
 import dev.shadowsoffire.apotheosis.loot.functions.ReforgeItemFunction;
 import dev.shadowsoffire.apotheosis.tiers.GenContext;
+import dev.shadowsoffire.apotheosis.tiers.WorldTier;
 import dev.shadowsoffire.apotheosis.util.NameHelper;
 import dev.shadowsoffire.placebo.codec.PlaceboCodecs;
 import dev.shadowsoffire.placebo.dynreg.DynamicHolder;
@@ -57,6 +58,10 @@ public class AffixLootPoolEntry extends ContextualLootPoolEntry {
         }
 
         ItemStack stack = LootController.createAffixItemFromPools(this.rarities, this.entries, gCtx);
+        if (stack.isEmpty() && gCtx.tier() == WorldTier.HAVEN) {
+            GenContext frontierCtx = new GenContext(gCtx.rand(), WorldTier.FRONTIER, gCtx.luck(), gCtx.dimension(), gCtx.biome(), gCtx.stages());
+            stack = LootController.createAffixItemFromPools(this.rarities, this.entries, frontierCtx);
+        }
         if (!stack.isEmpty()) {
             NameHelper.setItemName(ctx.getRandom(), stack);
             list.accept(stack);

@@ -66,9 +66,13 @@ public class AdventureKeys {
         }
 
         while (OPEN_WORLD_TIER_SELECT.consumeClick()) {
-            if (client.gui.screen() == null) {
-                boolean isDefaultT = OPEN_WORLD_TIER_SELECT.matches(OPEN_WORLD_TIER_SELECT.getDefaultKey());
-                if (!isDefaultT || client.hasControlDown()) {
+            boolean isDefaultT = OPEN_WORLD_TIER_SELECT.matches(OPEN_WORLD_TIER_SELECT.getDefaultKey());
+            boolean hasModifier = client.hasControlDown() || InputConstants.isKeyDown(342) || InputConstants.isKeyDown(346);
+            if (!isDefaultT || hasModifier) {
+                if (client.gui.screen() instanceof WorldTierSelectScreen || client.gui.screen() instanceof WorldTierTutorialScreen) {
+                    client.gui.setScreen(null);
+                }
+                else if (client.gui.screen() == null || client.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
                     client.gui.setScreen(new WorldTierSelectScreen());
                 }
             }

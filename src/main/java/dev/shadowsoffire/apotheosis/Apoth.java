@@ -716,7 +716,9 @@ public class Apoth {
             return stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
         }
 
-        private static void bootstrap() {}
+        private static void bootstrap() {
+            LootCategory.Inner.rebuildSortedValueList();
+        }
 
     }
 

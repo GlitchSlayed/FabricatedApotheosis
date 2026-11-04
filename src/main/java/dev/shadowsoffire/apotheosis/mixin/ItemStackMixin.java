@@ -1,5 +1,6 @@
 package dev.shadowsoffire.apotheosis.mixin;
 
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.function.TriConsumer;
@@ -7,22 +8,77 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import dev.shadowsoffire.apotheosis.Apoth;
 import dev.shadowsoffire.apotheosis.affix.AffixHelper;
+import dev.shadowsoffire.apotheosis.loot.LootRarity;
 import dev.shadowsoffire.apotheosis.socket.SocketHelper;
+import dev.shadowsoffire.apotheosis.socket.SocketTooltipComponent;
+import dev.shadowsoffire.apotheosis.tiers.WorldTier;
+import dev.shadowsoffire.apotheosis.util.ApothMiscUtil;
 import dev.shadowsoffire.apothic_attributes.modifiers.EquipmentSlotCompat;
 import dev.shadowsoffire.apothic_attributes.modifiers.StackAttributeModifiers;
 import dev.shadowsoffire.apothic_attributes.modifiers.StackAttributeModifiersEvent;
+import dev.shadowsoffire.placebo.dynreg.DynamicHolder;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.level.Level;
 
 @Mixin(ItemStack.class)
 public abstract class ItemStackMixin {
+
+    @Inject(method = "getHoverName", at = @At("RETURN"), cancellable = true)
+    public void apoth_affixItemName(CallbackInfoReturnable<Component> cir) {
+        ItemStack ths = (ItemStack) (Object) this;
+        Component afxName = AffixHelper.getModifiedStackName(ths, cir.getReturnValue());
+        if (afxName != null) {
+            cir.setReturnValue(afxName);
+        }
+
+        DynamicHolder<LootRarity> rarity = AffixHelper.getRarity(ths);
+        if (rarity.isBound()) {
+            Component recolored = cir.getReturnValue().copy().withStyle(s -> s.withColor(rarity.get().color()));
+            cir.setReturnValue(recolored);
+        }
+    }
+
+    @Inject(method = "getStyledHoverName", at = @At("RETURN"), cancellable = true)
+    public void apoth_affixStyledHoverName(CallbackInfoReturnable<Component> cir) {
+        ItemStack ths = (ItemStack) (Object) this;
+        DynamicHolder<LootRarity> rarity = AffixHelper.getRarity(ths);
+        if (rarity.isBound()) {
+            Component recolored = cir.getReturnValue().copy().withStyle(s -> s.withColor(rarity.get().color()));
+            cir.setReturnValue(recolored);
+        }
+    }
+
+    @Inject(method = "getTooltipImage", at = @At("HEAD"), cancellable = true)
+    public void apoth_socketTooltipImage(CallbackInfoReturnable<Optional<TooltipComponent>> cir) {
+        ItemStack ths = (ItemStack) (Object) this;
+        Player player = ApothMiscUtil.getClientPlayer();
+        if (SocketHelper.getSockets(ths) > 0 && (player == null || !WorldTier.isTutorialActive(player))) {
+            cir.setReturnValue(Optional.of(new SocketTooltipComponent(ths, SocketHelper.getGems(ths))));
+        }
+    }
+
+    @Inject(method = "inventoryTick", at = @At("HEAD"))
+    public void apoth_tryTickMalice(Level level, Entity entity, EquipmentSlot slot, CallbackInfo ci) {
+        ItemStack ths = (ItemStack) (Object) this;
+        if (!level.isClientSide() && ths.has(Apoth.Components.MALICE_MARKER) && entity instanceof Player player) {
+            AffixHelper.applyMalice(player, ths);
+            ths.remove(Apoth.Components.MALICE_MARKER);
+        }
+    }
 
     @Inject(method = "forEachModifier(Lnet/minecraft/world/entity/EquipmentSlot;Ljava/util/function/BiConsumer;)V", at = @At("TAIL"))
     private void apoth_forEachModifier(EquipmentSlot slot, BiConsumer<Holder<Attribute>, AttributeModifier> action, CallbackInfo ci) {
@@ -50,15 +106,8 @@ public abstract class ItemStackMixin {
             SocketHelper.getGems(ths).addModifiers(event);
             AffixHelper.streamAffixes(ths).forEach(inst -> inst.addModifiers(event));
             for (var entry : event.getModifiers()) {
-                boolean matches = false;
-                for (var s : entry.slots().slots()) {
-                    var vanillaSlot = EquipmentSlotCompat.toVanilla(s);
-                    if (vanillaSlot != null && group.test(vanillaSlot)) {
-                        matches = true;
-                        break;
-                    }
-                }
-                if (matches) {
+                EquipmentSlotGroup vanillaGroup = EquipmentSlotCompat.toVanilla(entry.slots());
+                if (vanillaGroup == group || (vanillaGroup == null && group == EquipmentSlotGroup.ANY)) {
                     action.accept(entry.attribute(), entry.modifier(), ItemAttributeModifiers.Display.attributeModifiers());
                 }
             }

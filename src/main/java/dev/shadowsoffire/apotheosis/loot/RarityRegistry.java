@@ -64,6 +64,8 @@ public class RarityRegistry extends TieredDynamicRegistry<LootRarity> {
     @Override
     protected void onReload(ReloadType type) {
         super.onReload(type);
+        this.materialMap = HashBiMap.create();
+        this.sorted.clear();
         for (LootRarity r : this.getValues()) {
             DynamicHolder<LootRarity> old = this.materialMap.put(r.getMaterial(), this.holder(r));
             if (old != null) {
@@ -72,7 +74,6 @@ public class RarityRegistry extends TieredDynamicRegistry<LootRarity> {
             this.sorted.add(r);
         }
         this.sorted.sort(Comparator.comparing(LootRarity::sortIndex));
-
     }
 
     @Override

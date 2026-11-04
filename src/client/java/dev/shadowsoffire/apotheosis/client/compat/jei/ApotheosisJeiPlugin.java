@@ -70,6 +70,7 @@ public class ApotheosisJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(Apoth.Items.SIGIL_OF_WITHDRAWAL.value(), Component.translatable("info.apotheosis.withdrawal"));
         registration.addIngredientInfo(Ench.Items.LIBRARY.value(), Component.translatable("info.apothic_enchanting.library"));
         registration.addIngredientInfo(Blocks.ENCHANTING_TABLE, Component.translatable("info.apothic_enchanting.enchanting_table"));
+        registration.addIngredientInfo(Ench.Blocks.APOTHIC_ENCHANTING_TABLE.value(), Component.translatable("info.apothic_enchanting.enchanting_table"));
     }
 
     @Override
@@ -77,7 +78,7 @@ public class ApotheosisJeiPlugin implements IModPlugin {
         registration.addCraftingStation(SpawnerCategory.TYPE, Blocks.SPAWNER);
         registration.addCraftingStation(SalvagingCategory.TYPE, Apoth.Blocks.SALVAGING_TABLE.value());
         registration.addCraftingStation(GemCuttingCategory.TYPE, Apoth.Blocks.GEM_CUTTING_TABLE.value());
-        registration.addCraftingStation(InfusionRecipeCategory.TYPE, Blocks.ENCHANTING_TABLE, Ench.Blocks.RAVEN_ENCHANTING_TABLE.value());
+        registration.addCraftingStation(InfusionRecipeCategory.TYPE, Blocks.ENCHANTING_TABLE, Ench.Blocks.APOTHIC_ENCHANTING_TABLE.value(), Ench.Blocks.RAVEN_ENCHANTING_TABLE.value());
     }
 
     @Override

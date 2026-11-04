@@ -1,9 +1,10 @@
-# Handoff Report — Milestone 12: Final Verification & Release-Candidate Preparation
+# Handoff Report — Post-Milestone 12 Hotfix 3: Reforged Weapon Tooltips, Sockets, Jade & Tome Tower Loot Repairs
 
-- **Date**: 2026-11-01
-- **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.19.5, YACL 3.9.6, JEI 31.17.0.108, Jade 26.3.5+fabric)
-- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.2.jar`
-- **Status**: **Milestone 12 Complete + Client Hotfix Verified; Release Candidate Ready for Testing. DO NOT PUBLISH.**
+- **Date**: 2026-11-03
+- **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.20.1+, YACL 3.9.6, JEI 31.17.0.108, Jade 26.3.5+fabric)
+- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.4.jar`
+- **SHA-256**: `f87b6df01de159944e395d7edb9b0713041f5c1bb89147b5e6c9b4ab1b2de227`
+- **Status**: **Repairs Complete; 78/78 Tests Passing; Build Green.**
 
 ---
 

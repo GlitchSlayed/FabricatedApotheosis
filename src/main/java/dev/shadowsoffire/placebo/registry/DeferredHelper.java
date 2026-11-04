@@ -135,14 +135,19 @@ public class DeferredHelper {
     public Holder.Reference<Item> blockItem(String name, Holder<Block> block, BiFunction<Block, Item.Properties, Item> factory, UnaryOperator<Item.Properties> props) {
         Identifier id = this.id(name);
         this.checkDuplicate(id, BuiltInRegistries.ITEM);
-        Item.Properties p = new Item.Properties().setId(ResourceKey.create(Registries.ITEM, id));
+        Item.Properties p = new Item.Properties().setId(ResourceKey.create(Registries.ITEM, id)).useBlockDescriptionPrefix();
         if (props != null) p = props.apply(p);
         Item it = factory.apply(block.value(), p);
         return Registry.registerForHolder(BuiltInRegistries.ITEM, ResourceKey.create(Registries.ITEM, id), it);
     }
 
     public Holder.Reference<Item> blockItem(String name, Holder<Block> block, Function<Item.Properties, Item> factory, UnaryOperator<Item.Properties> props) {
-        return this.item(name, factory, props);
+        Identifier id = this.id(name);
+        this.checkDuplicate(id, BuiltInRegistries.ITEM);
+        Item.Properties p = new Item.Properties().setId(ResourceKey.create(Registries.ITEM, id)).useBlockDescriptionPrefix();
+        if (props != null) p = props.apply(p);
+        Item it = factory.apply(p);
+        return Registry.registerForHolder(BuiltInRegistries.ITEM, ResourceKey.create(Registries.ITEM, id), it);
     }
 
     public Holder.Reference<Item> blockItem(String name, Holder<Block> block) {
@@ -164,13 +169,14 @@ public class DeferredHelper {
     }
 
     @SafeVarargs
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public final <T extends BlockEntity> BlockEntityType<T> tickingBlockEntity(String name, BlockEntityType.BlockEntitySupplier<T> supplier, dev.shadowsoffire.placebo.block_entity.TickingBlockEntityType.TickSide side, Holder<Block>... validBlocks) {
         Identifier id = this.id(name);
         java.util.Set<Block> blocks = new java.util.HashSet<>();
         for (Holder<Block> h : validBlocks) {
             blocks.add(h.value());
         }
-        BlockEntityType<T> type = new BlockEntityType<>(supplier, blocks);
+        BlockEntityType<T> type = new dev.shadowsoffire.placebo.block_entity.TickingBlockEntityType(supplier, blocks, side);
         return Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, id, type);
     }
 

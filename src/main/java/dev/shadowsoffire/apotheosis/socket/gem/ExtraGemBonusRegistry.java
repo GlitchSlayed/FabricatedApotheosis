@@ -42,6 +42,7 @@ public class ExtraGemBonusRegistry extends DynamicRegistry<ExtraGemBonus> {
     @Override
     protected void onReload(ReloadType type) {
         super.onReload(type);
+        this.extraBonuses = HashMultimap.create();
         for (ExtraGemBonus extraBonus : this.getValues()) {
             this.extraBonuses.put(extraBonus.gem, extraBonus);
         }

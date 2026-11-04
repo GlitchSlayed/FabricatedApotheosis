@@ -39,6 +39,7 @@ public final class TierAugmentRegistry extends DynamicRegistry<TierAugment> {
     @Override
     protected void onReload(ReloadType type) {
         super.onReload(type);
+        this.augmentsPerTier.clear();
         for (TierAugment aug : this.registry.values()) {
             this.augmentsPerTier.computeIfAbsent(new Key(aug.tier(), aug.target()), t -> new ArrayList<>()).add(aug);
         }

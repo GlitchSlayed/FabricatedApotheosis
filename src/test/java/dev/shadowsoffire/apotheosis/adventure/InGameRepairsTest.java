@@ -44,4 +44,38 @@ public class InGameRepairsTest {
         // Haven is the base tier and must always be unlocked
         assertTrue(WorldTier.isUnlocked(null, WorldTier.HAVEN), "Haven tier must be unlocked even with null/fresh player");
     }
+
+    @Test
+    void testEquipmentSlotCompatGroupMatching() {
+        // Verify that EquipmentSlotCompat maps groups 1:1 and does not map MAINHAND to ANY or HAND
+        var mainHandGroup = dev.shadowsoffire.apothic_attributes.modifiers.EquipmentSlotCompat.toVanilla(dev.shadowsoffire.apothic_attributes.api.ALObjects.EquipmentSlotGroups.MAINHAND);
+        assertEquals(net.minecraft.world.entity.EquipmentSlotGroup.MAINHAND, mainHandGroup);
+        assertNotEquals(net.minecraft.world.entity.EquipmentSlotGroup.ANY, mainHandGroup);
+        assertNotEquals(net.minecraft.world.entity.EquipmentSlotGroup.HAND, mainHandGroup);
+
+        var anyGroup = dev.shadowsoffire.apothic_attributes.modifiers.EquipmentSlotCompat.toVanilla(dev.shadowsoffire.apothic_attributes.api.ALObjects.EquipmentSlotGroups.ANY);
+        assertEquals(net.minecraft.world.entity.EquipmentSlotGroup.ANY, anyGroup);
+    }
+
+    @Test
+    void testSocketTooltipComponentCommonSafety() {
+        dev.shadowsoffire.apotheosis.socket.SocketTooltipComponent comp = new dev.shadowsoffire.apotheosis.socket.SocketTooltipComponent(
+            net.minecraft.world.item.ItemStack.EMPTY,
+            dev.shadowsoffire.apotheosis.socket.SocketedGems.EMPTY
+        );
+        assertNotNull(comp);
+        assertTrue(comp.socketed().isEmpty());
+        assertTrue(comp.gems().isEmpty());
+    }
+
+    @Test
+    void testEnchantingTableHierarchyForJade() {
+        // Both Apothic and Raven enchanting table blocks extend EnchantingTableBlock
+        assertTrue(net.minecraft.world.level.block.EnchantingTableBlock.class.isAssignableFrom(
+            dev.shadowsoffire.apothic_enchanting.table.ApothicEnchantingTableBlock.class
+        ));
+        assertTrue(net.minecraft.world.level.block.EnchantingTableBlock.class.isAssignableFrom(
+            dev.shadowsoffire.apothic_enchanting.table.RavenEnchantingTableBlock.class
+        ));
+    }
 }

@@ -152,6 +152,7 @@ public enum WorldTier implements StringRepresentable {
      * <li>Upon opening the Tier Select screen, the screen will immediately open the World Tier Tutorial GUI Layer</li>
      * </ul>
      */
+    public static boolean clientTutorialDismissed = false;
     public static Predicate<Player> clientTutorialChecker = p -> false;
 
     public static boolean isTutorialActive(Player player) {

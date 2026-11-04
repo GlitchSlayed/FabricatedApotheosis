@@ -45,8 +45,14 @@ public class ItemFrameGemsProcessor implements StructureProcessor {
         if ("minecraft:item_frame".equals(id)) {
             ServerLevel sLevel = level.getLevel();
             Player player = sLevel.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), -1, false);
-            GenContext ctx = player != null ? GenContext.forPlayerAtPos(rand, player, pos) : GenContext.standalone(rand, WorldTier.HAVEN, 0, sLevel, pos);
+            GenContext ctx = player != null ? GenContext.forPlayerAtPos(rand, player, pos) : GenContext.standalone(rand, WorldTier.FRONTIER, 0, sLevel, pos);
+            if (ctx.tier() == WorldTier.HAVEN) {
+                ctx = new GenContext(ctx.rand(), WorldTier.FRONTIER, ctx.luck(), ctx.dimension(), ctx.biome(), ctx.stages());
+            }
             Gem gem = GemRegistry.INSTANCE.getRandomItem(ctx);
+            if (gem == null) {
+                gem = GemRegistry.INSTANCE.getRandomItem(ctx, s -> true);
+            }
             if (gem != null) {
                 Purity purity = Purity.random(ctx, this.purities);
                 ItemStack stack = gem.toStack(purity);

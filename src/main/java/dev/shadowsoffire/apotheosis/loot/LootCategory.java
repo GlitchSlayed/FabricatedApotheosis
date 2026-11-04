@@ -148,6 +148,10 @@ public final class LootCategory {
     @SuppressWarnings("deprecation")
     public static LootCategory forItem(ItemStack stack) {
         if (sortedCategories.isEmpty()) {
+            Inner.rebuildSortedValueList();
+        }
+
+        if (sortedCategories.isEmpty()) {
             throw new UnsupportedOperationException("Attempted to resolve the loot category for an item before loot categories were registered!");
         }
 
@@ -197,7 +201,8 @@ public final class LootCategory {
     @ApiStatus.Internal
     public static class Inner {
 
-        public static void rebuildSortedValueList() {
+        public static synchronized void rebuildSortedValueList() {
+            var unused = Apoth.LootCategories.BOW;
             var list = new ArrayList<LootCategory>();
             for (LootCategory cat : Apoth.BuiltInRegs.LOOT_CATEGORY) {
                 list.add(cat);

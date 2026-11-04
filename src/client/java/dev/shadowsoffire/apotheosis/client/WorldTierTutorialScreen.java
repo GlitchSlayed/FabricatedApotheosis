@@ -65,16 +65,27 @@ public class WorldTierTutorialScreen extends Screen {
                 .pos(imgLeft + 420, imgTop + 250)
                 .texture(SimpleTexButton.APOTH_SPRITES)
                 .action(btn -> {
-                    this.stage = this.stage.next();
-                    this.updateButtons();
-                    if (this.stage == null) {
+                    TutorialStage next = this.stage.next();
+                    if (next == null) {
                         this.closeTutorial();
+                    } else {
+                        this.stage = next;
+                        this.updateButtons();
                     }
                 })
                 .buttonText(Apotheosis.lang("button", "next_tutorial"))
                 .build());
 
         this.updateButtons();
+    }
+
+    @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        if (event.isEscape() || (this.minecraft != null && this.minecraft.options.keyInventory.matches(event))) {
+            this.closeTutorial();
+            return true;
+        }
+        return super.keyPressed(event);
     }
 
     @Override
@@ -160,8 +171,9 @@ public class WorldTierTutorialScreen extends Screen {
     }
 
     private void closeTutorial() {
-        this.minecraft.gui.setScreen(this.parent);
+        dev.shadowsoffire.apotheosis.tiers.WorldTier.clientTutorialDismissed = true;
         this.parent.closeTutorial();
+        this.minecraft.gui.setScreen(this.parent);
     }
 
     private static enum TutorialStage {

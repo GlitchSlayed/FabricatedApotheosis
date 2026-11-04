@@ -23,6 +23,7 @@ import dev.shadowsoffire.apotheosis.affix.salvaging.SalvagingRecipe;
 import dev.shadowsoffire.apotheosis.affix.salvaging.SalvagingTableTile;
 import dev.shadowsoffire.apotheosis.loot.LootCategory;
 import dev.shadowsoffire.apotheosis.loot.LootRarity;
+import dev.shadowsoffire.apotheosis.loot.RarityRegistry;
 import dev.shadowsoffire.apotheosis.socket.SocketHelper;
 import dev.shadowsoffire.apotheosis.socket.SocketedGems;
 import dev.shadowsoffire.apotheosis.socket.gem.Gem;
@@ -237,5 +238,30 @@ public class AdventureTests {
         ItemStack extracted = tile.getOutput().removeItem(0, 2);
         assertEquals(2, extracted.getCount());
         assertEquals(1, tile.getOutput().getItem(0).getCount());
+    }
+
+    @Test
+    @DisplayName("LootCategory resolution is automatic and never throws")
+    public void testLootCategoryResolution() {
+        ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
+        LootCategory swordCat = LootCategory.forItem(sword);
+        assertNotNull(swordCat);
+        assertEquals(Apoth.LootCategories.MELEE_WEAPON, swordCat);
+
+        ItemStack bow = new ItemStack(Items.BOW);
+        LootCategory bowCat = LootCategory.forItem(bow);
+        assertEquals(Apoth.LootCategories.BOW, bowCat);
+
+        ItemStack empty = ItemStack.EMPTY;
+        assertEquals(Apoth.LootCategories.NONE, LootCategory.forItem(empty));
+    }
+
+    @Test
+    @DisplayName("RarityRegistry reload is idempotent and survives multiple reloads")
+    public void testRarityRegistryIdempotentReload() {
+        assertDoesNotThrow(() -> {
+            RarityRegistry.INSTANCE.completeClientSync();
+            RarityRegistry.INSTANCE.completeClientSync();
+        });
     }
 }

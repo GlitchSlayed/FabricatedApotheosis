@@ -14,6 +14,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EnchantingTableBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IServerDataProvider;
@@ -30,7 +31,7 @@ public class EnchantingServerDataProvider implements IServerDataProvider<BlockAc
     @Override
     public void appendServerData(CompoundTag tag, BlockAccessor accessor) {
         BlockState state = accessor.getBlockState();
-        if (state.is(Blocks.ENCHANTING_TABLE) || state.is(Ench.Blocks.RAVEN_ENCHANTING_TABLE.value())) {
+        if (state.getBlock() instanceof EnchantingTableBlock) {
             EnchantmentTableStats stats = EnchantmentTableStats.gatherStats(accessor.getLevel(), accessor.getPosition());
             CompoundTag enchTag = new CompoundTag();
             enchTag.putFloat("Eterna", stats.eterna());

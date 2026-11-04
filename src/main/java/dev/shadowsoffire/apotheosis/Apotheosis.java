@@ -48,6 +48,9 @@ public class Apotheosis implements ModInitializer {
         // 4. Initialize Placebo compatibility utilities
         PlaceboSupport.init();
 
+        // 4b. Ensure core Apoth registries and loot categories are bootstrapped
+        Apoth.bootstrap();
+
         // 5. Initialize approved modules according to configuration
         if (ApotheosisConfig.getServer().enableAttributes) {
             AttributesModule.init();

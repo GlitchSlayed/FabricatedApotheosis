@@ -17,6 +17,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.CommonHooks;
 
 /**
@@ -50,13 +51,18 @@ public record GenContext(RandomSource rand, WorldTier tier, float luck, Resource
         return forPlayer(player.getRandom(), player);
     }
 
-    @Nullable
     public static GenContext forLoot(LootContext ctx) {
         Player player = findPlayer(ctx);
-        if (player != null) {
-            return new GenContext(ctx.getRandom(), WorldTier.getTier(player), ctx.getLuck(), ctx.getLevel().dimension(), ctx.getLevel().getBiome(player.blockPosition()), GameStagesCompat.getStages(player));
+        Vec3 origin = ctx.getOptional(LootContextParams.ORIGIN);
+        if (player == null && origin != null) {
+            player = ctx.getLevel().getNearestPlayer(origin.x, origin.y, origin.z, 64, false);
         }
-        return null;
+        if (player != null) {
+            BlockPos pos = origin != null ? BlockPos.containing(origin) : player.blockPosition();
+            return new GenContext(ctx.getRandom(), WorldTier.getTier(player), ctx.getLuck(), ctx.getLevel().dimension(), ctx.getLevel().getBiome(pos), GameStagesCompat.getStages(player));
+        }
+        BlockPos pos = origin != null ? BlockPos.containing(origin) : BlockPos.ZERO;
+        return GenContext.standalone(ctx.getRandom(), WorldTier.HAVEN, ctx.getLuck(), ctx.getLevel(), pos);
     }
 
     public static GenContext standalone(RandomSource rand, WorldTier tier, float luck, ServerLevel level, BlockPos pos) {

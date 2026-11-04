@@ -354,7 +354,7 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         // Subclasses may implement custom semantic validation
     }
 
-    protected synchronized void commitReload(Map<Identifier, R> newEntries) {
+    protected synchronized void commitReload(Map<Identifier, R> newEntries, ReloadType reloadType) {
         // 1. Swap registry map atomically
         this.registry = newEntries;
 
@@ -377,8 +377,12 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         }
 
         this.onReload();
-        this.onReload(ReloadType.SERVER);
+        this.onReload(reloadType);
         this.logger.info("Dynamic registry '{}' reload complete ({} entries active)", this.id, this.registry.size());
+    }
+
+    protected synchronized void commitReload(Map<Identifier, R> newEntries) {
+        this.commitReload(newEntries, ReloadType.SERVER);
     }
 
     public enum ReloadType {
@@ -431,11 +435,11 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
     public synchronized void completeClientSync() {
         if (net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
             this.clientStaged.clear();
-            this.onReload(ReloadType.INTEGRATED_CLIENT);
             this.logger.info("Integrated client sync preserved authoritative server registry for '{}'", this.id);
             return;
         }
-        this.commitReload(ImmutableMap.copyOf(this.clientStaged));
+        this.beginReload(ReloadType.CLIENT);
+        this.commitReload(ImmutableMap.copyOf(this.clientStaged), ReloadType.CLIENT);
         this.clientStaged.clear();
         this.logger.info("Client synchronization complete for dynamic registry '{}'", this.id);
     }

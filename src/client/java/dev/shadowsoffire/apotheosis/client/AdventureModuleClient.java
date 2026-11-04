@@ -25,7 +25,7 @@ import dev.shadowsoffire.apotheosis.affix.reforging.ReforgingScreen;
 import dev.shadowsoffire.apotheosis.affix.reforging.ReforgingTableTileRenderer;
 import dev.shadowsoffire.apotheosis.affix.salvaging.SalvagingRecipeCache;
 import dev.shadowsoffire.apotheosis.affix.salvaging.SalvagingScreen;
-import dev.shadowsoffire.apotheosis.client.SocketTooltipRenderer.SocketComponent;
+import dev.shadowsoffire.apotheosis.socket.SocketTooltipComponent;
 import dev.shadowsoffire.apotheosis.client.StoneformingTooltipRenderer.StoneformingComponent;
 import dev.shadowsoffire.apotheosis.loot.LootCategory;
 import dev.shadowsoffire.apotheosis.loot.LootRarity;
@@ -93,7 +93,7 @@ public class AdventureModuleClient {
 
         // Register custom tooltip components
         ClientTooltipComponentCallback.EVENT.register(comp -> {
-            if (comp instanceof SocketComponent sc) {
+            if (comp instanceof SocketTooltipComponent sc) {
                 return new SocketTooltipRenderer(sc);
             }
             if (comp instanceof StoneformingComponent sfc) {
@@ -119,6 +119,14 @@ public class AdventureModuleClient {
             return false;
         };
         WorldTier.clientTutorialChecker = player -> {
+            if (WorldTier.clientTutorialDismissed) {
+                return false;
+            }
+            if (player instanceof net.minecraft.client.player.LocalPlayer lp) {
+                if (lp.getStats().getValue(net.minecraft.stats.Stats.CUSTOM.get(dev.shadowsoffire.apotheosis.Apoth.Stats.WORLD_TIERS_ACTIVATED)) > 0) {
+                    return false;
+                }
+            }
             return WorldTier.getTier(player) == WorldTier.HAVEN;
         };
 

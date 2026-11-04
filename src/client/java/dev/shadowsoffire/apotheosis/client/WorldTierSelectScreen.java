@@ -53,6 +53,7 @@ public class WorldTierSelectScreen extends Screen {
     protected WorldTier displayedTier = WorldTier.getTier(Minecraft.getInstance().player);
     protected int leftPos, topPos;
     protected Map<WorldTier, SimpleTexButton> tierButtons = new EnumMap<>(WorldTier.class);
+    protected boolean tutorialShown = false;
     protected int animTicks = 0;
 
     public WorldTierSelectScreen() {
@@ -103,7 +104,8 @@ public class WorldTierSelectScreen extends Screen {
 
         this.updateButtonStatus();
 
-        if (this.minecraft.gui.screen() == this && WorldTier.isTutorialActive(this.minecraft.player) && WorldTier.isUnlocked(this.minecraft.player, WorldTier.HAVEN)) {
+        if (!this.tutorialShown && !WorldTier.clientTutorialDismissed && this.minecraft.gui.screen() == this && WorldTier.isTutorialActive(this.minecraft.player) && WorldTier.isUnlocked(this.minecraft.player, WorldTier.HAVEN)) {
+            this.tutorialShown = true;
             this.minecraft.gui.setScreen(new WorldTierTutorialScreen(this, Apotheosis.lang("title", "world_tier_tutorial")));
         }
     }
@@ -197,12 +199,24 @@ public class WorldTierSelectScreen extends Screen {
     }
 
     void closeTutorial() {
+        this.tutorialShown = true;
+        WorldTier.clientTutorialDismissed = true;
         if (this.activateButton.isActive() || WorldTier.isTutorialActive(Minecraft.getInstance().player)) {
             this.activateButton.onPress(new net.minecraft.client.input.MouseButtonEvent(
                 this.activateButton.getX() + this.activateButton.getWidth() / 2.0,
                 this.activateButton.getY() + this.activateButton.getHeight() / 2.0,
                 new net.minecraft.client.input.MouseButtonInfo(0, 0)));
         }
+        this.updateButtonStatus();
+    }
+
+    @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        if (event.isEscape() || (this.minecraft != null && this.minecraft.options.keyInventory.matches(event))) {
+            this.onClose();
+            return true;
+        }
+        return super.keyPressed(event);
     }
 
     protected void updateButtonStatus() {

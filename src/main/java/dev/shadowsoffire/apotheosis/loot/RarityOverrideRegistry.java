@@ -50,6 +50,7 @@ public class RarityOverrideRegistry extends DynamicRegistry<RarityOverride> {
     @Override
     protected void onReload(ReloadType type) {
         super.onReload(type);
+        this.byCategory = new HashMap<>();
         this.registry.forEach((key, value) -> {
             LootCategory category = value.category();
             if (category == null || category.isNone()) {

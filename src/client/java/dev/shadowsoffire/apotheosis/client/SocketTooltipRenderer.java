@@ -1,6 +1,7 @@
 package dev.shadowsoffire.apotheosis.client;
 
 import dev.shadowsoffire.apotheosis.Apotheosis;
+import dev.shadowsoffire.apotheosis.socket.SocketTooltipComponent;
 import dev.shadowsoffire.apotheosis.socket.SocketedGems;
 import dev.shadowsoffire.apotheosis.socket.gem.GemInstance;
 import net.minecraft.client.gui.Font;
@@ -16,21 +17,21 @@ public class SocketTooltipRenderer implements ClientTooltipComponent {
 
     public static final Identifier SOCKET = Apotheosis.loc("textures/gui/socket.png");
 
-    private final SocketComponent comp;
+    private final SocketTooltipComponent comp;
 
-    public SocketTooltipRenderer(SocketComponent comp) {
+    public SocketTooltipRenderer(SocketTooltipComponent comp) {
         this.comp = comp;
     }
 
     @Override
     public int getHeight(Font font) {
-        return spacing(font) * this.comp.gems.size();
+        return spacing(font) * this.comp.gems().size();
     }
 
     @Override
     public int getWidth(Font font) {
         int maxWidth = 0;
-        for (GemInstance inst : this.comp.gems.gems()) {
+        for (GemInstance inst : this.comp.gems().gems()) {
             maxWidth = Math.max(maxWidth, font.width(getSocketDesc(inst)) + 12);
         }
         return maxWidth;
@@ -39,10 +40,10 @@ public class SocketTooltipRenderer implements ClientTooltipComponent {
     @Override
     public void extractImage(Font font, int x, int y, int w, int h, GuiGraphicsExtractor gfx) {
         int spacing = spacing(font);
-        for (int i = 0; i < this.comp.gems.size(); i++) {
+        for (int i = 0; i < this.comp.gems().size(); i++) {
             gfx.blit(RenderPipelines.GUI_TEXTURED, SOCKET, x, y + spacing * i, 0, 0, 9, 9, 9, 9);
         }
-        for (GemInstance inst : this.comp.gems()) {
+        for (GemInstance inst : this.comp.gems().gems()) {
             if (inst.isValid()) {
                 gfx.pose().pushMatrix();
                 gfx.pose().scale(0.5F, 0.5F);
@@ -56,8 +57,8 @@ public class SocketTooltipRenderer implements ClientTooltipComponent {
     @Override
     public void extractText(GuiGraphicsExtractor gfx, Font font, int x, int y) {
         int spacing = spacing(font);
-        for (int i = 0; i < this.comp.gems.size(); i++) {
-            gfx.text(font, getSocketDesc(this.comp.gems.get(i)), x + 12, y + 1 + spacing * i, 0xFFAABBCC, true);
+        for (int i = 0; i < this.comp.gems().size(); i++) {
+            gfx.text(font, getSocketDesc(this.comp.gems().get(i)), x + 12, y + 1 + spacing * i, 0xFFAABBCC, true);
         }
     }
 
@@ -72,6 +73,10 @@ public class SocketTooltipRenderer implements ClientTooltipComponent {
         return inst.getSocketBonusTooltip(AdventureModuleClient.tooltipCtx());
     }
 
-    public static record SocketComponent(ItemStack socketed, SocketedGems gems) implements TooltipComponent {}
+    public static class SocketComponent extends SocketTooltipComponent {
+        public SocketComponent(ItemStack socketed, SocketedGems gems) {
+            super(socketed, gems);
+        }
+    }
 
 }

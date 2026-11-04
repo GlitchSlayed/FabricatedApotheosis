@@ -12,6 +12,7 @@ import dev.shadowsoffire.apotheosis.socket.gem.Gem;
 import dev.shadowsoffire.apotheosis.socket.gem.GemRegistry;
 import dev.shadowsoffire.apotheosis.socket.gem.Purity;
 import dev.shadowsoffire.apotheosis.tiers.GenContext;
+import dev.shadowsoffire.apotheosis.tiers.WorldTier;
 import dev.shadowsoffire.placebo.codec.PlaceboCodecs;
 import dev.shadowsoffire.placebo.dynreg.DynamicHolder;
 import net.minecraft.core.Holder;
@@ -55,9 +56,20 @@ public class GemLootPoolEntry extends ContextualLootPoolEntry {
             gem = GemRegistry.INSTANCE.getRandomItem(gCtx);
         }
 
-        Purity purity = Purity.random(gCtx, this.purities);
-        ItemStack stack = gem.toStack(purity);
-        list.accept(stack);
+        if (gem == null) {
+            // Fallback for HAVEN tier or restrictive constraints: try with FRONTIER tier
+            GenContext frontierCtx = new GenContext(gCtx.rand(), WorldTier.FRONTIER, gCtx.luck(), gCtx.dimension(), gCtx.biome(), gCtx.stages());
+            gem = !this.gems.isEmpty() ? GemRegistry.INSTANCE.getRandomItemFromHolders(frontierCtx, this.gems) : GemRegistry.INSTANCE.getRandomItem(frontierCtx);
+            if (gem == null) {
+                gem = GemRegistry.INSTANCE.getRandomItem(gCtx, s -> true);
+            }
+        }
+
+        if (gem != null) {
+            Purity purity = Purity.random(gCtx, this.purities);
+            ItemStack stack = gem.toStack(purity);
+            list.accept(stack);
+        }
     }
 
     @Override
