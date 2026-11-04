@@ -71,6 +71,16 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
         this.internalSetAbsorptionAmount(absorptionAmount);
     }
 
+    @Inject(method = "baseTick()V", at = @At("TAIL"))
+    private void apoth$tickAuxDmgTracker(CallbackInfo ci) {
+        if (!this.level().isClientSide() && ALObjects.Attachments.AUX_DMG_TRACKER != null) {
+            LivingEntity self = (LivingEntity) (Object) this;
+            if (self.hasAttached(ALObjects.Attachments.AUX_DMG_TRACKER)) {
+                self.getAttached(ALObjects.Attachments.AUX_DMG_TRACKER).tick();
+            }
+        }
+    }
+
     @Inject(method = "getDamageAfterMagicAbsorb", at = @At("HEAD"))
     private void apoth_captureInitialMagicDamage(DamageSource damageSource, float amount, CallbackInfoReturnable<Float> cir) {
         this.initialMagicDamage = amount;
@@ -177,7 +187,37 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
         if (damageSource.getEntity() instanceof LivingEntity attacker && !damageSource.is(ALObjects.Tags.CANNOT_CRITICALLY_STRIKE)) {
             amount = AttributeEvents.rollCriticalStrikes(attacker, self, amount);
         }
+        if (self.hasAttached(dev.shadowsoffire.apotheosis.Apoth.Attachments.DAMAGE_REDUCTIONS)) {
+            dev.shadowsoffire.apotheosis.attachments.DamageReductions reductions = self.getAttached(dev.shadowsoffire.apotheosis.Apoth.Attachments.DAMAGE_REDUCTIONS);
+            amount = reductions.applyReductions(damageSource, amount);
+        }
+        for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+            ItemStack s = self.getItemBySlot(slot);
+            if (!s.isEmpty()) {
+                amount = dev.shadowsoffire.apotheosis.socket.SocketHelper.getGems(s).onHurt(damageSource, self, amount);
+                var affixes = dev.shadowsoffire.apotheosis.affix.AffixHelper.getAffixes(s);
+                for (dev.shadowsoffire.apotheosis.affix.AffixInstance inst : affixes.values()) {
+                    amount = inst.onHurt(damageSource, self, amount);
+                }
+            }
+        }
         return amount;
+    }
+
+    @Inject(method = "applyItemBlocking", at = @At("RETURN"), cancellable = true)
+    private void apoth$onShieldBlock(ServerLevel level, DamageSource damageSource, float amount, CallbackInfoReturnable<Float> cir) {
+        float blocked = cir.getReturnValueF();
+        if (blocked > 0) {
+            LivingEntity self = (LivingEntity) (Object) this;
+            ItemStack stack = self.getUseItem();
+            if (!stack.isEmpty()) {
+                blocked = dev.shadowsoffire.apotheosis.socket.SocketHelper.getGems(stack).onShieldBlock(self, damageSource, blocked);
+                for (dev.shadowsoffire.apotheosis.affix.AffixInstance inst : dev.shadowsoffire.apotheosis.affix.AffixHelper.getAffixes(stack).values()) {
+                    blocked = inst.onShieldBlock(self, damageSource, blocked);
+                }
+                cir.setReturnValue(blocked);
+            }
+        }
     }
 
     @Inject(method = "hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z", at = @At("TAIL"))

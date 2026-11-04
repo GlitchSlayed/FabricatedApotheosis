@@ -70,8 +70,9 @@ public record GenContext(RandomSource rand, WorldTier tier, float luck, Resource
     }
 
     public static GenContext dummy(RandomSource rand) {
-        // Nobody should be deleting plains outright, right?
-        return new GenContext(rand, WorldTier.HAVEN, 0, Level.OVERWORLD, CommonHooks.resolveLookup(Registries.BIOME).getOrThrow(Biomes.PLAINS), Set.of());
+        var lookup = dev.shadowsoffire.placebo.dynreg.DynamicRegistry.getActiveLookup();
+        Holder<Biome> plains = lookup != null ? lookup.lookup(Registries.BIOME).flatMap(l -> l.get(Biomes.PLAINS)).orElse(null) : null;
+        return new GenContext(rand, WorldTier.HAVEN, 0, Level.OVERWORLD, plains, Set.of());
     }
 
     @Nullable

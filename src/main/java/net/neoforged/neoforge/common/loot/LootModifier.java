@@ -38,5 +38,9 @@ public abstract class LootModifier implements IGlobalLootModifier {
         return doApply(loot, ctx);
     }
 
+    public int getPriority() {
+        return this.priority;
+    }
+
     protected abstract ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> loot, LootContext ctx);
 }

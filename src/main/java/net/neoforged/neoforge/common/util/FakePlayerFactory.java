@@ -18,6 +18,15 @@ public class FakePlayerFactory {
     }
 
     public static FakePlayer get(ServerLevel level, GameProfile profile) {
-        return FAKE_PLAYERS.computeIfAbsent(profile, p -> new FakePlayer(level, p));
+        FakePlayer fake = FAKE_PLAYERS.get(profile);
+        if (fake == null || fake.level() != level) {
+            fake = new FakePlayer(level, profile);
+            FAKE_PLAYERS.put(profile, fake);
+        }
+        return fake;
+    }
+
+    public static void clear() {
+        FAKE_PLAYERS.clear();
     }
 }

@@ -70,6 +70,14 @@ public class SalvagingRecipe implements Recipe<SingleRecipeInput> {
 
     public static record OutputData(ItemStackTemplate stack, int min, int max) {
 
+        public OutputData {
+            if (min > max) {
+                int temp = min;
+                min = max;
+                max = temp;
+            }
+        }
+
         public static Codec<OutputData> CODEC = RecordCodecBuilder.create(inst -> inst
             .group(
                 ItemStackTemplate.CODEC.fieldOf("stack").forGetter(d -> d.stack),

@@ -51,10 +51,10 @@ public class GemCuttingMenu extends PlaceboContainerMenu {
         super(Menus.GEM_CUTTING, id, playerInv);
         this.player = playerInv.player;
         this.access = access;
-        this.addSlot(new UpdatingSlot(this.inv, BASE_SLOT, 62, 45, this::isValidBase));
-        this.addSlot(new UpdatingSlot(this.inv, TOP_SLOT, 62, 12, this::isValidTop));
-        this.addSlot(new UpdatingSlot(this.inv, LEFT_SLOT, 33, 64, this::isValidLeft));
-        this.addSlot(new UpdatingSlot(this.inv, RIGHT_SLOT, 90, 64, this::isValidRight));
+        this.addSlot(new UpdatingSlot(this.inv, BASE_SLOT, 62, 45, this::isValidBase, this::onSlotChanged));
+        this.addSlot(new UpdatingSlot(this.inv, TOP_SLOT, 62, 12, this::isValidTop, this::onSlotChanged));
+        this.addSlot(new UpdatingSlot(this.inv, LEFT_SLOT, 33, 64, this::isValidLeft, this::onSlotChanged));
+        this.addSlot(new UpdatingSlot(this.inv, RIGHT_SLOT, 90, 64, this::isValidRight, this::onSlotChanged));
 
         this.addPlayerSlots(playerInv, 8, 98);
         this.mover.registerRule((stack, slot) -> slot >= this.playerInvStart && this.isValidBase(stack) && !this.getSlot(BASE_SLOT).hasItem(), BASE_SLOT, TOP_SLOT);
@@ -63,6 +63,13 @@ public class GemCuttingMenu extends PlaceboContainerMenu {
         this.mover.registerRule((stack, slot) -> slot >= this.playerInvStart && this.isValidRight(stack), RIGHT_SLOT, RIGHT_SLOT + 1);
         this.mover.registerRule((stack, slot) -> slot < this.playerInvStart, this.playerInvStart, this.hotbarStart + 9);
         this.registerInvShuffleRules();
+    }
+
+    protected void onSlotChanged() {
+        this.slotsChanged(this.inv);
+        if (this.slotChangedCallback != null) {
+            this.slotChangedCallback.run();
+        }
     }
 
     @Override
@@ -125,7 +132,7 @@ public class GemCuttingMenu extends PlaceboContainerMenu {
 
     @Override
     public boolean stillValid(Player pPlayer) {
-        return this.access.evaluate((level, pos) -> level.getBlockState(pos).is(Blocks.GEM_CUTTING_TABLE), true);
+        return this.access.evaluate((level, pos) -> level.getBlockState(pos).is(Blocks.GEM_CUTTING_TABLE) && pPlayer.isWithinBlockInteractionRange(pos, 4.0), true);
     }
 
     @Override

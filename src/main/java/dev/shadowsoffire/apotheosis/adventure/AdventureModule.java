@@ -117,6 +117,9 @@ public class AdventureModule {
         PayloadHelper.registerPayload(new LinkItemToChatPayload.Provider());
         PayloadHelper.registerPayload(new GemCaseSelectPayload.Provider());
 
+        // Global Loot Modifiers
+        dev.shadowsoffire.apotheosis.loot.modifiers.LootModifierManager.init();
+
         // Fabric Transfer API ItemStorage automation for workstations
         try {
             ItemStorage.SIDED.registerForBlockEntity((be, dir) -> be.getItemHandler(), Apoth.Tiles.SALVAGING_TABLE);

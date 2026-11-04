@@ -68,10 +68,13 @@ public class SalvagingMenu extends BlockEntityMenu<SalvagingTableTile> {
 
     @Override
     public boolean stillValid(Player player) {
-        if (this.level.isClientSide()) {
-            return true;
+        if (this.tile == null || this.tile.isRemoved()) {
+            return false;
         }
-        return this.level.getBlockState(this.pos).is(Blocks.SALVAGING_TABLE);
+        if (!this.level.getBlockState(this.pos).is(Blocks.SALVAGING_TABLE)) {
+            return false;
+        }
+        return player.isWithinBlockInteractionRange(this.pos, 4.0);
     }
 
     @Override
@@ -110,9 +113,13 @@ public class SalvagingMenu extends BlockEntityMenu<SalvagingTableTile> {
         for (int inSlot = 0; inSlot < 12; inSlot++) {
             Slot s = this.getSlot(inSlot);
             ItemStack stack = s.getItem();
+            if (stack.isEmpty()) continue;
+            var matches = findMatch(this.level, stack);
+            if (matches.isEmpty()) continue;
             List<ItemStack> outputs = getSalvageResults(this.level, stack);
             s.set(ItemStack.EMPTY);
             for (ItemStack out : outputs) {
+                if (out.isEmpty()) continue;
                 ItemStack remaining = out.copy();
                 for (int outSlot = 0; outSlot < 6 && !remaining.isEmpty(); outSlot++) {
                     remaining = this.tile.output.insertItem(outSlot, remaining, false);
@@ -126,18 +133,25 @@ public class SalvagingMenu extends BlockEntityMenu<SalvagingTableTile> {
 
     public static int getSalvageCount(OutputData output, ItemStack stack, RandomSource rand) {
         int[] counts = getSalvageCounts(output, stack);
-        return rand.nextInt(counts[0], counts[1] + 1);
+        int min = Math.min(counts[0], counts[1]);
+        int max = Math.max(counts[0], counts[1]);
+        if (min >= max) {
+            return min;
+        }
+        return rand.nextInt(min, max + 1);
     }
 
     public static int[] getSalvageCounts(OutputData output, ItemStack stack) {
-        int[] out = { output.min(), output.max() };
+        int min = Math.min(output.min(), output.max());
+        int max = Math.max(output.min(), output.max());
+        int[] out = { min, max };
         if (stack.isDamageableItem()) {
             int maxDmg = stack.getMaxDamage();
             if (maxDmg <= 0) {
                 Apotheosis.LOGGER.warn("Item {} returned true to ItemStack#isDamageableItem, but returned {} from ItemStack#getMaxDamage, when the value should be positive!", BuiltInRegistries.ITEM.getKey(stack.getItem()), maxDmg);
                 return out;
             }
-            out[1] = Math.max(out[0], Math.round(out[1] * (maxDmg - stack.getDamageValue()) / maxDmg));
+            out[1] = Math.max(out[0], Math.round((float) out[1] * (maxDmg - stack.getDamageValue()) / maxDmg));
         }
         return out;
     }

@@ -86,7 +86,7 @@ public class AugmentingMenu extends BlockEntityMenu<AugmentingTableTile> {
 
         List<AffixInstance> affixes = computeItemAffixes(mainItem);
 
-        if (affixes.isEmpty() || selected >= affixes.size()) {
+        if (selected < 0 || affixes.isEmpty() || selected >= affixes.size()) {
             return false;
         }
 

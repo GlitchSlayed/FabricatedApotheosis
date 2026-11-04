@@ -43,7 +43,7 @@ public class ReforgingMenu extends BlockEntityMenu<ReforgingTableTile> {
     public ReforgingMenu(int id, Inventory inv, BlockPos pos) {
         super(Menus.REFORGING, id, inv, pos);
         this.player = inv.player;
-        this.addSlot(new UpdatingSlot(this.itemInv, 0, 81, 62, stack -> !LootCategory.forItem(stack).isNone()){
+        this.addSlot(new UpdatingSlot(this.itemInv, 0, 81, 62, stack -> !LootCategory.forItem(stack).isNone(), () -> this.slotsChanged(this.itemInv)){
             @Override
             public int getMaxStackSize() {
                 return 1;
@@ -54,8 +54,8 @@ public class ReforgingMenu extends BlockEntityMenu<ReforgingTableTile> {
                 return 1;
             }
         });
-        this.addSlot(new UpdatingSlot(this.tile.inv, 0, 39, 40, this.tile::isValidRarityMat));
-        this.addSlot(new UpdatingSlot(this.tile.inv, 1, 123, 86, stack -> stack.is(Items.SIGIL_OF_REBIRTH)));
+        this.addSlot(new UpdatingSlot(this.tile.inv, 0, 39, 40, this.tile::isValidRarityMat, () -> this.slotsChanged(this.itemInv)));
+        this.addSlot(new UpdatingSlot(this.tile.inv, 1, 123, 86, stack -> stack.is(Items.SIGIL_OF_REBIRTH), () -> this.slotsChanged(this.itemInv)));
         this.addSlot(new ReforgingResultSlot(this.choicesInv, 0, 27, 135));
         this.addSlot(new ReforgingResultSlot(this.choicesInv, 1, 81, 135));
         this.addSlot(new ReforgingResultSlot(this.choicesInv, 2, 135, 135));

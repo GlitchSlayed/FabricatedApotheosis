@@ -44,27 +44,34 @@ public class PayloadHelper {
 
         StreamCodec<? super RegistryFriendlyByteBuf, T> codec = provider.getCodec();
 
-        // Register on both S2C and C2S channels for Fabric networking
         try {
-            PayloadTypeRegistry.clientboundPlay().register(type, (StreamCodec<RegistryFriendlyByteBuf, T>) codec);
-            PayloadTypeRegistry.serverboundPlay().register(type, (StreamCodec<RegistryFriendlyByteBuf, T>) codec);
+            if (provider.isClientbound()) {
+                PayloadTypeRegistry.clientboundPlay().register(type, (StreamCodec<RegistryFriendlyByteBuf, T>) codec);
+            }
+            if (provider.isServerbound()) {
+                PayloadTypeRegistry.serverboundPlay().register(type, (StreamCodec<RegistryFriendlyByteBuf, T>) codec);
+            }
         } catch (IllegalArgumentException e) {
             LOGGER.debug("Payload {} already registered on channel: {}", type.id(), e.getMessage());
         }
 
-        // Server-side receiver
-        ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> {
-            context.server().execute(() -> {
-                provider.handleServer(payload, context.player());
+        // Server-side receiver only if serverbound
+        if (provider.isServerbound()) {
+            ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> {
+                context.server().execute(() -> {
+                    provider.handleServer(payload, context.player());
+                });
             });
-        });
+        }
 
-        // Client-side receiver
-        synchronized (PayloadHelper.class) {
-            if (clientHandler != null) {
-                clientHandler.registerClient(type, provider);
-            } else {
-                PENDING_CLIENT_REGISTRATIONS.add(h -> h.registerClient(type, provider));
+        // Client-side receiver only if clientbound
+        if (provider.isClientbound()) {
+            synchronized (PayloadHelper.class) {
+                if (clientHandler != null) {
+                    clientHandler.registerClient(type, provider);
+                } else {
+                    PENDING_CLIENT_REGISTRATIONS.add(h -> h.registerClient(type, provider));
+                }
             }
         }
     }

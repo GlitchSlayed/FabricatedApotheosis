@@ -38,6 +38,16 @@ public record ButtonClickPayload(int button) implements CustomPacketPayload {
         }
 
         @Override
+        public boolean isClientbound() {
+            return false;
+        }
+
+        @Override
+        public boolean isServerbound() {
+            return true;
+        }
+
+        @Override
         public void handleServer(ButtonClickPayload msg, ServerPlayer player) {
             if (player.containerMenu instanceof IButtonContainer btnContainer) {
                 btnContainer.onButtonClick(msg.button);

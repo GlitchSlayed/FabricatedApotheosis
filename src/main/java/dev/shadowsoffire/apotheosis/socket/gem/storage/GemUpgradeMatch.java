@@ -18,16 +18,21 @@ import net.neoforged.neoforge.common.crafting.SizedIngredient;
 record GemUpgradeMatch(PurityUpgradeRecipe recipe, int leftSlot, int rightSlot, SizedIngredient leftIng, SizedIngredient rightIng) {
 
     void execute(InternalItemHandler matInv, EnumMap<Purity, Integer> map) {
-        map.put(this.recipe.purity(), map.get(this.recipe.purity()) - 2);
-        map.put(this.recipe.purity().next(), map.get(this.recipe.purity().next()) + 1);
         matInv.extractItem(this.leftSlot, this.leftIng.count(), false);
         matInv.extractItem(this.rightSlot, this.rightIng.count(), false);
+        int currentPrev = map.getOrDefault(this.recipe.purity(), 0);
+        int currentNext = map.getOrDefault(this.recipe.purity().next(), 0);
+        map.put(this.recipe.purity(), Math.max(0, currentPrev - 2));
+        map.put(this.recipe.purity().next(), currentNext + 1);
     }
 
     @Nullable
     static GemUpgradeMatch findMatch(Level level, Purity purity, EnumMap<Purity, Integer> map, InternalItemHandler matInv) {
+        if (purity.ordinal() <= 0) {
+            return null;
+        }
         Purity prev = Purity.values()[purity.ordinal() - 1];
-        if (map.get(prev) < 2) {
+        if (map.getOrDefault(prev, 0) < 2) {
             return null;
         }
 

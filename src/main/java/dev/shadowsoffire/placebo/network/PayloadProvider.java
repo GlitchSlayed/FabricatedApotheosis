@@ -17,6 +17,14 @@ public interface PayloadProvider<T extends CustomPacketPayload> {
 
     StreamCodec<? super RegistryFriendlyByteBuf, T> getCodec();
 
+    default boolean isClientbound() {
+        return true;
+    }
+
+    default boolean isServerbound() {
+        return false;
+    }
+
     default void handleClient(T msg, Player player) {}
 
     default void handleServer(T msg, ServerPlayer player) {}

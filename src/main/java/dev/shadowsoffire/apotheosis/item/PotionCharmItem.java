@@ -52,7 +52,7 @@ public class PotionCharmItem extends Item implements ITabFiller {
     }
 
     public static boolean isCharmsInCuriosOnly() {
-        return AdventureConfig.charmsInCuriosOnly && (PlatformHelper.isModLoaded("accessories") || PlatformHelper.isModLoaded("trinkets"));
+        return false;
     }
 
     @Override

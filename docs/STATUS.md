@@ -285,6 +285,40 @@
     - Added `.useBlockDescriptionPrefix()` on block items to inherit proper `block.` translation keys.
   - [x] **Automated Verification**: Added 3 new tests in `InGameRepairsTest`. Total test suite: 78/78 tests passing. Clean build (`./gradlew build`) verified.
 
+### Post-Milestone 12 Hotfix 4: Comprehensive 32-Point Stabilization Audit & Integrity Hardening
+- **Status**: **COMPLETE** (2026-11-04)
+- **Scope**: Addressed all 32 findings from the static audit across item conservation, packet direction safety, GLM registration, gameplay dispatch, dynamic registries, and lifecycles.
+- **Key Fixes**:
+  - [x] **Cluster 1 (Item Loss & Menu Safety)**:
+    - `GemCaseMenu`: Guarded `depositGem` with re-entrancy protection; preserved remainder in input slot when partially inserted or rejected (Finding #1).
+    - `GemUpgradeMatch`: Used `map.getOrDefault` on sparse purity maps to eliminate NPE; guarded minimum purity ordinal; extracted items before updating map (Finding #24).
+    - `SalvagingRecipe` & `SalvagingMenu`: Enforced `min <= max` bounds; preserved unmatched inputs; clamped counts in `RandomSource.nextInt` (Finding #26, #27).
+  - [x] **Cluster 2 (Packet Validation, Menus & Leaks)**:
+    - `PayloadHelper` & `PayloadProvider`: Enforced direction split (`isClientbound()`, `isServerbound()`); rejected misdirected packets (Finding #6).
+    - `DynRegPayloads`: Added `MAX_JSON_BYTES` (2MB limit) to prevent negative array or OOM allocations (Finding #4).
+    - Menu bounds & reach validation: Enforced reach and validity checks in `AugmentingMenu`, `GemCuttingMenu`, `ReforgingMenu`, `BlockEntityMenu`, and `LinkItemToChatPayload` (Finding #5, #25, #28).
+    - Listeners: Fixed listener leak in `EnchLibraryContainer` on container close; wired listener notification for `GemCaseTile` container updates (Finding #29, #30).
+  - [x] **Cluster 3 (Structure Gen & Aux Damage)**:
+    - `StructureTemplateMixin`: Replaced destructive in-place NBT mutation with `@ModifyArg` copy and thread-local settings deque (Finding #8).
+    - `LivingEntityMixin`: Wired `AuxDmgTracker.tick()` to expire auxiliary damage immunity (Finding #23).
+  - [x] **Cluster 4 (Gameplay Hooks & Global Loot Modifiers)**:
+    - Global Loot Modifiers: Restored 6 loot modifier JSONs; implemented `LootModifierManager` with priority ordering; injected `LootTable.getRandomItems` and `ReloadableServerResources` (Finding #3).
+    - Effect dispatch: Implemented `EnchantmentHelperMixin` (`getDamageProtection`, `modifyDamage`, `doPostAttack`, `doPostHurt`, `processDurabilityChange`, `getItemEnchantmentLevel`), `ProjectileMixin` (firing & impact), `LivingEntityMixin` (shield blocking & hurt reductions), and `ServerPlayerGameModeMixin` (block break) (Finding #2).
+    - Protection & Fake Players: Dispatched `PlayerBlockBreakEvents.BEFORE` in `CommonHooks.fireBlockBreak`; fixed level checks and level switching in `FakePlayerFactory` (Finding #22).
+    - Potion Charms & Flight: Removed premature charm suppression when accessory mod is present; checked external flight sources in `PlayerMixin` (Finding #31, #32).
+  - [x] **Cluster 5 (Dynamic Registries, Tags, Reload & Sync)**:
+    - `GemCaseTile`: Preserved unresolvable gem holders across saves in `unresolvedGems` map (Finding #7).
+    - `DynamicTagManager`: Registered as `IdentifiableResourceReloadListener` (`placebo:dynamic_registry_tags`) (Finding #9).
+    - `DynamicRegistryManager`: Wired client sync broadcast on `ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS`; cleared lookup on server stop (Finding #10, #11).
+    - Transactional reload: In `DynamicRegistry` and `RarityRegistry`, preserved previous valid state on reload failure (Finding #6).
+    - `GenContext.dummy`: Safe lookup fallback (Finding #12).
+    - `ApotheosisConfig`: Differentiated integrated vs remote servers; preserved malformed config files as `.invalid` instead of overwriting (Finding #14, #16).
+    - `WorldTier`: Separated active tier from max unlocked tier; reset tutorial state on disconnect (Finding #20).
+    - `GemLootPoolEntry` & `TieredDynamicRegistry`: Preserved explicit loot pool constraints without dropping restrictions (Finding #19).
+    - `GemModel`: Supported extensible resource-pack gem model mappings and logged baking failures (Finding #18).
+    - `DeferredHelper`: Logged and propagated attachment registration failures instead of silently returning null (Finding #21).
+  - [x] **Automated Verification**: `./gradlew test` and `./gradlew build` verified passing 100% cleanly. Dedicated server launch verified.
+
 ---
 
 ## 2. Milestone Summary

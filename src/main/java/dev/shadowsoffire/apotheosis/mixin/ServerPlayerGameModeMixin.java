@@ -10,6 +10,7 @@ import dev.shadowsoffire.apotheosis.attributes.api.AttributesUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
+import net.minecraft.world.item.ItemStack;
 
 @Mixin(ServerPlayerGameMode.class)
 public abstract class ServerPlayerGameModeMixin {
@@ -25,5 +26,12 @@ public abstract class ServerPlayerGameModeMixin {
     @Inject(method = "destroyBlock", at = @At("RETURN"))
     private void apoth_clearBreaker(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         AttributesUtil.CURRENT_BREAKER.remove();
+        if (cir.getReturnValue()) {
+            ItemStack stack = this.player.getMainHandItem();
+            if (!stack.isEmpty()) {
+                dev.shadowsoffire.apotheosis.socket.SocketHelper.getGems(stack).onBlockBreak(this.player, this.player.level(), pos, this.player.level().getBlockState(pos));
+                dev.shadowsoffire.apotheosis.affix.AffixHelper.streamAffixes(stack).forEach(inst -> inst.onBlockBreak(this.player, this.player.level(), pos, this.player.level().getBlockState(pos)));
+            }
+        }
     }
 }

@@ -41,6 +41,11 @@ public record GemCaseSelectPayload(DynamicHolder<Gem> gem) implements CustomPack
         }
 
         @Override
+        public boolean isServerbound() {
+            return true;
+        }
+
+        @Override
         public void handleClient(GemCaseSelectPayload msg, Player player) {
             clientHandler.accept(msg.gem());
         }

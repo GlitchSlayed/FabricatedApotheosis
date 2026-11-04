@@ -39,6 +39,11 @@ public record RadialStatePayload(RadialState state) implements CustomPacketPaylo
         }
 
         @Override
+        public boolean isServerbound() {
+            return true;
+        }
+
+        @Override
         public void handleClient(RadialStatePayload msg, Player player) {
             RadialState.setState(player, msg.state);
         }

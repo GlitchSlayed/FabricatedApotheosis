@@ -34,6 +34,8 @@ import net.minecraft.world.item.ItemStack;
  */
 public class GemModel implements ItemModel {
 
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(GemModel.class);
+
     public static final List<String> BUILTIN_GEMS = List.of(
         "core/ballast",
         "core/brawlers",
@@ -93,17 +95,19 @@ public class GemModel implements ItemModel {
     public record Unbaked(ItemModel.Unbaked fallback, Map<Identifier, ItemModel.Unbaked> gemModels) implements ItemModel.Unbaked {
 
         public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            ItemModels.CODEC.fieldOf("fallback").forGetter(Unbaked::fallback))
-            .apply(i, Unbaked::createDefault));
+            ItemModels.CODEC.fieldOf("fallback").forGetter(Unbaked::fallback),
+            com.mojang.serialization.Codec.unboundedMap(Identifier.CODEC, ItemModels.CODEC).optionalFieldOf("models", Map.of()).forGetter(Unbaked::gemModels)
+        ).apply(i, Unbaked::create));
 
-        public static Unbaked createDefault(ItemModel.Unbaked fallback) {
-            Map<Identifier, ItemModel.Unbaked> models = new HashMap<>();
+        public static Unbaked create(ItemModel.Unbaked fallback, Map<Identifier, ItemModel.Unbaked> models) {
+            Map<Identifier, ItemModel.Unbaked> merged = new HashMap<>();
             for (String gemPath : BUILTIN_GEMS) {
                 Identifier gemId = Apotheosis.loc(gemPath);
                 Identifier modelId = Apotheosis.loc("item/gems/" + gemPath);
-                models.put(gemId, new CuboidItemModelWrapper.Unbaked(modelId, Optional.empty(), List.of()));
+                merged.put(gemId, new CuboidItemModelWrapper.Unbaked(modelId, Optional.empty(), List.of()));
             }
-            return new Unbaked(fallback, models);
+            merged.putAll(models);
+            return new Unbaked(fallback, merged);
         }
 
         @Override
@@ -120,7 +124,7 @@ public class GemModel implements ItemModel {
                     baked.put(entry.getKey(), entry.getValue().bake(context, transformation));
                 }
                 catch (Exception e) {
-                    // Fall back gracefully to fallback model for this gem if individual baking fails
+                    LOGGER.warn("Failed to bake gem model for '{}': {}", entry.getKey(), e.getMessage());
                 }
             }
             return new GemModel(bakedFallback, baked);

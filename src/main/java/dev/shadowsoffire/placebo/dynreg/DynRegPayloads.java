@@ -45,6 +45,7 @@ public class DynRegPayloads {
     }
 
     public record Content(Identifier registryId, Identifier entryId, String jsonString) implements CustomPacketPayload {
+        public static final int MAX_JSON_BYTES = 2 * 1024 * 1024;
         public static final Type<Content> TYPE = new Type<>(Placebo.loc("dynreg_sync_content"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Content> CODEC = StreamCodec.of(
             (buf, msg) -> {
@@ -58,6 +59,9 @@ public class DynRegPayloads {
                 Identifier regId = Identifier.STREAM_CODEC.decode(buf);
                 Identifier entryId = Identifier.STREAM_CODEC.decode(buf);
                 int len = buf.readVarInt();
+                if (len < 0 || len > MAX_JSON_BYTES || len > buf.readableBytes()) {
+                    throw new io.netty.handler.codec.DecoderException("Invalid json payload byte length: " + len + ", readable: " + buf.readableBytes());
+                }
                 byte[] bytes = new byte[len];
                 buf.readBytes(bytes);
                 return new Content(regId, entryId, new String(bytes, StandardCharsets.UTF_8));

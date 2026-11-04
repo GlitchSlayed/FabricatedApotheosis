@@ -159,11 +159,12 @@ public class AdventureModuleClient {
             }
         });
 
-        // Clear recipe caches on disconnect
+        // Clear recipe caches and tutorial state on disconnect
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             SalvagingRecipeCache.clear();
             GemCuttingRecipeCache.clear();
             ReforgingRecipeCache.clear();
+            WorldTier.clientTutorialDismissed = false;
         });
     }
 

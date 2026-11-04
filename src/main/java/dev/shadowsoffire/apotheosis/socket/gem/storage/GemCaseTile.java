@@ -2,6 +2,7 @@ package dev.shadowsoffire.apotheosis.socket.gem.storage;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -50,6 +51,7 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
     public static final int UPGRADE_MAT_SLOTS = 6;
 
     protected final Object2ObjectMap<DynamicHolder<Gem>, EnumMap<Purity, Integer>> gems = new Object2ObjectLinkedOpenHashMap<>();
+    protected final Map<Identifier, CompoundTag> unresolvedGems = new HashMap<>();
     protected final Set<GemCaseMenu> activeContainers = new HashSet<>();
     protected final Storage<ItemVariant> itemHandler = new GemCaseStorage();
     protected final int maxCount;
@@ -58,6 +60,10 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
         @Override
         protected void onContentsChanged(int index, ItemStack previousContents) {
             GemCaseTile.this.setChanged();
+            GemCaseTile.this.activeContainers.forEach(GemCaseMenu::onChanged);
+            if (GemCaseTile.this.level != null && !GemCaseTile.this.level.isClientSide()) {
+                VanillaPacketDispatcher.dispatchTEToNearbyPlayers(GemCaseTile.this);
+            }
         }
     };
 
@@ -162,6 +168,10 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
         if (match != null) {
             match.execute(this.upgradeMats, map);
             this.setChanged();
+            this.activeContainers.forEach(GemCaseMenu::onChanged);
+            if (this.level != null && !this.level.isClientSide()) {
+                VanillaPacketDispatcher.dispatchTEToNearbyPlayers(this);
+            }
             return true;
         }
         return false;
@@ -196,6 +206,9 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
 
     public void saveGemData(CompoundTag tag) {
         CompoundTag gems = new CompoundTag();
+        for (var entry : this.unresolvedGems.entrySet()) {
+            gems.put(entry.getKey().toString(), entry.getValue().copy());
+        }
         for (DynamicHolder<Gem> gem : this.gems.keySet()) {
             EnumMap<Purity, Integer> map = this.gems.get(gem);
             CompoundTag purityTag = new CompoundTag();
@@ -211,18 +224,19 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
     }
 
     public void loadGemData(CompoundTag tag) {
+        this.gems.clear();
+        this.unresolvedGems.clear();
         CompoundTag gems = tag.getCompoundOrEmpty("gems");
         for (String key : gems.keySet()) {
             Identifier res = Identifier.tryParse(key);
+            if (res == null) continue;
             DynamicHolder<Gem> gem = GemRegistry.INSTANCE.holder(res);
+            CompoundTag purityTag = gems.getCompoundOrEmpty(key);
             if (!gem.isBound()) {
+                this.unresolvedGems.put(res, purityTag.copy());
                 continue;
             }
-            CompoundTag purityTag = gems.getCompoundOrEmpty(key);
-            if (purityTag.isEmpty()) {
-                this.gems.remove(gem);
-            }
-            else {
+            if (!purityTag.isEmpty()) {
                 EnumMap<Purity, Integer> map = new EnumMap<>(Purity.class);
                 for (Purity p : Purity.values()) {
                     map.put(p, purityTag.getIntOr(p.getSerializedName(), 0));

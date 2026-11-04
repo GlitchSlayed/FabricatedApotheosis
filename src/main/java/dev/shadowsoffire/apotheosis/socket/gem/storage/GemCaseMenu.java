@@ -59,6 +59,8 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
 
     void initCommon(Inventory inv) {
         this.addSlot(new Slot(this.ioInv, 0, 142, 99){
+            private boolean depositing = false;
+
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.is(Apoth.Items.GEM);
@@ -72,13 +74,27 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
             @Override
             public void setChanged() {
                 super.setChanged();
-                if (!GemCaseMenu.this.level.isClientSide() && !this.getItem().isEmpty()) {
-                    GemCaseMenu.this.tile.depositGem(this.getItem());
+                if (this.depositing) return;
+                ItemStack stack = this.getItem();
+                if (stack.isEmpty()) return;
+
+                this.depositing = true;
+                try {
+                    int prev = stack.getCount();
+                    if (!GemCaseMenu.this.level.isClientSide()) {
+                        GemCaseMenu.this.tile.depositGem(stack);
+                        if (stack.getCount() < prev) {
+                            GemCaseMenu.this.level.playSound(null, GemCaseMenu.this.pos, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.NEUTRAL, 0.5F, 0.7F);
+                        }
+                    }
+                    if (stack.isEmpty()) {
+                        GemCaseMenu.this.ioInv.setItem(0, ItemStack.EMPTY);
+                    } else if (stack.getCount() != prev) {
+                        GemCaseMenu.this.ioInv.setItem(0, stack);
+                    }
+                } finally {
+                    this.depositing = false;
                 }
-                if (!this.getItem().isEmpty() && GemCaseMenu.this.level.isClientSide()) {
-                    inv.player.level().playSound(inv.player, GemCaseMenu.this.pos, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.NEUTRAL, 0.5F, 0.7F);
-                }
-                GemCaseMenu.this.ioInv.setItem(0, ItemStack.EMPTY);
             }
         });
         this.addSlot(new Slot(this.ioInv, 1, 142, 18){

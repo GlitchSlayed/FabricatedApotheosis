@@ -103,7 +103,14 @@ public class ApotheosisConfig {
      * Returns true if currently connected to a remote server with authoritative settings.
      */
     public static boolean isRemoteServer() {
-        return remoteServerConfig != null;
+        if (remoteServerConfig == null) {
+            return false;
+        }
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null && !server.isDedicatedServer()) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -158,7 +165,12 @@ public class ApotheosisConfig {
                     return;
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to parse server configuration {}, falling back to defaults with diagnostics", serverFile.getName(), e);
+                LOGGER.error("Failed to parse server configuration {}. Renaming invalid file to .invalid and creating fresh default.", serverFile.getName(), e);
+                File invalidFile = new File(serverFile.getParentFile(), serverFile.getName() + ".invalid");
+                if (invalidFile.exists()) {
+                    invalidFile.delete();
+                }
+                serverFile.renameTo(invalidFile);
             }
         }
         // Save initial default server configuration
@@ -179,7 +191,12 @@ public class ApotheosisConfig {
                     return;
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to parse client preferences {}, falling back to defaults", clientFile.getName(), e);
+                LOGGER.error("Failed to parse client preferences {}. Renaming invalid file to .invalid and creating fresh default.", clientFile.getName(), e);
+                File invalidFile = new File(clientFile.getParentFile(), clientFile.getName() + ".invalid");
+                if (invalidFile.exists()) {
+                    invalidFile.delete();
+                }
+                clientFile.renameTo(invalidFile);
             }
         }
         // Save initial default client configuration

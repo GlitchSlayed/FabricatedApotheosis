@@ -284,12 +284,16 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         clientLookupSupplier = supplier;
     }
 
+    public static void clearActiveLookup() {
+        activeLookup = null;
+    }
+
     public static net.minecraft.core.HolderLookup.Provider getActiveLookup() {
-        if (activeLookup != null) {
-            return activeLookup;
-        }
         var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
+            if (activeLookup != null) {
+                return activeLookup;
+            }
             return server.registryAccess();
         }
         if (clientLookupSupplier != null) {
@@ -301,6 +305,9 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
             } catch (Throwable ignored) {
                 // Client not initialized or running in dedicated server environment
             }
+        }
+        if (activeLookup != null) {
+            return activeLookup;
         }
         return net.minecraft.core.RegistryAccess.fromRegistryOfRegistries(net.minecraft.core.registries.BuiltInRegistries.REGISTRY);
     }

@@ -60,7 +60,7 @@ public class GemLootPoolEntry extends ContextualLootPoolEntry {
             // Fallback for HAVEN tier or restrictive constraints: try with FRONTIER tier
             GenContext frontierCtx = new GenContext(gCtx.rand(), WorldTier.FRONTIER, gCtx.luck(), gCtx.dimension(), gCtx.biome(), gCtx.stages());
             gem = !this.gems.isEmpty() ? GemRegistry.INSTANCE.getRandomItemFromHolders(frontierCtx, this.gems) : GemRegistry.INSTANCE.getRandomItem(frontierCtx);
-            if (gem == null) {
+            if (gem == null && this.gems.isEmpty()) {
                 gem = GemRegistry.INSTANCE.getRandomItem(gCtx, s -> true);
             }
         }

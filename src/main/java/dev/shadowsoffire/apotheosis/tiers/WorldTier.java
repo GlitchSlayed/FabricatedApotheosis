@@ -115,6 +115,10 @@ public enum WorldTier implements StringRepresentable {
         }
 
         dev.shadowsoffire.apotheosis.util.ModAttachments.setData(player, Attachments.WORLD_TIER, tier);
+        WorldTier maxTier = dev.shadowsoffire.apotheosis.util.ModAttachments.getData(player, Attachments.MAX_UNLOCKED_TIER);
+        if (maxTier == null || tier.compareTo(maxTier) > 0) {
+            dev.shadowsoffire.apotheosis.util.ModAttachments.setData(player, Attachments.MAX_UNLOCKED_TIER, tier);
+        }
         if (player instanceof ServerPlayer sp) {
             net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new WorldTierPayload(tier));
 
@@ -137,6 +141,10 @@ public enum WorldTier implements StringRepresentable {
             return true;
         }
         if (getTier(player).isAtLeast(tier)) {
+            return true;
+        }
+        WorldTier maxTier = dev.shadowsoffire.apotheosis.util.ModAttachments.getData(player, Attachments.MAX_UNLOCKED_TIER);
+        if (maxTier != null && maxTier.isAtLeast(tier)) {
             return true;
         }
         return ApothMiscUtil.hasAdvancement(player, tier.getUnlockAdvancement());

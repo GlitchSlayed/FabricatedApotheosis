@@ -61,10 +61,12 @@ public abstract class TieredDynamicRegistry<V extends Weighted> extends DynamicR
      * As opposed to {@link #getRandomItem(GenContext, Predicate...)}, this method is not nullable, and will always return an item from the pool or the registry.
      */
     public final V getRandomItem(GenContext ctx, Set<V> pool) {
-        V v = this.getRandomItem(ctx, pool.isEmpty() ? s -> true : pool::contains);
+        if (pool.isEmpty()) {
+            return this.getRandomItem(ctx);
+        }
+        V v = this.getRandomItem(ctx, pool::contains);
         if (v == null) {
-            java.util.Collection<V> candidates = pool.isEmpty() ? this.getValues() : pool;
-            return candidates.isEmpty() ? null : ApothMiscUtil.getRandomElement(candidates, ctx.rand());
+            return ApothMiscUtil.getRandomElement(pool, ctx.rand());
         }
         return v;
     }
@@ -73,7 +75,14 @@ public abstract class TieredDynamicRegistry<V extends Weighted> extends DynamicR
      * Similar to {@link #getRandomItem(GenContext, Set)}, but uses a set of {@link DynamicHolder} objects instead of the actual items.
      */
     public final V getRandomItemFromHolders(GenContext ctx, Set<DynamicHolder<V>> pool) {
-        return this.getRandomItem(ctx, pool.stream().filter(DynamicHolder::isBound).map(DynamicHolder::get).collect(Collectors.toSet()));
+        if (pool.isEmpty()) {
+            return this.getRandomItem(ctx);
+        }
+        Set<V> resolved = pool.stream().filter(DynamicHolder::isBound).map(DynamicHolder::get).collect(Collectors.toSet());
+        if (resolved.isEmpty()) {
+            return null;
+        }
+        return this.getRandomItem(ctx, resolved);
     }
 
 }

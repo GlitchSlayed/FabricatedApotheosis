@@ -324,7 +324,8 @@ public class DeferredHelper {
             });
         }
         catch (Throwable t) {
-            return null;
+            org.slf4j.LoggerFactory.getLogger("Placebo").error("Failed to register attachment type '{}'", id, t);
+            throw new IllegalStateException("Failed to register attachment type " + id, t);
         }
     }
 
@@ -383,7 +384,10 @@ public class DeferredHelper {
         return Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, id, codec);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> com.mojang.serialization.MapCodec<T> lootModifier(String name, com.mojang.serialization.MapCodec<T> codec) {
+        Identifier id = this.id(name);
+        dev.shadowsoffire.apotheosis.loot.modifiers.LootModifierManager.registerCodec(id, (com.mojang.serialization.MapCodec<? extends net.neoforged.neoforge.common.loot.LootModifier>) (com.mojang.serialization.MapCodec<?>) codec);
         return codec;
     }
 

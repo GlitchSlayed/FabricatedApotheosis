@@ -41,6 +41,11 @@ public record AttributeTogglesPayload(AttributeToggles toggles) implements Custo
         }
 
         @Override
+        public boolean isServerbound() {
+            return true;
+        }
+
+        @Override
         public void handleClient(AttributeTogglesPayload msg, Player player) {
             AttributeToggleAffix.setToggles(player, msg.toggles);
         }

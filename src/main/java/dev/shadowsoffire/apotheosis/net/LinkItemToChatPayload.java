@@ -45,6 +45,16 @@ public record LinkItemToChatPayload(int containerId, int slot, Item intendedItem
         }
 
         @Override
+        public boolean isClientbound() {
+            return false;
+        }
+
+        @Override
+        public boolean isServerbound() {
+            return true;
+        }
+
+        @Override
         public void handleServer(LinkItemToChatPayload msg, ServerPlayer player) {
             if (ItemLinking.isOnCooldown(player.getUUID(), player.level().getGameTime())) {
                 return;
@@ -56,7 +66,7 @@ public record LinkItemToChatPayload(int containerId, int slot, Item intendedItem
             }
 
             AbstractContainerMenu menu = player.containerMenu;
-            if (menu.containerId == msg.containerId && menu.slots.size() > msg.slot) {
+            if (menu.containerId == msg.containerId && msg.slot >= 0 && msg.slot < menu.slots.size()) {
                 Slot slot = menu.getSlot(msg.slot);
                 ItemStack stack = slot.getItem();
 

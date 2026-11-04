@@ -36,7 +36,10 @@ public class EnchLibraryContainer extends BlockEntityMenu<EnchLibraryTile> imple
     @Override
     public void removed(Player player) {
         super.removed(player);
-        if (!this.level.isClientSide()) this.tile.removeListener(this);
+        if (this.tile != null) {
+            this.tile.removeListener(this);
+        }
+        this.notifier = null;
         this.clearContainer(player, this.ioInv);
     }
 

@@ -18,5 +18,12 @@ public class ReloadableServerResourcesMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void apoth$captureRegistries(ReloadableServerRegistries.LoadResult loadResult, FeatureFlagSet featureFlagSet, Commands.CommandSelection commandSelection, List<?> postponedTags, PermissionSet permissionSet, List<?> newComponents, CallbackInfo ci) {
         DynamicRegistry.setActiveLookup(loadResult.lookupWithUpdatedTags());
+        loadResult.lookupWithUpdatedTags().lookup(net.minecraft.core.registries.Registries.LOOT_TABLE).ifPresent(lookup -> {
+            lookup.listElements().forEach(holder -> {
+                if (holder.value() instanceof dev.shadowsoffire.apotheosis.util.LootTableAccess access) {
+                    access.apoth_setTableKey(holder.key());
+                }
+            });
+        });
     }
 }

@@ -27,11 +27,16 @@ import net.minecraft.util.profiling.ProfilerFiller;
  *
  * @see DynamicRegistry#bindTags(Map)
  */
-public class DynamicTagManager extends SimplePreparableReloadListener<Map<DynamicRegistry<?>, ScannedTags<?>>> {
+public class DynamicTagManager extends SimplePreparableReloadListener<Map<DynamicRegistry<?>, ScannedTags<?>>> implements net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener {
 
     public static final Identifier ID = Placebo.loc("dynamic_registry_tags");
 
     public static final DynamicTagManager INSTANCE = new DynamicTagManager();
+
+    @Override
+    public Identifier getFabricId() {
+        return ID;
+    }
 
     @Override
     protected Map<DynamicRegistry<?>, ScannedTags<?>> prepare(ResourceManager manager, ProfilerFiller profiler) {

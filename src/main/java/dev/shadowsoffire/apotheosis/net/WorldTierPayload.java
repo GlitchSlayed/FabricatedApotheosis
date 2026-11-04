@@ -37,6 +37,11 @@ public record WorldTierPayload(WorldTier tier) implements CustomPacketPayload {
         }
 
         @Override
+        public boolean isServerbound() {
+            return true;
+        }
+
+        @Override
         public void handleClient(WorldTierPayload msg, Player player) {
             WorldTier.setTier(player, msg.tier);
         }

@@ -32,11 +32,30 @@ public class DynamicRegistryManager {
             LOGGER.debug("Registered reload listener for dynamic registry '{}'", registry.getId());
         }
 
+        // Register dynamic tags loader
+        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(dev.shadowsoffire.placebo.dynreg.tag.DynamicTagManager.INSTANCE);
+        LOGGER.debug("Registered reload listener for dynamic registry tags");
+
         // Synchronize dynamic registries when a player joins the server
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             for (DynamicRegistry<?> registry : DynamicRegistry.getAllRegistries()) {
                 registry.syncToPlayer(handler.player);
             }
+        });
+
+        // Synchronize dynamic registries on datapack reload (/reload)
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register((player, joined) -> {
+            if (!joined) {
+                for (DynamicRegistry<?> registry : DynamicRegistry.getAllRegistries()) {
+                    registry.syncToPlayer(player);
+                }
+            }
+        });
+
+        // Server stop cleanup to prevent memory leaks across sessions
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            DynamicRegistry.clearActiveLookup();
+            net.neoforged.neoforge.common.util.FakePlayerFactory.clear();
         });
 
         LOGGER.info("Dynamic registry manager initialized successfully");

@@ -238,6 +238,11 @@ public class Apoth {
         public static final AttachmentType<WorldTier> WORLD_TIER = R.attachment("world_tier", () -> WorldTier.HAVEN, b -> b.persistent(WorldTier.CODEC).copyOnDeath());
 
         /**
+         * The highest {@link WorldTier} the player has ever unlocked.
+         */
+        public static final AttachmentType<WorldTier> MAX_UNLOCKED_TIER = R.attachment("max_unlocked_tier", () -> WorldTier.HAVEN, b -> b.persistent(WorldTier.CODEC).copyOnDeath());
+
+        /**
          * Records if the {@link TierAugment}s for the current world tier have been applied to the attached entity or not.
          * <p>
          * If this is not set, they will be applied the next time the entity joins the level.
