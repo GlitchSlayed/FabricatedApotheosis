@@ -27,7 +27,18 @@ public class SalvagingTableTile extends BlockEntity implements Clearable {
     /**
      * "Real" output inventory, as reflected in the container menu.
      */
-    protected final InternalItemHandler output = new InternalItemHandler(6);
+    protected final InternalItemHandler output = new InternalItemHandler(6) {
+        @Override
+        protected void onContentsChanged(int slot, ItemStack previousContents) {
+            SalvagingTableTile.this.setChanged();
+        }
+
+        @Override
+        public void setChanged() {
+            super.setChanged();
+            SalvagingTableTile.this.setChanged();
+        }
+    };
     protected final Storage<ItemVariant> itemHandler = new SalvagingItemHandler();
 
     public Storage<ItemVariant> getItemHandler() {

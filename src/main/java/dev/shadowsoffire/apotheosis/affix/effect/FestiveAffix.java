@@ -89,16 +89,16 @@ public class FestiveAffix extends Affix {
         if (e.getEntity() instanceof Container c) {
             for (int i = 0; i < c.getContainerSize(); i++) {
                 ItemStack stack = c.getItem(i);
-                if (!stack.isEmpty()) {
-                    ((IFestiveMarker) (Object) stack).setMarked(true);
+                if (!stack.isEmpty() && (Object) stack instanceof IFestiveMarker marker) {
+                    marker.setMarked(true);
                 }
             }
         }
 
         for (EquipmentSlot slot : EquipmentSlot.values()) {
             ItemStack i = e.getEntity().getItemBySlot(slot);
-            if (!i.isEmpty()) {
-                ((IFestiveMarker) (Object) i).setMarked(true);
+            if (!i.isEmpty() && (Object) i instanceof IFestiveMarker marker) {
+                marker.setMarked(true);
             }
         }
     }
@@ -117,7 +117,8 @@ public class FestiveAffix extends Affix {
 
                 List<ItemEntity> drops = new ArrayList<>(e.getDrops());
                 for (ItemEntity item : drops) {
-                    if (((IFestiveMarker) (Object) item.getItem()).isMarked() || item.getItem().is(Apoth.Tags.CANNOT_BE_DUPLICATED)) {
+                    boolean isMarked = (Object) item.getItem() instanceof IFestiveMarker marker && marker.isMarked();
+                    if (isMarked || item.getItem().is(Apoth.Tags.CANNOT_BE_DUPLICATED)) {
                         continue;
                     }
 
@@ -139,7 +140,9 @@ public class FestiveAffix extends Affix {
     public static void removeMarker(LivingDropsEvent e) {
         e.getDrops().stream().forEach(ent -> {
             ItemStack s = ent.getItem();
-            ((IFestiveMarker) (Object) s).setMarked(false);
+            if ((Object) s instanceof IFestiveMarker marker) {
+                marker.setMarked(false);
+            }
             ent.setItem(s);
         });
     }

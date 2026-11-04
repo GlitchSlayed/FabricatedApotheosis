@@ -1,40 +1,43 @@
-# Handoff Report — Second-Pass Audit Hardening & System Integrity
+# Handoff Report — Third-Pass Audit Hardening & System Integrity
 
 - **Date**: 2026-11-04
 - **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.20.1+, YACL 3.9.6, JEI 31.17.0.108, Jade 26.3.5+fabric)
 - **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar`
-- **Status**: **Second-Pass Audit Resolved; 83/83 Tests Passing; Full Build Green.**
+- **Status**: **Third-Pass Audit Resolved; 88/88 Tests Passing; Full Build Green.**
 
 ---
 
 ## 1. Scope & Audit Resolution Summary
 
-Following the full static codebase audit and subsequent second-pass verification, all findings have been thoroughly resolved across 5 functional areas:
+Following the full static codebase audit and subsequent third-pass verification, all findings have been thoroughly resolved across all functional areas:
 
-### 1. Invoker Registration & Crash Prevention
-- **`LivingEntityInvoker` Registration**: Added `"LivingEntityInvoker"` to `apotheosis.mixins.json` and validated all 4 target methods (`apoth$callDropCustomDeathLoot`, `apoth$callDropEquipment`, `apoth$callOnEffectUpdated`, `apoth$callCanRide`) against Minecraft 26.3 `LivingEntity`. Added automated regression test `testLivingEntityInvokerRegistered` in `SaveCompatibilityTest`.
+### 1. Critical Mob Death Crash & Marker Implementation
+- **`IFestiveMarker` Implementation**: Implemented `IFestiveMarker` on `ItemStackMixin` with `@Unique boolean apoth$festiveMarked` and copy propagation via `@Inject` on `copy`.
+- **Defensive Markers in `FestiveAffix`**: Added defensive `(Object) stack instanceof IFestiveMarker` checks in `markEquipment`, `modifyEntityLoot`, and `removeMarker`, completely preventing `ClassCastException` for ordinary equipped mobs (e.g. skeletons with bows) dying in all runtime and untransformed test environments.
 
-### 2. Projectile Dispatch Timing & Re-entry Safety
-- **Firing Dispatch Timing**: Shifted `ProjectileMixin` firing dispatch to `@Inject(at = @At("TAIL"), method = "shoot(DDDFF)V")` so arrow motion/delta vectors are fully initialized before affixes inspect velocity.
-- **Spectral Arrow Recursion Guard**: Pre-tagged `apoth.generated` in `SpectralShotAffix` *before* firing the secondary arrow, and added `apoth$IN_SHOOT` thread-local re-entrancy protection in `ProjectileMixin`.
+### 2. Scoped Death-Drop Capture & Exception Safety
+- **Per-Thread Context Stack**: Scoped `spawnAtLocation` capture in `EntityMixin` to a per-thread LIFO context stack (`DropCaptureContext(LivingEntity entity)`), ensuring drops are only captured when `this == ctx.entity`.
+- **Safe Lifecycle Flushing**: Replaced injections in `LivingEntityMixin` with `@WrapMethod` on `dropAllDeathLoot`, wrapping drop capture in a strict `try / finally` block that flushes captured drops to the world on both success and exception recovery, preventing drop leaks or swallowing of unrelated drops.
 
-### 3. Attack Source Targeting & Exception Safety
-- **Attack Source Disambiguation**: Targeted `@Nullable ItemStack itemSource` (with main-hand fallback) instead of iterating every equipped item in `EnchantmentHelperMixin.apoth_doPostAttackEffects`.
-- **Invulnerability Timer Safety**: Wrapped `target.invulnerableTime` modification in `try { ... } finally { target.invulnerableTime = old; }`.
+### 3. Dynamic Registry Whole-Generation Validation & Atomic Reload
+- **Whole-Generation Validation**: Added `validateGeneration(Map<Identifier, R> staged, ReloadType type)` in `DynamicRegistry` to validate entire replacement generations before any state changes are committed.
+- **Atomic Coherent Reload in `RarityRegistry`**: Implemented `validateGeneration` (checks duplicate material collisions across all staged entries) and overridden `commitReload` to update `materialMap`, `sorted`, and the registry atomically together, ensuring reload failures preserve the coherent previous generation.
 
-### 4. Gameplay Hooks & Network Synchronization
-- **`onItemUse` Dispatch**: Wired from `ItemStackMixin.useOn(UseOnContext)` to socketed gems and affixes (`StoneformingAffix`, `EnlightenedAffix`).
-- **`modifyIncomingDamageTags` Dispatch**: Wired at `HEAD` of `LivingEntity.hurtServer` for `MagicalArrowAffix`.
-- **`modifyEntityLoot` Dispatch**: Wired in `LivingEntityMixin` with death-drop capture via `EntityMixin.spawnAtLocation` (`FestiveAffix`, `TelepathicAffix`).
-- **Dynamic Tags Network Sync**: Implemented `DynRegPayloads.Tags` payload, sent before `End` in `DynamicRegistry.syncToPlayer`, staged and bound via `bindTags` on the client in `completeClientSync`. Registered payload provider in `DynamicRegistryManager` and hooked `EnchantmentInfoLoader.syncToPlayer` to `SYNC_DATA_PACK_CONTENTS`.
-- **World Tier Maximum Unlocked Tier Sync**: Added `maxUnlockedTier` to `WorldTierPayload` and synchronized across join, dimension travel, respawn, and tier advancement.
+### 4. Tag Packet Bounds & Flight Contract
+- **Bounded Tag Decoding**: Enforced `MAX_TAG_COUNT = 10,000`, `MAX_ENTRIES_PER_TAG = 10,000`, and `MAX_TOTAL_TAG_ENTRIES = 50,000` in `DynRegPayloads.Tags` with readable-bytes validation.
+- **Flight Integration Contract**: Documented third-party integration contract for `AttributesUtil.EXTERNAL_FLIGHT_PREDICATES` detailing registration timing, thread safety, and interaction with flight revocation.
 
-### 5. Configuration Ownership & Persistence Integrity
-- **Integrated Server Config Ownership**: Added `ServerLifecycleHooks.isIntegratedServerRunning()` and guarded `ApotheosisConfig.setRemoteServerConfig` and `isRemoteServer` so singleplayer integrated servers retain authoritative local settings without remote decoupling. Wired unconsumed server settings (`maxEnchantmentLevelLimit`, `critDamageModifierCap`, `spawnerRedstoneControl`).
-- **Flight Cooperative Ownership**: Added `AttributesUtil.EXTERNAL_FLIGHT_PREDICATES` and protected `PlayerMixin` flight revocation against other active flight-granting mods.
-- **Structure Placement Exception Safety**: Replaced head/return injection on `placeInWorld` with `@WrapOperation` on `placeEntities` with `try/finally` in `StructureTemplateMixin`.
-- **Loot Modifier Pool Guards**: Added non-empty checks before `getRandomItem` in `AffixLootModifier` and `GemLootModifier`.
-- **Unknown Gem Preservation & Reconciliation**: Stored unresolved gems across saves in `GemCaseTile` and added `reconcileUnresolvedGems()` to merge them back into storage when their definitions are registered. Tested in `SaveCompatibilityTest`.
+### 5. Menu & Table Inventory Safety
+- **Gem Case Shift-Click**: Wrapped `quickMoveStack` with quick-moving tracking so `GemCaseSlot.onQuickMove` extracts the exact transferred count (`original.getCount() - remaining.getCount()`), eliminating gem loss on partial shift-clicks.
+- **Salvaging Table Dirtiness**: Marked `SalvagingTableTile` dirty whenever output items are inserted, removed, or `salvageAll()` executes.
+- **Gem Case Storage Views**: Delegated `StorageView.extract` to `GemCaseStorage.extract` so Fabric Transfer API extraction returns the actual extracted amount instead of 0.
+- **Dynamic Gem Selection**: Converted raw `Gem` in `GemCaseMenu` to `DynamicHolder<Gem>`, updated `GemCaseScreen` to use `getSelectedGem()`, preventing stale references across datapack reloads.
+- **Reforging Choices Invalidation**: Added listeners to `ReforgingTableTile` notifying menus to re-evaluate choices when another player alters table contents.
+- **Gem Upgrade Capacity Limit**: Enforced `maxCount` capacity guards in `GemUpgradeMatch` and `GemCaseTile` before executing upgrades.
+- **Block-Break State Capture**: Captured `BlockState` at HEAD in `ServerPlayerGameModeMixin` and passed pre-destruction state at RETURN.
+- **Config Backup Move**: Enforced atomic move, standard move, and copy fallback in `ApotheosisConfig.backupInvalidFile` before overwriting malformed configs.
+- **Gem-Cutting Slot Callback**: Eliminated duplicate callback in `GemCuttingMenu`.
+- **Unknown Gem Overflow Safety**: Used `long` arithmetic in `GemCaseTile.reconcileUnresolvedGems()` and eliminated clamping of saved quantities.
 
 ---
 

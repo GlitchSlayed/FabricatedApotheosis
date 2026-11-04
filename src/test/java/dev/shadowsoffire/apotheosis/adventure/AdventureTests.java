@@ -36,6 +36,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -98,6 +99,14 @@ public class AdventureTests {
             AdventureModule.init();
         } catch (Throwable t) {
             // Ignored in non-instrumented test JVM
+        }
+
+        for (net.minecraft.world.item.Item item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+            try {
+                item.builtInRegistryHolder().components();
+            } catch (Exception e) {
+                item.builtInRegistryHolder().bindComponents(compMap);
+            }
         }
     }
 
@@ -235,13 +244,86 @@ public class AdventureTests {
     @Test
     @DisplayName("Inventory operations and item conservation for SalvagingTableTile")
     public void testSalvagingTableInventory() {
-        SalvagingTableTile tile = new SalvagingTableTile(BlockPos.ZERO, Apoth.Blocks.SALVAGING_TABLE.value().defaultBlockState());
+        boolean[] changed = { false };
+        SalvagingTableTile tile = new SalvagingTableTile(BlockPos.ZERO, Apoth.Blocks.SALVAGING_TABLE.value().defaultBlockState()) {
+            @Override
+            public void setChanged() {
+                super.setChanged();
+                changed[0] = true;
+            }
+        };
         tile.getOutput().setItem(0, new ItemStack(Items.DIAMOND, 3));
         assertEquals(3, tile.getOutput().getItem(0).getCount());
 
         ItemStack extracted = tile.getOutput().removeItem(0, 2);
         assertEquals(2, extracted.getCount());
         assertEquals(1, tile.getOutput().getItem(0).getCount());
+
+        tile.getOutput().insertItem(1, new ItemStack(Items.IRON_NUGGET, 5), false);
+        assertTrue(changed[0], "Salvaging output insertion must mark tile changed");
+    }
+
+    @Test
+    @DisplayName("GemCaseTile StorageView extraction delegates and updates counts")
+    public void testGemCaseStorageViewsExtraction() {
+        try {
+            Apoth.Items.GEM.value().builtInRegistryHolder().components();
+        } catch (Exception e) {
+            Apoth.Items.GEM.value().builtInRegistryHolder().bindComponents(
+                net.minecraft.core.component.DataComponentMap.builder()
+                    .set(net.minecraft.core.component.DataComponents.MAX_STACK_SIZE, 64)
+                    .build()
+            );
+        }
+        dev.shadowsoffire.apotheosis.socket.gem.storage.GemCaseTile.BasicGemCaseTile gemCase =
+            new dev.shadowsoffire.apotheosis.socket.gem.storage.GemCaseTile.BasicGemCaseTile(
+                BlockPos.ZERO,
+                Apoth.Blocks.GEM_CASE.value().defaultBlockState()
+            );
+        Gem dummyGem = new Gem(
+            dev.shadowsoffire.apotheosis.tiers.TieredWeights.EMPTY,
+            dev.shadowsoffire.apotheosis.tiers.Constraints.EMPTY,
+            Purity.CRACKED,
+            List.of(new dev.shadowsoffire.apotheosis.socket.gem.bonus.DurabilityBonus(
+                new dev.shadowsoffire.apotheosis.socket.gem.GemClass(Apoth.LootCategories.MELEE_WEAPON),
+                Map.of(Purity.CRACKED, 0.1f, Purity.NORMAL, 0.2f, Purity.FLAWLESS, 0.5f)
+            )),
+            false
+        );
+        Identifier testId = Identifier.fromNamespaceAndPath("test", "extraction_gem");
+        GemRegistry.INSTANCE.registerForTesting(testId, dummyGem);
+        DynamicHolder<Gem> gem = GemRegistry.INSTANCE.holder(testId);
+        gemCase.getGems(gem).put(Purity.NORMAL, 10);
+
+        var iter = gemCase.getItemHandler(null).iterator();
+        assertTrue(iter.hasNext());
+        var view = iter.next();
+        assertEquals(10, view.getAmount());
+        try (net.fabricmc.fabric.api.transfer.v1.transaction.Transaction tx = net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.openOuter()) {
+            long extracted = view.extract(view.getResource(), 4, tx);
+            assertEquals(4, extracted, "StorageView.extract must return actual extracted amount instead of 0");
+            tx.commit();
+        }
+        assertEquals(6, gemCase.getCount(gem, Purity.NORMAL));
+    }
+
+    @Test
+    @DisplayName("Gem upgrade capacity limit prevents exceeding maxCount")
+    public void testGemUpgradeCapacityLimit() {
+        java.util.EnumMap<Purity, Integer> map = new java.util.EnumMap<>(Purity.class);
+        map.put(Purity.CRACKED, 10);
+        map.put(Purity.CHIPPED, 64);
+
+        assertNull(
+            dev.shadowsoffire.apotheosis.socket.gem.storage.GemUpgradeMatch.findMatch(
+                null,
+                Purity.CHIPPED,
+                map,
+                new dev.shadowsoffire.placebo.cap.InternalItemHandler(2),
+                64
+            ),
+            "Upgrading to a purity that is already at maxCount must be rejected"
+        );
     }
 
     @Test

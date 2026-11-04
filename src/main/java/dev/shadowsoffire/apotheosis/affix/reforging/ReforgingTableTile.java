@@ -33,6 +33,15 @@ public class ReforgingTableTile extends BlockEntity implements TickingBlockEntit
 
     public int time = 0;
     public boolean step1 = true;
+    protected final java.util.List<Runnable> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public void addListener(Runnable r) {
+        this.listeners.add(r);
+    }
+
+    public void removeListener(Runnable r) {
+        this.listeners.remove(r);
+    }
 
     protected InternalItemHandler inv = new InternalItemHandler(2) {
         @Override
@@ -46,6 +55,9 @@ public class ReforgingTableTile extends BlockEntity implements TickingBlockEntit
         @Override
         protected void onContentsChanged(int index, ItemStack previousContents) {
             ReforgingTableTile.this.setChanged();
+            for (Runnable r : ReforgingTableTile.this.listeners) {
+                r.run();
+            }
         }
     };
 

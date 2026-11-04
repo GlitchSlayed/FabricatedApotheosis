@@ -1,6 +1,7 @@
 package dev.shadowsoffire.apotheosis.socket.gem.storage;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,6 +79,10 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
         this.maxCount = maxCount;
     }
 
+    public Map<Identifier, CompoundTag> getUnresolvedGems() {
+        return Collections.unmodifiableMap(this.unresolvedGems);
+    }
+
     public void reconcileUnresolvedGems() {
         if (this.unresolvedGems.isEmpty()) return;
         Iterator<Map.Entry<Identifier, CompoundTag>> it = this.unresolvedGems.entrySet().iterator();
@@ -91,7 +96,9 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
                     int savedCount = purityTag.getIntOr(p.getSerializedName(), 0);
                     if (savedCount > 0) {
                         int currentCount = map.getOrDefault(p, 0);
-                        map.put(p, Math.min(this.maxCount, currentCount + savedCount));
+                        long total = (long) currentCount + (long) savedCount;
+                        int merged = (int) Math.min((long) Integer.MAX_VALUE, total);
+                        map.put(p, merged);
                     }
                 }
                 it.remove();
@@ -163,7 +170,7 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
         if (map == null) {
             return null;
         }
-        return GemUpgradeMatch.findMatch(this.level, purity, map, this.upgradeMats);
+        return GemUpgradeMatch.findMatch(this.level, purity, map, this.upgradeMats, this.maxCount);
     }
 
     public ItemStack extractGem(DynamicHolder<Gem> holder, Purity purity, int count) {
@@ -188,9 +195,9 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
         if (map == null) {
             return false;
         }
-        GemUpgradeMatch match = GemUpgradeMatch.findMatch(this.level, purity, map, this.upgradeMats);
+        GemUpgradeMatch match = GemUpgradeMatch.findMatch(this.level, purity, map, this.upgradeMats, this.maxCount);
         if (match != null) {
-            match.execute(this.upgradeMats, map);
+            match.execute(this.upgradeMats, map, this.maxCount);
             this.setChanged();
             this.activeContainers.forEach(GemCaseMenu::onChanged);
             if (this.level != null && !this.level.isClientSide()) {
@@ -383,7 +390,8 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
                         views.add(new StorageView<ItemVariant>() {
                             @Override
                             public long extract(ItemVariant resource, long maxAmount, TransactionContext transaction) {
-                                return 0;
+                                if (!resource.equals(variant)) return 0;
+                                return GemCaseStorage.this.extract(resource, maxAmount, transaction);
                             }
 
                             @Override

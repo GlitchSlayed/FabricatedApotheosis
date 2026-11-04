@@ -337,6 +337,28 @@
   - [x] **Loot Modifier Pool Guards**: Added non-empty checks before `getRandomItem` in `AffixLootModifier` and `GemLootModifier`.
   - [x] **Automated Verification**: Total test suite expanded to **83 tests passing 100% cleanly** (0 failures, 0 errors, 0 skipped). `./gradlew build` verified.
 
+### Post-Milestone 12 Hotfix 6: Third-Pass Audit Hardening & Drop Capture, Rarity Reload, and Menu Item Safety
+- **Status**: **COMPLETE** (2026-11-04)
+- **Scope**: Addressed third-pass audit findings: ordinary mob-death crash on `IFestiveMarker`, death-drop capture leak and swallow risks, dynamic registry whole-generation validation and atomic reload coherence, tag packet decoding bounds, external flight integration contract, unknown gem recovery clamping/overflow, and 9 open menu/inventory safety findings.
+- **Key Fixes**:
+  - [x] **Critical Mob Death Crash & Marker Implementation**: Implemented `IFestiveMarker` on `ItemStackMixin` with `@Unique boolean apoth$festiveMarked` and copy propagation; added defensive `instanceof IFestiveMarker` checks in `FestiveAffix` to prevent any `ClassCastException` on mob death in any runtime or test JVM.
+  - [x] **Death-Drop Capture Scoping & Exception Safety**: Scoped `spawnAtLocation` capture in `EntityMixin` to a per-thread LIFO context stack verifying `this == ctx.entity`. Replaced injections in `LivingEntityMixin` with `@WrapMethod` on `dropAllDeathLoot` wrapping execution in `try / finally` to flush drops on both success and exceptions.
+  - [x] **Whole-Generation Validation & Atomic Coherent Reload**: Added `validateGeneration` in `DynamicRegistry` to stage and validate entire replacement generations before committing. Overrode in `RarityRegistry` to validate material uniqueness and atomically commit `materialMap`, `sorted`, and registry together.
+  - [x] **Tag Packet Bounds**: Enforced `MAX_TAG_COUNT = 10,000`, `MAX_ENTRIES_PER_TAG = 10,000`, and `MAX_TOTAL_TAG_ENTRIES = 50,000` in `DynRegPayloads.Tags`.
+  - [x] **Flight Integration Contract**: Documented `AttributesUtil.EXTERNAL_FLIGHT_PREDICATES` third-party integration contract.
+  - [x] **Unknown Gem Overflow Safety**: Used `long` arithmetic in `GemCaseTile.reconcileUnresolvedGems()` and eliminated clamping of saved quantities.
+  - [x] **Menu & Table Inventory Safety**:
+    - Resolved partial shift-click gem deletion in `GemCaseMenu` and `GemCaseSlot` by tracking quick-moving state and transferring exact count delta.
+    - Marked `SalvagingTableTile` dirty on output modifications and `salvageAll()`.
+    - Delegated `StorageView.extract` to actual storage extraction in `GemCaseTile.GemCaseStorage`.
+    - Converted raw `Gem` to `DynamicHolder<Gem>` in `GemCaseMenu` to prevent stale references after reload.
+    - Notified listeners on `ReforgingTableTile` contents change and re-evaluated choices in `ReforgingMenu`.
+    - Enforced `maxCount` capacity guards in `GemUpgradeMatch` and `GemCaseTile`.
+    - Captured pre-destruction `BlockState` at HEAD in `ServerPlayerGameModeMixin`.
+    - Ensured safe atomic backup in `ApotheosisConfig.backupInvalidFile`.
+    - Removed duplicate slot callback in `GemCuttingMenu`.
+  - [x] **Automated Verification**: Total test suite expanded to **88 tests passing 100% cleanly** (0 failures, 0 errors, 0 skipped). `./gradlew build` verified.
+
 ---
 
 ## 2. Milestone Summary

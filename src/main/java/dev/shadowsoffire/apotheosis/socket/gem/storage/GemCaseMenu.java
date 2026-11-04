@@ -37,7 +37,12 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
     protected Runnable notifier = null;
 
     @Nullable
-    protected Gem selectedGem = null;
+    protected DynamicHolder<Gem> selectedGem = null;
+    private boolean isQuickMoving = false;
+
+    public boolean isQuickMoving() {
+        return this.isQuickMoving;
+    }
 
     public GemCaseMenu(int id, Inventory inv, BlockPos pos) {
         super(Apoth.Menus.GEM_CASE, id, inv, pos);
@@ -46,8 +51,17 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
     }
 
     public void setSelectedGem(DynamicHolder<Gem> gem) {
-        this.selectedGem = gem.isBound() ? gem.get() : null;
+        this.selectedGem = gem;
         this.onChanged();
+    }
+
+    @Nullable
+    public Gem getSelectedGem() {
+        return this.selectedGem != null && this.selectedGem.isBound() ? this.selectedGem.get() : null;
+    }
+
+    public DynamicHolder<Gem> getSelectedGemHolder() {
+        return this.selectedGem != null ? this.selectedGem : GemRegistry.INSTANCE.emptyHolder();
     }
 
     @Override
@@ -163,19 +177,18 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
     }
 
     public ItemStack extractGem(Purity p, int count) {
-        if (this.selectedGem == null) {
+        if (this.selectedGem == null || !this.selectedGem.isBound()) {
             return ItemStack.EMPTY;
         }
-        DynamicHolder<Gem> holder = GemRegistry.INSTANCE.holder(this.selectedGem);
-        return this.tile.extractGem(holder, p, count);
+        return this.tile.extractGem(this.selectedGem, p, count);
     }
 
     @Nullable
     public GemUpgradeMatch getUpgradeMatch(Purity purity) {
-        if (this.selectedGem == null) {
+        if (this.selectedGem == null || !this.selectedGem.isBound()) {
             return null;
         }
-        return this.tile.getUpgradeMatch(GemRegistry.INSTANCE.holder(this.selectedGem), purity);
+        return this.tile.getUpgradeMatch(this.selectedGem, purity);
     }
 
     /**
@@ -187,21 +200,28 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
 
     @Override
     public void onQuickMove(ItemStack original, ItemStack remaining, Slot slot) {
-        if (slot instanceof GemCaseSlot gss) {
+        if (slot instanceof GemCaseSlot gss && this.selectedGem != null && this.selectedGem.isBound()) {
             int amount = original.getCount() - remaining.getCount();
-            this.tile.extractGem(GemRegistry.INSTANCE.holder(this.selectedGem), gss.purity, amount);
+            if (amount > 0) {
+                this.tile.extractGem(this.selectedGem, gss.purity, amount);
+            }
         }
         slot.setChanged();
     }
 
     @Override
     public ItemStack quickMoveStack(Player pPlayer, int pIndex) {
-        Slot slot = this.getSlot(pIndex);
-        if (slot instanceof GemCaseSlot) {
-            this.mover.quickMoveStack(this, pPlayer, pIndex);
-            return ItemStack.EMPTY; // Always abort after a single operation so we don't extract the entire inventory at once.
+        this.isQuickMoving = true;
+        try {
+            Slot slot = this.getSlot(pIndex);
+            if (slot instanceof GemCaseSlot) {
+                this.mover.quickMoveStack(this, pPlayer, pIndex);
+                return ItemStack.EMPTY; // Always abort after a single operation so we don't extract the entire inventory at once.
+            }
+            return this.mover.quickMoveStack(this, pPlayer, pIndex);
+        } finally {
+            this.isQuickMoving = false;
         }
-        return this.mover.quickMoveStack(this, pPlayer, pIndex);
     }
 
     public boolean isValidUpgradeMaterial(ItemStack stack) {
@@ -222,11 +242,11 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
         boolean shift = (id & 0x1000) != 0;
         Purity purity = Purity.BY_ID.apply(id & 0xFFF);
 
-        if (this.selectedGem == null || purity == Purity.CRACKED) {
+        if (this.selectedGem == null || !this.selectedGem.isBound() || purity == Purity.CRACKED) {
             return;
         }
 
-        DynamicHolder<Gem> holder = GemRegistry.INSTANCE.holder(this.selectedGem);
+        DynamicHolder<Gem> holder = this.selectedGem;
         int tries = shift ? 64 : 1;
 
         while (tries-- > 0) {

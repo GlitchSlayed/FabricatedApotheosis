@@ -129,6 +129,7 @@ public class SalvagingMenu extends BlockEntityMenu<SalvagingTableTile> {
                 }
             }
         }
+        this.tile.setChanged();
     }
 
     public static int getSalvageCount(OutputData output, ItemStack stack, RandomSource rand) {

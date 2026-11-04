@@ -15,20 +15,27 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
-record GemUpgradeMatch(PurityUpgradeRecipe recipe, int leftSlot, int rightSlot, SizedIngredient leftIng, SizedIngredient rightIng) {
+public record GemUpgradeMatch(PurityUpgradeRecipe recipe, int leftSlot, int rightSlot, SizedIngredient leftIng, SizedIngredient rightIng) {
 
-    void execute(InternalItemHandler matInv, EnumMap<Purity, Integer> map) {
+    void execute(InternalItemHandler matInv, EnumMap<Purity, Integer> map, int maxCount) {
+        int currentNext = map.getOrDefault(this.recipe.purity().next(), 0);
+        if (currentNext >= maxCount) {
+            return;
+        }
         matInv.extractItem(this.leftSlot, this.leftIng.count(), false);
         matInv.extractItem(this.rightSlot, this.rightIng.count(), false);
         int currentPrev = map.getOrDefault(this.recipe.purity(), 0);
-        int currentNext = map.getOrDefault(this.recipe.purity().next(), 0);
         map.put(this.recipe.purity(), Math.max(0, currentPrev - 2));
-        map.put(this.recipe.purity().next(), currentNext + 1);
+        long next = (long) currentNext + 1;
+        map.put(this.recipe.purity().next(), (int) Math.min((long) maxCount, next));
     }
 
     @Nullable
-    static GemUpgradeMatch findMatch(Level level, Purity purity, EnumMap<Purity, Integer> map, InternalItemHandler matInv) {
+    public static GemUpgradeMatch findMatch(Level level, Purity purity, EnumMap<Purity, Integer> map, InternalItemHandler matInv, int maxCount) {
         if (purity.ordinal() <= 0) {
+            return null;
+        }
+        if (map.getOrDefault(purity, 0) >= maxCount) {
             return null;
         }
         Purity prev = Purity.values()[purity.ordinal() - 1];

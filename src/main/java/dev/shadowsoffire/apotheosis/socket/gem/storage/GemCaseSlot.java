@@ -26,10 +26,10 @@ public class GemCaseSlot extends Slot {
 
     @Override
     public void onTake(Player player, ItemStack stack) {
-        if (!stack.isEmpty()) { // Technically empty should trigger some warnings, but shift-click always submits an empty stack.
+        if (!this.menu.isQuickMoving() && !stack.isEmpty()) {
             DynamicHolder<Gem> gem = GemItem.getGem(stack);
             Purity purity = GemItem.getPurity(stack);
-            if (!gem.isBound() || gem.get() != this.menu.selectedGem || purity != this.purity) {
+            if (!gem.isBound() || gem.get() != this.menu.getSelectedGem() || purity != this.purity) {
                 Apotheosis.LOGGER.warn("Player {} tried to take a gem that doesn't match the selected gem or purity! (gem: {}, purity: {})", player.getName().getString(), gem.getId(), purity);
                 return;
             }
@@ -45,7 +45,7 @@ public class GemCaseSlot extends Slot {
 
     @Override
     public ItemStack getItem() {
-        Gem gem = this.menu.selectedGem;
+        Gem gem = this.menu.getSelectedGem();
         if (gem == null) {
             return ItemStack.EMPTY;
         }
@@ -57,7 +57,7 @@ public class GemCaseSlot extends Slot {
 
     @Override
     public boolean hasItem() {
-        Gem gem = this.menu.selectedGem;
+        Gem gem = this.menu.getSelectedGem();
         if (gem == null) {
             return false;
         }
@@ -94,7 +94,7 @@ public class GemCaseSlot extends Slot {
      */
     @Override
     public ItemStack remove(int amount) {
-        Gem gem = this.menu.selectedGem;
+        Gem gem = this.menu.getSelectedGem();
         if (gem == null) {
             return ItemStack.EMPTY;
         }
@@ -117,7 +117,7 @@ public class GemCaseSlot extends Slot {
 
     @Override
     public boolean isActive() {
-        Gem gem = this.menu.selectedGem;
+        Gem gem = this.menu.getSelectedGem();
         if (gem == null) {
             return false;
         }

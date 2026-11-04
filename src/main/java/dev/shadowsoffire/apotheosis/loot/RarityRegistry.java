@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
@@ -60,26 +61,34 @@ public class RarityRegistry extends TieredDynamicRegistry<LootRarity> {
     }
 
     @Override
-    protected void onReload(ReloadType type) {
-        super.onReload(type);
+    protected void validateGeneration(Map<Identifier, LootRarity> staged, ReloadType type) {
+        BiMap<Item, Identifier> testMap = HashBiMap.create();
+        for (Map.Entry<Identifier, LootRarity> entry : staged.entrySet()) {
+            Identifier old = testMap.put(entry.getValue().getMaterial(), entry.getKey());
+            if (old != null) {
+                throw new IllegalStateException("Two rarities may not share the same rarity material: " + entry.getKey() + " conflicts with " + old);
+            }
+        }
+    }
+
+    @Override
+    protected synchronized void commitReload(Map<Identifier, LootRarity> newEntries, ReloadType reloadType) {
         BiMap<Item, DynamicHolder<LootRarity>> nextMaterialMap = HashBiMap.create();
         List<LootRarity> nextSorted = new ArrayList<>();
-        boolean conflict = false;
-        for (LootRarity r : this.getValues()) {
-            DynamicHolder<LootRarity> old = nextMaterialMap.put(r.getMaterial(), this.holder(r));
-            if (old != null) {
-                this.logger.error("Two rarities may not share the same rarity material: {} conflicts with {}", this.getKey(r), old.getId());
-                conflict = true;
-            }
+        for (LootRarity r : newEntries.values()) {
+            nextMaterialMap.put(r.getMaterial(), this.holder(r));
             nextSorted.add(r);
         }
-        if (conflict && !this.sorted.isEmpty()) {
-            this.logger.error("Preserving previous valid material map and sorted rarities due to conflict.");
-            return;
-        }
         nextSorted.sort(Comparator.comparing(LootRarity::sortIndex));
+
+        super.commitReload(newEntries, reloadType);
         this.materialMap = nextMaterialMap;
         this.sorted = nextSorted;
+    }
+
+    @Override
+    protected void onReload(ReloadType type) {
+        super.onReload(type);
     }
 
     @Override

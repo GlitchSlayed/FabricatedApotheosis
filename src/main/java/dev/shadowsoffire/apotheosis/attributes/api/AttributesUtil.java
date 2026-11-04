@@ -40,6 +40,15 @@ public class AttributesUtil {
         return Math.min(entity.getAttached(ALObjects.Attachments.OVERHEAL_ABSORPTION), entity.getAbsorptionAmount());
     }
 
+    /**
+     * Cooperative flight grant predicates for third-party mod integration (e.g. Origins, Trinkets, custom armor).
+     * <p>
+     * Contract: External mods or compatibility bridges can register a {@link java.util.function.Predicate} into
+     * this list. When an Apotheosis flight source (such as {@link ALObjects.MobEffects#FLYING} or
+     * {@link ALObjects.Attributes#CREATIVE_FLIGHT}) expires, Apotheosis checks these predicates before revoking
+     * {@code player.getAbilities().mayfly}. If any registered predicate returns {@code true}, Apotheosis leaves
+     * {@code mayfly} intact and does not revoke flight.
+     */
     public static final java.util.List<java.util.function.Predicate<net.minecraft.world.entity.player.Player>> EXTERNAL_FLIGHT_PREDICATES = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     /**

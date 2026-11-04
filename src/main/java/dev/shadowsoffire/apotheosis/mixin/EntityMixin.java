@@ -1,6 +1,10 @@
 package dev.shadowsoffire.apotheosis.mixin;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -22,17 +26,50 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(Entity.class)
 public abstract class EntityMixin {
 
+    public static class DropCaptureContext {
+        public final LivingEntity entity;
+        public final List<ItemEntity> drops = new ArrayList<>();
+
+        public DropCaptureContext(LivingEntity entity) {
+            this.entity = entity;
+        }
+    }
+
     @Unique
-    public static final ThreadLocal<List<ItemEntity>> apoth$CAPTURED_DROPS = new ThreadLocal<>();
+    private static final ThreadLocal<Deque<DropCaptureContext>> apoth$CAPTURE_STACK = ThreadLocal.withInitial(ArrayDeque::new);
+
+    @Unique
+    public static void apoth$pushCaptureContext(DropCaptureContext ctx) {
+        apoth$CAPTURE_STACK.get().push(ctx);
+    }
+
+    @Unique
+    @Nullable
+    public static DropCaptureContext apoth$popCaptureContext() {
+        Deque<DropCaptureContext> stack = apoth$CAPTURE_STACK.get();
+        if (stack.isEmpty()) return null;
+        DropCaptureContext popped = stack.pop();
+        if (stack.isEmpty()) {
+            apoth$CAPTURE_STACK.remove();
+        }
+        return popped;
+    }
+
+    @Unique
+    @Nullable
+    public static DropCaptureContext apoth$peekCaptureContext() {
+        Deque<DropCaptureContext> stack = apoth$CAPTURE_STACK.get();
+        return stack.isEmpty() ? null : stack.peek();
+    }
 
     @WrapOperation(
         method = "spawnAtLocation(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/entity/item/ItemEntity;",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z")
     )
     private boolean apoth$interceptDeathDrop(ServerLevel level, Entity entity, Operation<Boolean> original) {
-        List<ItemEntity> drops = apoth$CAPTURED_DROPS.get();
-        if (drops != null && entity instanceof ItemEntity item) {
-            drops.add(item);
+        DropCaptureContext ctx = apoth$peekCaptureContext();
+        if (ctx != null && (Object) this == ctx.entity && entity instanceof ItemEntity item) {
+            ctx.drops.add(item);
             return true;
         }
         return original.call(level, entity);

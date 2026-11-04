@@ -184,7 +184,7 @@ public class GemCaseScreen extends AdventureContainerScreen<GemCaseMenu> impleme
             ItemStack stack = slot.getItem();
             gfx.fakeItem(stack, slot.x, slot.y);
 
-            int count = this.menu.getGemCount(this.menu.selectedGem, gss.purity);
+            int count = this.menu.getGemCount(this.menu.getSelectedGem(), gss.purity);
             if (count > 1) {
                 String countStr = GemCaseBlock.format(count);
                 float scale = 1.0f;
@@ -249,7 +249,7 @@ public class GemCaseScreen extends AdventureContainerScreen<GemCaseMenu> impleme
 
     @Nullable
     public Gem getSelectedGem() {
-        return this.menu.selectedGem;
+        return this.menu.getSelectedGem();
     }
 
     /**

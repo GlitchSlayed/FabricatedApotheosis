@@ -95,11 +95,26 @@ public class DynRegPayloads {
 
     public record Tags(Identifier registryId, java.util.Map<Identifier, java.util.List<Identifier>> tags) implements CustomPacketPayload {
         public static final Type<Tags> TYPE = new Type<>(Placebo.loc("dynreg_sync_tags"));
+        public static final int MAX_TAG_COUNT = 10_000;
+        public static final int MAX_ENTRIES_PER_TAG = 10_000;
+        public static final int MAX_TOTAL_TAG_ENTRIES = 50_000;
+
         public static final StreamCodec<RegistryFriendlyByteBuf, Tags> CODEC = StreamCodec.of(
             (buf, msg) -> {
+                if (msg.tags().size() > MAX_TAG_COUNT) {
+                    throw new IllegalArgumentException("Cannot encode Tags payload with " + msg.tags().size() + " tags (max " + MAX_TAG_COUNT + ")");
+                }
                 buf.writeIdentifier(msg.registryId());
                 buf.writeVarInt(msg.tags().size());
+                long total = 0;
                 for (java.util.Map.Entry<Identifier, java.util.List<Identifier>> entry : msg.tags().entrySet()) {
+                    if (entry.getValue().size() > MAX_ENTRIES_PER_TAG) {
+                        throw new IllegalArgumentException("Tag " + entry.getKey() + " has " + entry.getValue().size() + " entries (max " + MAX_ENTRIES_PER_TAG + ")");
+                    }
+                    total += entry.getValue().size();
+                    if (total > MAX_TOTAL_TAG_ENTRIES) {
+                        throw new IllegalArgumentException("Tags payload total entries exceed limit: " + total + " > " + MAX_TOTAL_TAG_ENTRIES);
+                    }
                     buf.writeIdentifier(entry.getKey());
                     buf.writeVarInt(entry.getValue().size());
                     for (Identifier id : entry.getValue()) {
@@ -110,11 +125,31 @@ public class DynRegPayloads {
             buf -> {
                 Identifier regId = buf.readIdentifier();
                 int tagCount = buf.readVarInt();
-                java.util.Map<Identifier, java.util.List<Identifier>> tags = new java.util.HashMap<>(tagCount);
+                if (tagCount < 0 || tagCount > MAX_TAG_COUNT) {
+                    throw new IllegalArgumentException("Invalid tagCount: " + tagCount + " (max " + MAX_TAG_COUNT + ")");
+                }
+                int estimatedMinBytes = tagCount * 2;
+                if (buf.readableBytes() < estimatedMinBytes) {
+                    throw new IllegalArgumentException("Malformed tag packet: requires at least " + estimatedMinBytes + " bytes, but only " + buf.readableBytes() + " available");
+                }
+                int capacity = Math.min(tagCount, 1024);
+                java.util.Map<Identifier, java.util.List<Identifier>> tags = new java.util.HashMap<>(capacity);
+                long totalEntries = 0;
                 for (int i = 0; i < tagCount; i++) {
                     Identifier tagId = buf.readIdentifier();
                     int entryCount = buf.readVarInt();
-                    java.util.List<Identifier> entries = new java.util.ArrayList<>(entryCount);
+                    if (entryCount < 0 || entryCount > MAX_ENTRIES_PER_TAG) {
+                        throw new IllegalArgumentException("Invalid entryCount " + entryCount + " for tag " + tagId);
+                    }
+                    totalEntries += entryCount;
+                    if (totalEntries > MAX_TOTAL_TAG_ENTRIES) {
+                        throw new IllegalArgumentException("Total tag entries exceed maximum limit: " + totalEntries + " > " + MAX_TOTAL_TAG_ENTRIES);
+                    }
+                    if (buf.readableBytes() < entryCount * 2) {
+                        throw new IllegalArgumentException("Malformed tag packet: not enough readable bytes for " + entryCount + " entries in tag " + tagId);
+                    }
+                    int entryCapacity = Math.min(entryCount, 1024);
+                    java.util.List<Identifier> entries = new java.util.ArrayList<>(entryCapacity);
                     for (int j = 0; j < entryCount; j++) {
                         entries.add(buf.readIdentifier());
                     }

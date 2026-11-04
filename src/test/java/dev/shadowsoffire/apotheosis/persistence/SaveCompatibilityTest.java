@@ -3,6 +3,7 @@ package dev.shadowsoffire.apotheosis.persistence;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -329,6 +330,30 @@ public class SaveCompatibilityTest {
         CompoundTag savedPurities = savedGems.getCompoundOrEmpty("apotheosis:future_modded_gem_v2");
         assertEquals(5, savedPurities.getIntOr("cracked", 0));
         assertEquals(2, savedPurities.getIntOr("flawless", 0));
+
+        // Now simulate the missing gem definition becoming available and verify reconciliation restores it
+        Identifier futureId = Identifier.fromNamespaceAndPath("apotheosis", "future_modded_gem_v2");
+        assertFalse(GemRegistry.INSTANCE.holder(futureId).isBound());
+
+        Gem dummyGem = new Gem(
+            dev.shadowsoffire.apotheosis.tiers.TieredWeights.EMPTY,
+            dev.shadowsoffire.apotheosis.tiers.Constraints.EMPTY,
+            Purity.CRACKED,
+            List.of(new dev.shadowsoffire.apotheosis.socket.gem.bonus.DurabilityBonus(
+                new dev.shadowsoffire.apotheosis.socket.gem.GemClass(Apoth.LootCategories.MELEE_WEAPON),
+                Map.of(Purity.CRACKED, 0.1f, Purity.NORMAL, 0.2f, Purity.FLAWLESS, 0.5f)
+            )),
+            false
+        );
+        GemRegistry.INSTANCE.registerForTesting(futureId, dummyGem);
+        assertTrue(GemRegistry.INSTANCE.holder(futureId).isBound());
+
+        tile.reconcileUnresolvedGems();
+        assertFalse(tile.getUnresolvedGems().containsKey(futureId), "Reconciled gem must be removed from unresolved map");
+
+        var gemMap = tile.getGems(GemRegistry.INSTANCE.holder(futureId));
+        assertEquals(5, gemMap.getOrDefault(Purity.CRACKED, 0), "Cracked count must be restored into gem map");
+        assertEquals(2, gemMap.getOrDefault(Purity.FLAWLESS, 0), "Flawless count must be restored into gem map");
     }
 
     @Test
@@ -336,6 +361,77 @@ public class SaveCompatibilityTest {
     public void testLivingEntityInvokerRegistered() throws Exception {
         String mixinJson = new String(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("src/main/resources/apotheosis.mixins.json")));
         assertTrue(mixinJson.contains("\"LivingEntityInvoker\""), "apotheosis.mixins.json must register LivingEntityInvoker to prevent ClassCastException");
+    }
+
+    @Test
+    @DisplayName("Verify IFestiveMarker implementation and ordinary mob death safety")
+    public void testFestiveMarkerImplementedOnItemStack() throws Exception {
+        assertTrue(dev.shadowsoffire.apotheosis.util.IFestiveMarker.class.isAssignableFrom(dev.shadowsoffire.apotheosis.mixin.ItemStackMixin.class),
+            "ItemStackMixin must implement IFestiveMarker");
+
+        // Verify that ordinary equipped mob death does not crash
+        java.lang.reflect.Field f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+        f.setAccessible(true);
+        sun.misc.Unsafe unsafe = (sun.misc.Unsafe) f.get(null);
+        MockSkeleton skeleton = (MockSkeleton) unsafe.allocateInstance(MockSkeleton.class);
+
+        net.neoforged.neoforge.event.entity.living.LivingDeathEvent deathEvent =
+            new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(skeleton, null);
+
+        assertDoesNotThrow(() -> dev.shadowsoffire.apotheosis.affix.effect.FestiveAffix.markEquipment(deathEvent),
+            "Ordinary mob with equipped items dying must never throw ClassCastException");
+    }
+
+    static class MockSkeleton extends net.minecraft.world.entity.monster.skeleton.Skeleton {
+        public MockSkeleton() {
+            super(null, null);
+        }
+
+        @Override
+        public ItemStack getItemBySlot(net.minecraft.world.entity.EquipmentSlot slot) {
+            return slot == net.minecraft.world.entity.EquipmentSlot.MAINHAND ? new ItemStack(Items.BOW) : ItemStack.EMPTY;
+        }
+    }
+
+    @Test
+    @DisplayName("Verify scoped death drop capture stack and nesting safety")
+    public void testScopedDeathDropCaptureSafety() {
+        assertNull(dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext());
+
+        dev.shadowsoffire.apotheosis.mixin.EntityMixin.DropCaptureContext outer =
+            new dev.shadowsoffire.apotheosis.mixin.EntityMixin.DropCaptureContext(null);
+        dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$pushCaptureContext(outer);
+        assertSame(outer, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext());
+
+        // Nested call
+        dev.shadowsoffire.apotheosis.mixin.EntityMixin.DropCaptureContext inner =
+            new dev.shadowsoffire.apotheosis.mixin.EntityMixin.DropCaptureContext(null);
+        dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$pushCaptureContext(inner);
+        assertSame(inner, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext());
+
+        assertSame(inner, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$popCaptureContext());
+        assertSame(outer, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext(), "Outer context must be restored after inner finishes");
+
+        assertSame(outer, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$popCaptureContext());
+        assertNull(dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext(), "Context must be fully cleared after outer finishes");
+    }
+
+    @Test
+    @DisplayName("Verify DynRegPayloads.Tags bounds and allocation defense")
+    public void testTagsPacketBounds() {
+        io.netty.buffer.ByteBuf nettyBuf = io.netty.buffer.Unpooled.buffer();
+        net.minecraft.network.RegistryFriendlyByteBuf buf = new net.minecraft.network.RegistryFriendlyByteBuf(nettyBuf, net.minecraft.core.RegistryAccess.EMPTY);
+
+        // Test negative tag count
+        buf.writeIdentifier(Identifier.fromNamespaceAndPath("test", "reg"));
+        buf.writeVarInt(-1);
+        assertThrows(IllegalArgumentException.class, () -> dev.shadowsoffire.placebo.dynreg.DynRegPayloads.Tags.CODEC.decode(buf));
+
+        // Test excessive tag count
+        buf.clear();
+        buf.writeIdentifier(Identifier.fromNamespaceAndPath("test", "reg"));
+        buf.writeVarInt(20_000);
+        assertThrows(IllegalArgumentException.class, () -> dev.shadowsoffire.placebo.dynreg.DynRegPayloads.Tags.CODEC.decode(buf));
     }
 
     @Test

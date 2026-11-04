@@ -67,9 +67,6 @@ public class GemCuttingMenu extends PlaceboContainerMenu {
 
     protected void onSlotChanged() {
         this.slotsChanged(this.inv);
-        if (this.slotChangedCallback != null) {
-            this.slotChangedCallback.run();
-        }
     }
 
     @Override

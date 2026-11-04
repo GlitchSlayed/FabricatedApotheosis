@@ -27,15 +27,38 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import dev.shadowsoffire.apotheosis.util.IFestiveMarker;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(ItemStack.class)
-public abstract class ItemStackMixin {
+public abstract class ItemStackMixin implements IFestiveMarker {
+
+    @Unique
+    private boolean apoth$festiveMarked = false;
+
+    @Override
+    public boolean isMarked() {
+        return this.apoth$festiveMarked;
+    }
+
+    @Override
+    public void setMarked(boolean marked) {
+        this.apoth$festiveMarked = marked;
+    }
+
+    @Inject(method = "copy", at = @At("RETURN"))
+    private void apoth$propagateFestiveMark(CallbackInfoReturnable<ItemStack> cir) {
+        ItemStack copy = cir.getReturnValue();
+        if (copy != null && this.apoth$festiveMarked) {
+            ((IFestiveMarker) (Object) copy).setMarked(true);
+        }
+    }
 
     @Inject(method = "getHoverName", at = @At("RETURN"), cancellable = true)
     public void apoth_affixItemName(CallbackInfoReturnable<Component> cir) {

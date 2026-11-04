@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import dev.shadowsoffire.apotheosis.attributes.api.ALCombatRules;
@@ -316,33 +318,32 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
         }
     }
 
-    @Inject(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At("HEAD"))
-    private void apoth$onDeathMark(DamageSource damageSource, CallbackInfo ci) {
+    @WrapMethod(method = "dropAllDeathLoot(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)V")
+    private void apoth$wrapDropAllDeathLoot(ServerLevel level, DamageSource damageSource, Operation<Void> original) {
         LivingEntity self = (LivingEntity) (Object) this;
+        EntityMixin.DropCaptureContext ctx = new EntityMixin.DropCaptureContext(self);
+        EntityMixin.apoth$pushCaptureContext(ctx);
         dev.shadowsoffire.apotheosis.affix.effect.FestiveAffix.markEquipment(
             new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(self, damageSource));
-    }
-
-    @Inject(method = "dropAllDeathLoot(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At("HEAD"))
-    private void apoth$startCaptureDeathDrops(ServerLevel level, DamageSource damageSource, CallbackInfo ci) {
-        EntityMixin.apoth$CAPTURED_DROPS.set(new java.util.ArrayList<>());
-    }
-
-    @Inject(method = "dropAllDeathLoot(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At("TAIL"))
-    private void apoth$endCaptureDeathDrops(ServerLevel level, DamageSource damageSource, CallbackInfo ci) {
-        List<net.minecraft.world.entity.item.ItemEntity> drops = EntityMixin.apoth$CAPTURED_DROPS.get();
-        EntityMixin.apoth$CAPTURED_DROPS.remove();
-        if (drops != null) {
-            LivingEntity self = (LivingEntity) (Object) this;
-            if (damageSource.getEntity() instanceof net.minecraft.world.entity.player.Player p) {
-                net.neoforged.neoforge.event.entity.living.LivingDropsEvent dropsEvent =
-                    new net.neoforged.neoforge.event.entity.living.LivingDropsEvent(self, damageSource, drops);
-                dev.shadowsoffire.apotheosis.affix.AffixHelper.streamAffixes(p.getMainHandItem()).forEach(a -> a.modifyEntityLoot(dropsEvent));
-                dev.shadowsoffire.apotheosis.affix.effect.TelepathicAffix.drops(dropsEvent);
-            }
-            for (net.minecraft.world.entity.item.ItemEntity drop : drops) {
-                if (!drop.isRemoved()) {
-                    level.addFreshEntity(drop);
+        boolean succeeded = false;
+        try {
+            original.call(level, damageSource);
+            succeeded = true;
+        } finally {
+            EntityMixin.apoth$popCaptureContext();
+            net.neoforged.neoforge.event.entity.living.LivingDropsEvent dropsEvent =
+                new net.neoforged.neoforge.event.entity.living.LivingDropsEvent(self, damageSource, ctx.drops);
+            try {
+                if (succeeded && damageSource.getEntity() instanceof net.minecraft.world.entity.player.Player p) {
+                    dev.shadowsoffire.apotheosis.affix.AffixHelper.streamAffixes(p.getMainHandItem()).forEach(a -> a.modifyEntityLoot(dropsEvent));
+                    dev.shadowsoffire.apotheosis.affix.effect.TelepathicAffix.drops(dropsEvent);
+                }
+            } finally {
+                dev.shadowsoffire.apotheosis.affix.effect.FestiveAffix.removeMarker(dropsEvent);
+                for (net.minecraft.world.entity.item.ItemEntity drop : ctx.drops) {
+                    if (!drop.isRemoved()) {
+                        level.addFreshEntity(drop);
+                    }
                 }
             }
         }

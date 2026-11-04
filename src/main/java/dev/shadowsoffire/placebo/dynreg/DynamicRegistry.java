@@ -280,6 +280,12 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         activeLookup = lookup;
     }
 
+    public synchronized void registerForTesting(Identifier id, R value) {
+        Map<Identifier, R> next = new HashMap<>(this.registry);
+        next.put(id, value);
+        this.commitReload(ImmutableMap.copyOf(next), ReloadType.SERVER);
+    }
+
     public static void setClientLookupSupplier(java.util.function.Supplier<net.minecraft.core.HolderLookup.Provider> supplier) {
         clientLookupSupplier = supplier;
     }
@@ -348,13 +354,32 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
             }
         }
 
+        boolean generationValid = true;
+        try {
+            this.validateGeneration(staged, ReloadType.SERVER);
+        } catch (Exception e) {
+            generationValid = false;
+            String errorMsg = "Whole-generation validation failed for registry '" + this.id + "': " + e.getMessage();
+            errors.add(errorMsg);
+            this.logger.error(errorMsg, e);
+        }
+
         // Actionable validation error handling without partial corruption
         if (!errors.isEmpty()) {
-            this.logger.error("Dynamic registry '{}' encountered {} validation error(s). Applying {} valid entries and logging diagnostics.", this.id, errors.size(), staged.size());
+            this.logger.error("Dynamic registry '{}' encountered {} validation error(s).", this.id, errors.size());
+            if (!generationValid && !this.registry.isEmpty()) {
+                this.logger.error("Preserving previous valid generation for registry '{}' ({} entries) due to critical validation errors.", this.id, this.registry.size());
+                return;
+            }
+            this.logger.warn("Dynamic registry '{}': applying {} valid entries and logging diagnostics.", this.id, staged.size());
         }
 
         // Commit atomically
         this.commitReload(ImmutableMap.copyOf(staged));
+    }
+
+    protected void validateGeneration(Map<Identifier, R> staged, ReloadType type) {
+        // Subclasses may implement whole-generation or cross-entry validation
     }
 
     protected void validateItem(Identifier id, R item) {

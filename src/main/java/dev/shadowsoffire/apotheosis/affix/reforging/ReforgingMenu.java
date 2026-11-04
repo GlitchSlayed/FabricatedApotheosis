@@ -71,11 +71,15 @@ public class ReforgingMenu extends BlockEntityMenu<ReforgingTableTile> {
         this.addDataSlot(DataSlot.shared(this.costs, 0));
         this.addDataSlot(DataSlot.shared(this.costs, 1));
         this.addDataSlot(DataSlot.shared(this.costs, 2));
+        this.tile.addListener(this.tileListener);
     }
+
+    protected final Runnable tileListener = () -> this.slotsChanged(this.itemInv);
 
     @Override
     public void removed(Player pPlayer) {
         super.removed(pPlayer);
+        this.tile.removeListener(this.tileListener);
         this.clearContainer(pPlayer, this.itemInv);
     }
 

@@ -172,11 +172,7 @@ public class ApotheosisConfig {
                 }
             } catch (Exception e) {
                 LOGGER.error("Failed to parse server configuration {}. Renaming invalid file to .invalid and creating fresh default.", serverFile.getName(), e);
-                File invalidFile = new File(serverFile.getParentFile(), serverFile.getName() + ".invalid");
-                if (invalidFile.exists()) {
-                    invalidFile.delete();
-                }
-                serverFile.renameTo(invalidFile);
+                backupInvalidFile(serverFile);
             }
         }
         // Save initial default server configuration
@@ -198,17 +194,38 @@ public class ApotheosisConfig {
                 }
             } catch (Exception e) {
                 LOGGER.error("Failed to parse client preferences {}. Renaming invalid file to .invalid and creating fresh default.", clientFile.getName(), e);
-                File invalidFile = new File(clientFile.getParentFile(), clientFile.getName() + ".invalid");
-                if (invalidFile.exists()) {
-                    invalidFile.delete();
-                }
-                clientFile.renameTo(invalidFile);
+                backupInvalidFile(clientFile);
             }
         }
         // Save initial default client configuration
         clientConfig = new ClientConfig();
         clientConfig.validate();
         saveClient();
+    }
+
+    private static void backupInvalidFile(File file) {
+        File invalidFile = new File(file.getParentFile(), file.getName() + ".invalid");
+        Path src = file.toPath();
+        Path dest = invalidFile.toPath();
+        try {
+            Files.move(src, dest, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException ignored) {
+            try {
+                Files.move(src, dest, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException copyFallback) {
+                try {
+                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException ex) {
+                    LOGGER.error("Failed to back up invalid config file to {}", dest, ex);
+                }
+            }
+        } catch (IOException e) {
+            try {
+                Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException copyEx) {
+                LOGGER.error("Failed to back up invalid config file to {}", dest, copyEx);
+            }
+        }
     }
 
     /**
