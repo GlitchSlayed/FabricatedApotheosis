@@ -71,6 +71,27 @@ public abstract class ItemStackMixin {
         }
     }
 
+    @Inject(method = "useOn", at = @At("RETURN"), cancellable = true)
+    public void apoth_useItemOnBlockPost(net.minecraft.world.item.context.UseOnContext ctx, CallbackInfoReturnable<net.minecraft.world.InteractionResult> cir) {
+        if (!cir.getReturnValue().consumesAction()) {
+            ItemStack s = (ItemStack) (Object) this;
+            net.minecraft.world.InteractionResult socketRes = SocketHelper.getGems(s).onItemUse(ctx);
+            if (socketRes != null) {
+                cir.setReturnValue(socketRes);
+                return;
+            }
+
+            net.minecraft.world.InteractionResult afxRes = AffixHelper.streamAffixes(s)
+                .map(afx -> afx.onItemUse(ctx))
+                .filter(com.google.common.base.Predicates.notNull())
+                .findFirst()
+                .orElse(null);
+            if (afxRes != null) {
+                cir.setReturnValue(afxRes);
+            }
+        }
+    }
+
     @Inject(method = "inventoryTick", at = @At("HEAD"))
     public void apoth_tryTickMalice(Level level, Entity entity, EquipmentSlot slot, CallbackInfo ci) {
         ItemStack ths = (ItemStack) (Object) this;

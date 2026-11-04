@@ -24,6 +24,7 @@ public class DynamicRegistryManager {
         // Register payloads for registry synchronization
         PayloadHelper.registerPayload(new DynRegPayloads.Start.Provider());
         PayloadHelper.registerPayload(new DynRegPayloads.Content.Provider());
+        PayloadHelper.registerPayload(new DynRegPayloads.Tags.Provider());
         PayloadHelper.registerPayload(new DynRegPayloads.End.Provider());
 
         // Register all dynamic registries as server resource reload listeners
@@ -49,6 +50,7 @@ public class DynamicRegistryManager {
                 for (DynamicRegistry<?> registry : DynamicRegistry.getAllRegistries()) {
                     registry.syncToPlayer(player);
                 }
+                dev.shadowsoffire.apothic_enchanting.table.EnchantmentInfoLoader.syncToPlayer(player);
             }
         });
 

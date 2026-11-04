@@ -120,7 +120,8 @@ public enum WorldTier implements StringRepresentable {
             dev.shadowsoffire.apotheosis.util.ModAttachments.setData(player, Attachments.MAX_UNLOCKED_TIER, tier);
         }
         if (player instanceof ServerPlayer sp) {
-            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new WorldTierPayload(tier));
+            WorldTier currentMax = dev.shadowsoffire.apotheosis.util.ModAttachments.getData(player, Attachments.MAX_UNLOCKED_TIER);
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new WorldTierPayload(tier, currentMax != null ? currentMax : tier));
 
             for (TierAugment aug : TierAugmentRegistry.getAugments(oldTier, Target.PLAYERS)) {
                 aug.remove(sp.level(), player);

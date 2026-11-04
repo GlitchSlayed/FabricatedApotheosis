@@ -214,6 +214,10 @@ public class AdventureTests {
         assertEquals(1, outputs.size());
         assertEquals(2, outputs.get(0).min());
         assertEquals(5, outputs.get(0).max());
+
+        SalvagingRecipe.OutputData inverted = new SalvagingRecipe.OutputData(Items.IRON_NUGGET, 5, 2);
+        assertEquals(2, inverted.min(), "Min and max should be normalized if inverted");
+        assertEquals(5, inverted.max());
     }
 
     @Test

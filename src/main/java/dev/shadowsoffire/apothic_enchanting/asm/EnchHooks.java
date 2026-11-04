@@ -18,7 +18,8 @@ public class EnchHooks {
      */
     public static int getMaxLevel(Holder<Enchantment> ench) {
         if (ench != null) {
-            return ApothicEnchanting.getEnchInfo(ench).getMaxLevel(ench);
+            int level = ApothicEnchanting.getEnchInfo(ench).getMaxLevel(ench);
+            return Math.min(level, dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().maxEnchantmentLevelLimit);
         }
         return 1;
     }
@@ -29,9 +30,9 @@ public class EnchHooks {
     public static int getMaxLevel(Enchantment ench) {
         Holder<Enchantment> holder = MiscUtil.findHolder(Registries.ENCHANTMENT, ench);
         if (holder != null) {
-            return ApothicEnchanting.getEnchInfo(holder).getMaxLevel(holder);
+            return getMaxLevel(holder);
         }
-        return ench.getMaxLevel();
+        return Math.min(ench.getMaxLevel(), dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().maxEnchantmentLevelLimit);
     }
 
     /**

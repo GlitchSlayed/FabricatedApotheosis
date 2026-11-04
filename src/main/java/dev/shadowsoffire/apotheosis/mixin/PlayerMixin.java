@@ -1,6 +1,7 @@
 package dev.shadowsoffire.apotheosis.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,7 +28,9 @@ public abstract class PlayerMixin {
     @ModifyConstant(method = "attack(Lnet/minecraft/world/entity/Entity;)V", constant = @Constant(floatValue = 1.5F))
     private float apoth_modifyVanillaCritMultiplier(float constant) {
         Player self = (Player) (Object) this;
-        return Math.max(constant, (float) self.getAttributeValue(ALObjects.Attributes.CRIT_DAMAGE));
+        float critVal = (float) self.getAttributeValue(ALObjects.Attributes.CRIT_DAMAGE);
+        float cap = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().critDamageModifierCap;
+        return Math.min(cap, Math.max(constant, critVal));
     }
 
     @WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurtOrSimulate(Lnet/minecraft/world/damagesource/DamageSource;F)Z"), method = "attack(Lnet/minecraft/world/entity/Entity;)V")
@@ -49,6 +52,15 @@ public abstract class PlayerMixin {
         return Math.min(original.call(player), 0.6F);
     }
 
+    @Unique
+    private static boolean apoth$hasExternalFlightGrant(Player player) {
+        if (player.isCreative() || player.isSpectator()) return true;
+        for (java.util.function.Predicate<Player> predicate : AttributesUtil.EXTERNAL_FLIGHT_PREDICATES) {
+            if (predicate.test(player)) return true;
+        }
+        return false;
+    }
+
     @Inject(method = "tick()V", at = @At("TAIL"))
     private void apoth_creativeFlightTick(CallbackInfo ci) {
         Player self = (Player) (Object) this;
@@ -63,7 +75,7 @@ public abstract class PlayerMixin {
                 }
             } else if (AttributesUtil.getPersistentData(self).getBooleanOr("apoth.had_flight_granted", false)) {
                 AttributesUtil.getPersistentData(self).remove("apoth.had_flight_granted");
-                if (!self.isCreative() && !self.isSpectator()) {
+                if (!apoth$hasExternalFlightGrant(self)) {
                     self.getAbilities().mayfly = false;
                     self.getAbilities().flying = false;
                     self.onUpdateAbilities();

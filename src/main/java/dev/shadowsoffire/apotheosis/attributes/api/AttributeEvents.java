@@ -77,7 +77,8 @@ public class AttributeEvents {
 
     public static float rollCriticalStrikes(LivingEntity attacker, LivingEntity target, float initialAmount) {
         double critChance = attacker.getAttributeValue(ALObjects.Attributes.CRIT_CHANCE);
-        float critDmg = (float) attacker.getAttributeValue(ALObjects.Attributes.CRIT_DAMAGE);
+        float critDmg = Math.min((float) attacker.getAttributeValue(ALObjects.Attributes.CRIT_DAMAGE),
+            dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().critDamageModifierCap);
         RandomSource rand = target.getRandom();
         float damage = initialAmount;
 

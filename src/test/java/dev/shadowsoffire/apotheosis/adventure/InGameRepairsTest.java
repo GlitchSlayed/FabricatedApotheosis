@@ -78,4 +78,25 @@ public class InGameRepairsTest {
             dev.shadowsoffire.apothic_enchanting.table.RavenEnchantingTableBlock.class
         ));
     }
+
+    @Test
+    void testIntegratedConfigOwnership() {
+        try {
+            net.neoforged.neoforge.server.ServerLifecycleHooks.setIntegratedServerOverrideForTesting(true);
+            dev.shadowsoffire.apotheosis.config.ServerConfig local = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getLocalServer();
+            local.maxEnchantmentLevelLimit = 120;
+            
+            // Calling setRemoteServerConfig should NOT overwrite localServerConfig in singleplayer
+            dev.shadowsoffire.apotheosis.config.ServerConfig dummyRemote = new dev.shadowsoffire.apotheosis.config.ServerConfig();
+            dummyRemote.maxEnchantmentLevelLimit = 50;
+            dev.shadowsoffire.apotheosis.config.ApotheosisConfig.setRemoteServerConfig(dummyRemote);
+
+            // When not remote, getServer() must return localServerConfig
+            assertFalse(dev.shadowsoffire.apotheosis.config.ApotheosisConfig.isRemoteServer());
+            assertEquals(120, dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().maxEnchantmentLevelLimit);
+        } finally {
+            net.neoforged.neoforge.server.ServerLifecycleHooks.setIntegratedServerOverrideForTesting(null);
+            dev.shadowsoffire.apotheosis.config.ApotheosisConfig.clearRemoteServerConfig();
+        }
+    }
 }

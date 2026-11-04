@@ -87,17 +87,32 @@ public class LootModifierManager implements ResourceManagerReloadListener, Ident
     @Override
     public void onResourceManagerReload(ResourceManager resourceManager) {
         List<LootModifier> loaded = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
         Map<Identifier, Resource> resources = resourceManager.listResources("loot_modifiers", path -> path.getPath().endsWith(".json"));
 
         for (Map.Entry<Identifier, Resource> entry : resources.entrySet()) {
             Identifier id = entry.getKey();
             try (Reader reader = new InputStreamReader(entry.getValue().open(), StandardCharsets.UTF_8)) {
                 JsonElement json = JsonParser.parseReader(reader);
-                DIRECT_CODEC.parse(JsonOps.INSTANCE, json)
-                    .resultOrPartial(err -> LOGGER.error("Failed to parse loot modifier {}: {}", id, err))
-                    .ifPresent(loaded::add);
+                var result = DIRECT_CODEC.parse(JsonOps.INSTANCE, json);
+                if (result.isError()) {
+                    String err = result.error().get().message();
+                    errors.add("Failed to parse loot modifier " + id + ": " + err);
+                    LOGGER.error("Failed to parse loot modifier {}: {}", id, err);
+                } else {
+                    loaded.add(result.getOrThrow());
+                }
             } catch (Exception e) {
+                errors.add("Failed to load loot modifier from " + id + ": " + e.getMessage());
                 LOGGER.error("Failed to load loot modifier from {}", id, e);
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            LOGGER.error("LootModifierManager encountered {} error(s) during reload.", errors.size());
+            if (!MODIFIERS.isEmpty()) {
+                LOGGER.error("Preserving previous valid loot modifiers ({} entries) due to reload errors.", MODIFIERS.size());
+                return;
             }
         }
 

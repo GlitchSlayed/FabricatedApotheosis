@@ -192,7 +192,8 @@ public class AdventureModule {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayer player = handler.player;
             WorldTier tier = WorldTier.getTier(player);
-            PayloadHelper.sendToPlayer(player, new WorldTierPayload(tier));
+            WorldTier max = ModAttachments.getData(player, Attachments.MAX_UNLOCKED_TIER);
+            PayloadHelper.sendToPlayer(player, new WorldTierPayload(tier, max != null ? max : tier));
             PayloadHelper.sendToPlayer(player, new RadialStatePayload(RadialState.getState(player)));
             AttributeToggleAffix.prune(player);
             AttributeToggleAffix.sync(player);
@@ -208,7 +209,9 @@ public class AdventureModule {
 
         // Player Dimension Change
         ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register((player, origin, destination) -> {
-            PayloadHelper.sendToPlayer(player, new WorldTierPayload(WorldTier.getTier(player)));
+            WorldTier max = ModAttachments.getData(player, Attachments.MAX_UNLOCKED_TIER);
+            WorldTier current = WorldTier.getTier(player);
+            PayloadHelper.sendToPlayer(player, new WorldTierPayload(current, max != null ? max : current));
         });
 
         // Player Clone (Respawn)
@@ -220,8 +223,13 @@ public class AdventureModule {
             if (tier != null) {
                 ModAttachments.setData(newPlayer, Attachments.WORLD_TIER, tier);
             }
+            WorldTier maxTier = ModAttachments.getData(oldPlayer, Attachments.MAX_UNLOCKED_TIER);
+            if (maxTier != null) {
+                ModAttachments.setData(newPlayer, Attachments.MAX_UNLOCKED_TIER, maxTier);
+            }
             ModAttachments.setData(newPlayer, Attachments.TIER_AUGMENTS_APPLIED, true);
-            PayloadHelper.sendToPlayer(newPlayer, new WorldTierPayload(WorldTier.getTier(newPlayer)));
+            WorldTier current = WorldTier.getTier(newPlayer);
+            PayloadHelper.sendToPlayer(newPlayer, new WorldTierPayload(current, maxTier != null ? maxTier : current));
         });
 
         // Entity Load into Level

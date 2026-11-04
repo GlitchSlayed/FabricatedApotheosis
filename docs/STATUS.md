@@ -317,7 +317,25 @@
     - `GemLootPoolEntry` & `TieredDynamicRegistry`: Preserved explicit loot pool constraints without dropping restrictions (Finding #19).
     - `GemModel`: Supported extensible resource-pack gem model mappings and logged baking failures (Finding #18).
     - `DeferredHelper`: Logged and propagated attachment registration failures instead of silently returning null (Finding #21).
-  - [x] **Automated Verification**: `./gradlew test` and `./gradlew build` verified passing 100% cleanly. Dedicated server launch verified.
+
+### Post-Milestone 12 Hotfix 5: Second-Pass Audit Hardening & Invoker / Projectile / Dispatch Verification
+- **Status**: **COMPLETE** (2026-11-04)
+- **Scope**: Addressed remaining findings from second-pass source audit: mixin registration for `LivingEntityInvoker`, projectile dispatch timing and re-entry recursion, post-attack item source targeting, missing gameplay dispatches (`onItemUse`, `modifyIncomingDamageTags`, `modifyEntityLoot`), tag network synchronization, unknown-gem reconciliation, and singleplayer integrated server config ownership.
+- **Key Fixes**:
+  - [x] **LivingEntityInvoker Registration**: Added `"LivingEntityInvoker"` to `src/main/resources/apotheosis.mixins.json` and verified all 4 invoker methods against 26.3 `LivingEntity`. Added automated test `testLivingEntityInvokerRegistered` in `SaveCompatibilityTest`.
+  - [x] **Projectile Dispatch Timing & Re-entry Safety**: Injected `ProjectileMixin` at `TAIL` of `shoot(DDDFF)V` after motion/delta vector is initialized. Tagged `apoth.generated` in `SpectralShotAffix` *before* shooting. Added `apoth$IN_SHOOT` thread-local re-entrancy guard to eliminate infinite recursive firing.
+  - [x] **Attack Source Disambiguation & Invulnerability Exception Safety**: Targeted `itemSource` (with main hand fallback) instead of iterating all equipment in `EnchantmentHelperMixin.apoth_doPostAttackEffects`. Wrapped `target.invulnerableTime` modification in `try { ... } finally { target.invulnerableTime = old; }`.
+  - [x] **Missing Gameplay Hooks**:
+    - `onItemUse`: Dispatched from `ItemStackMixin.useOn(UseOnContext)` to socketed gems and affixes (`StoneformingAffix`, `EnlightenedAffix`).
+    - `modifyIncomingDamageTags`: Dispatched at `HEAD` of `LivingEntity.hurtServer` for `MagicalArrowAffix`.
+    - `modifyEntityLoot`: Dispatched in `LivingEntityMixin.die` and `dropAllDeathLoot` with death drop capture via `EntityMixin.spawnAtLocation` (`FestiveAffix`, `TelepathicAffix`).
+  - [x] **Dynamic Tags Network Sync & EnchantmentInfo Reload Broadcast**: Created `DynRegPayloads.Tags` payload, sent before `End` in `DynamicRegistry.syncToPlayer`, and staged/applied via `bindTags` in `completeClientSync`. Registered payload provider in `DynamicRegistryManager` and hooked `EnchantmentInfoLoader.syncToPlayer` to `SYNC_DATA_PACK_CONTENTS`.
+  - [x] **Unknown Gem Reconciliation**: Added `reconcileUnresolvedGems()` to `GemCaseTile` that merges previously unresolvable gem stacks back into storage when their registry entries become available. Tested in `SaveCompatibilityTest.testUnknownGemPreservationAndReconciliation`.
+  - [x] **Singleplayer Integrated Server Config Ownership**: Added `ServerLifecycleHooks.isIntegratedServerRunning()` and guarded `ApotheosisConfig.setRemoteServerConfig` and `isRemoteServer` against overriding or decoupling local settings in singleplayer. Wired unconsumed server settings (`maxEnchantmentLevelLimit`, `critDamageModifierCap`, `spawnerRedstoneControl`).
+  - [x] **Flight Cooperative Ownership**: Added `AttributesUtil.EXTERNAL_FLIGHT_PREDICATES` and protected `PlayerMixin` creative flight revoke against external flight grants. Tested in `SaveCompatibilityTest.testCooperativeFlightGrant`.
+  - [x] **Structure Placement Exception Safety**: Replaced head/return injection on `placeInWorld` with `@WrapOperation` on `placeEntities` with `try/finally` in `StructureTemplateMixin`.
+  - [x] **Loot Modifier Pool Guards**: Added non-empty checks before `getRandomItem` in `AffixLootModifier` and `GemLootModifier`.
+  - [x] **Automated Verification**: Total test suite expanded to **83 tests passing 100% cleanly** (0 failures, 0 errors, 0 skipped). `./gradlew build` verified.
 
 ---
 

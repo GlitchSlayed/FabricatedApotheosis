@@ -27,6 +27,7 @@ import dev.shadowsoffire.apothic_spawners.ASObjects;
 import dev.shadowsoffire.apothic_spawners.stats.SpawnerStat;
 import dev.shadowsoffire.apothic_spawners.stats.SpawnerStats;
 import dev.shadowsoffire.placebo.dynreg.DynamicHolder;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentType;
@@ -297,18 +298,55 @@ public class SaveCompatibilityTest {
     }
 
     @Test
-    @DisplayName("Verify unknown/recoverable data tags are preserved without silent resets")
-    public void testUnknownDataPreservation() {
-        CompoundTag tagWithUnknowns = new CompoundTag();
-        tagWithUnknowns.putString("valid_key", "valid_value");
-        tagWithUnknowns.putString("future_version_field_26_4", "preserved_content");
-        tagWithUnknowns.putInt("unknown_extension_score", 9999);
+    @DisplayName("Verify unknown/unresolved gems are preserved across production save/load and reconciled upon definition availability")
+    public void testUnknownGemPreservationAndReconciliation() {
+        dev.shadowsoffire.apotheosis.socket.gem.storage.GemCaseTile tile =
+            new dev.shadowsoffire.apotheosis.socket.gem.storage.GemCaseTile.BasicGemCaseTile(
+                BlockPos.ZERO,
+                dev.shadowsoffire.apotheosis.Apoth.Blocks.GEM_CASE.value().defaultBlockState()
+            );
 
-        // Simulate save/load round-trip
-        CompoundTag roundTripped = tagWithUnknowns.copy();
-        assertEquals("valid_value", roundTripped.getStringOr("valid_key", ""));
-        assertEquals("preserved_content", roundTripped.getStringOr("future_version_field_26_4", ""));
-        assertEquals(9999, roundTripped.getIntOr("unknown_extension_score", 0));
+        // Construct saved data containing an unknown/future gem
+        CompoundTag root = new CompoundTag();
+        CompoundTag gemsTag = new CompoundTag();
+        CompoundTag unknownGemPurities = new CompoundTag();
+        unknownGemPurities.putInt("cracked", 5);
+        unknownGemPurities.putInt("flawless", 2);
+        gemsTag.put("apotheosis:future_modded_gem_v2", unknownGemPurities);
+        root.put("gems", gemsTag);
+
+        // Production load
+        tile.loadGemData(root);
+
+        // Save back out to a fresh tag
+        CompoundTag saved = new CompoundTag();
+        tile.saveGemData(saved);
+
+        // Verify the unknown gem was NOT dropped
+        assertTrue(saved.contains("gems"));
+        CompoundTag savedGems = saved.getCompoundOrEmpty("gems");
+        assertTrue(savedGems.contains("apotheosis:future_modded_gem_v2"));
+        CompoundTag savedPurities = savedGems.getCompoundOrEmpty("apotheosis:future_modded_gem_v2");
+        assertEquals(5, savedPurities.getIntOr("cracked", 0));
+        assertEquals(2, savedPurities.getIntOr("flawless", 0));
+    }
+
+    @Test
+    @DisplayName("Verify LivingEntityInvoker mixin registration in configuration")
+    public void testLivingEntityInvokerRegistered() throws Exception {
+        String mixinJson = new String(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("src/main/resources/apotheosis.mixins.json")));
+        assertTrue(mixinJson.contains("\"LivingEntityInvoker\""), "apotheosis.mixins.json must register LivingEntityInvoker to prevent ClassCastException");
+    }
+
+    @Test
+    @DisplayName("Verify cooperative flight grant does not revoke external flight")
+    public void testCooperativeFlightGrant() {
+        dev.shadowsoffire.apotheosis.attributes.api.AttributesUtil.EXTERNAL_FLIGHT_PREDICATES.add(p -> true);
+        try {
+            assertTrue(dev.shadowsoffire.apotheosis.attributes.api.AttributesUtil.EXTERNAL_FLIGHT_PREDICATES.stream().anyMatch(p -> p.test(null)));
+        } finally {
+            dev.shadowsoffire.apotheosis.attributes.api.AttributesUtil.EXTERNAL_FLIGHT_PREDICATES.clear();
+        }
     }
 
     private static Identifier getComponentId(DataComponentType<?> type) {

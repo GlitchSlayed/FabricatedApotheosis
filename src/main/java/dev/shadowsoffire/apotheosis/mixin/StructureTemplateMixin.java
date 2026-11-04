@@ -6,16 +6,21 @@ import java.util.Deque;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 
 import dev.shadowsoffire.apotheosis.gen.ItemFrameGemsProcessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.util.RandomSource;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -29,21 +34,27 @@ public abstract class StructureTemplateMixin {
     @Unique
     private static final ThreadLocal<Deque<ServerLevelAccessor>> apoth$CURRENT_LEVEL = ThreadLocal.withInitial(ArrayDeque::new);
 
-    @Inject(method = "placeInWorld", at = @At("HEAD"))
-    private void apoth$captureSettings(ServerLevelAccessor level, BlockPos pos, BlockPos pivot, StructurePlaceSettings settings, RandomSource random, int flags, CallbackInfoReturnable<Boolean> cir) {
+    @WrapOperation(
+        method = "placeInWorld",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;placeEntities(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Mirror;Lnet/minecraft/world/level/block/Rotation;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/levelgen/structure/BoundingBox;ZLnet/minecraft/util/ProblemReporter;)V"
+        )
+    )
+    private void apoth$scopePlaceEntities(StructureTemplate instance, ServerLevelAccessor level, BlockPos pos, Mirror mirror, Rotation rotation, BlockPos pivot, BoundingBox box, boolean finalizeEntities, ProblemReporter problemReporter, Operation<Void> original, @Local(argsOnly = true) StructurePlaceSettings settings) {
         apoth$CURRENT_SETTINGS.get().push(settings);
         apoth$CURRENT_LEVEL.get().push(level);
-    }
-
-    @Inject(method = "placeInWorld", at = @At("RETURN"))
-    private void apoth$releaseSettings(ServerLevelAccessor level, BlockPos pos, BlockPos pivot, StructurePlaceSettings settings, RandomSource random, int flags, CallbackInfoReturnable<Boolean> cir) {
-        Deque<StructurePlaceSettings> sStack = apoth$CURRENT_SETTINGS.get();
-        if (!sStack.isEmpty()) {
-            sStack.pop();
-        }
-        Deque<ServerLevelAccessor> lStack = apoth$CURRENT_LEVEL.get();
-        if (!lStack.isEmpty()) {
-            lStack.pop();
+        try {
+            original.call(instance, level, pos, mirror, rotation, pivot, box, finalizeEntities, problemReporter);
+        } finally {
+            Deque<StructurePlaceSettings> sStack = apoth$CURRENT_SETTINGS.get();
+            if (!sStack.isEmpty()) {
+                sStack.pop();
+            }
+            Deque<ServerLevelAccessor> lStack = apoth$CURRENT_LEVEL.get();
+            if (!lStack.isEmpty()) {
+                lStack.pop();
+            }
         }
     }
 

@@ -64,12 +64,18 @@ public class RarityRegistry extends TieredDynamicRegistry<LootRarity> {
         super.onReload(type);
         BiMap<Item, DynamicHolder<LootRarity>> nextMaterialMap = HashBiMap.create();
         List<LootRarity> nextSorted = new ArrayList<>();
+        boolean conflict = false;
         for (LootRarity r : this.getValues()) {
             DynamicHolder<LootRarity> old = nextMaterialMap.put(r.getMaterial(), this.holder(r));
             if (old != null) {
                 this.logger.error("Two rarities may not share the same rarity material: {} conflicts with {}", this.getKey(r), old.getId());
+                conflict = true;
             }
             nextSorted.add(r);
+        }
+        if (conflict && !this.sorted.isEmpty()) {
+            this.logger.error("Preserving previous valid material map and sorted rarities due to conflict.");
+            return;
         }
         nextSorted.sort(Comparator.comparing(LootRarity::sortIndex));
         this.materialMap = nextMaterialMap;

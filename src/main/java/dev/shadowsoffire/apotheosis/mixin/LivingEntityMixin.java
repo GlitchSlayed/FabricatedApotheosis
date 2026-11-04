@@ -173,6 +173,8 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
     @Inject(method = "hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z", at = @At("HEAD"), cancellable = true)
     private void apoth_checkDodge(ServerLevel level, DamageSource damageSource, float amount, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
+        dev.shadowsoffire.apotheosis.affix.effect.MagicalArrowAffix.modifyIncomingDamageTags(
+            new net.neoforged.neoforge.event.entity.EntityInvulnerabilityCheckEvent(self, damageSource));
         if (AttributeEvents.checkMeleeDodge(self, damageSource)) {
             cir.setReturnValue(false);
         }
@@ -309,6 +311,38 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
                     }
                 } finally {
                     this.apoth_isEchoingDrops = false;
+                }
+            }
+        }
+    }
+
+    @Inject(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At("HEAD"))
+    private void apoth$onDeathMark(DamageSource damageSource, CallbackInfo ci) {
+        LivingEntity self = (LivingEntity) (Object) this;
+        dev.shadowsoffire.apotheosis.affix.effect.FestiveAffix.markEquipment(
+            new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(self, damageSource));
+    }
+
+    @Inject(method = "dropAllDeathLoot(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At("HEAD"))
+    private void apoth$startCaptureDeathDrops(ServerLevel level, DamageSource damageSource, CallbackInfo ci) {
+        EntityMixin.apoth$CAPTURED_DROPS.set(new java.util.ArrayList<>());
+    }
+
+    @Inject(method = "dropAllDeathLoot(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At("TAIL"))
+    private void apoth$endCaptureDeathDrops(ServerLevel level, DamageSource damageSource, CallbackInfo ci) {
+        List<net.minecraft.world.entity.item.ItemEntity> drops = EntityMixin.apoth$CAPTURED_DROPS.get();
+        EntityMixin.apoth$CAPTURED_DROPS.remove();
+        if (drops != null) {
+            LivingEntity self = (LivingEntity) (Object) this;
+            if (damageSource.getEntity() instanceof net.minecraft.world.entity.player.Player p) {
+                net.neoforged.neoforge.event.entity.living.LivingDropsEvent dropsEvent =
+                    new net.neoforged.neoforge.event.entity.living.LivingDropsEvent(self, damageSource, drops);
+                dev.shadowsoffire.apotheosis.affix.AffixHelper.streamAffixes(p.getMainHandItem()).forEach(a -> a.modifyEntityLoot(dropsEvent));
+                dev.shadowsoffire.apotheosis.affix.effect.TelepathicAffix.drops(dropsEvent);
+            }
+            for (net.minecraft.world.entity.item.ItemEntity drop : drops) {
+                if (!drop.isRemoved()) {
+                    level.addFreshEntity(drop);
                 }
             }
         }

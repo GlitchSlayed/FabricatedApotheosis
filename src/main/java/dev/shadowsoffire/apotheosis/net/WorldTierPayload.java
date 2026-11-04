@@ -13,11 +13,19 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.player.Player;
 
-public record WorldTierPayload(WorldTier tier) implements CustomPacketPayload {
+public record WorldTierPayload(WorldTier tier, WorldTier maxUnlockedTier) implements CustomPacketPayload {
 
     public static final Type<WorldTierPayload> TYPE = new Type<>(Apotheosis.loc("world_tier"));
 
-    public static final StreamCodec<ByteBuf, WorldTierPayload> CODEC = WorldTier.STREAM_CODEC.map(WorldTierPayload::new, WorldTierPayload::tier);
+    public static final StreamCodec<ByteBuf, WorldTierPayload> CODEC = StreamCodec.composite(
+        WorldTier.STREAM_CODEC, WorldTierPayload::tier,
+        WorldTier.STREAM_CODEC, WorldTierPayload::maxUnlockedTier,
+        WorldTierPayload::new
+    );
+
+    public WorldTierPayload(WorldTier tier) {
+        this(tier, tier);
+    }
 
     @Override
     public Type<? extends CustomPacketPayload> type() {
@@ -44,6 +52,9 @@ public record WorldTierPayload(WorldTier tier) implements CustomPacketPayload {
         @Override
         public void handleClient(WorldTierPayload msg, Player player) {
             WorldTier.setTier(player, msg.tier);
+            if (msg.maxUnlockedTier != null) {
+                dev.shadowsoffire.apotheosis.util.ModAttachments.setData(player, Apoth.Attachments.MAX_UNLOCKED_TIER, msg.maxUnlockedTier);
+            }
         }
 
         @Override

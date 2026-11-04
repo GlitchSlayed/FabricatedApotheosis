@@ -350,7 +350,7 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
 
         // Actionable validation error handling without partial corruption
         if (!errors.isEmpty()) {
-            this.logger.error("Dynamic registry '{}' encountered {} validation error(s). Applying valid entries and logging diagnostics.", this.id, errors.size());
+            this.logger.error("Dynamic registry '{}' encountered {} validation error(s). Applying {} valid entries and logging diagnostics.", this.id, errors.size(), staged.size());
         }
 
         // Commit atomically
@@ -420,11 +420,29 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
                 PayloadHelper.sendToPlayer(player, new DynRegPayloads.Content(this.id, entry.getKey(), jsonStr));
             }
         }
+        Map<Identifier, List<Identifier>> tagMap = new HashMap<>();
+        for (Map.Entry<Identifier, DynamicHolderSet.Named<R>> entry : this.tags.entrySet()) {
+            if (entry.getValue().isBound()) {
+                tagMap.put(entry.getKey(), entry.getValue().stream().map(DynamicHolder::getId).toList());
+            }
+        }
+        if (!tagMap.isEmpty()) {
+            PayloadHelper.sendToPlayer(player, new DynRegPayloads.Tags(this.id, tagMap));
+        }
+
         PayloadHelper.sendToPlayer(player, new DynRegPayloads.End(this.id));
     }
 
+    private final Map<Identifier, List<Identifier>> clientStagedTags = new HashMap<>();
+
     public synchronized void initClientSync() {
         this.clientStaged.clear();
+        this.clientStagedTags.clear();
+    }
+
+    public synchronized void acceptClientTags(Map<Identifier, List<Identifier>> tags) {
+        this.clientStagedTags.clear();
+        this.clientStagedTags.putAll(tags);
     }
 
     public synchronized void acceptClientContent(Identifier entryId, JsonElement json) {
@@ -442,11 +460,16 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
     public synchronized void completeClientSync() {
         if (net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
             this.clientStaged.clear();
+            this.clientStagedTags.clear();
             this.logger.info("Integrated client sync preserved authoritative server registry for '{}'", this.id);
             return;
         }
         this.beginReload(ReloadType.CLIENT);
         this.commitReload(ImmutableMap.copyOf(this.clientStaged), ReloadType.CLIENT);
+        if (!this.clientStagedTags.isEmpty()) {
+            this.bindTags(this.clientStagedTags);
+            this.clientStagedTags.clear();
+        }
         this.clientStaged.clear();
         this.logger.info("Client synchronization complete for dynamic registry '{}'", this.id);
     }

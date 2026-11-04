@@ -15,6 +15,7 @@
     "EntityMixin",
     "ItemStackMixin",
     "LivingEntityAccessor",
+    "LivingEntityInvoker",
     "LivingEntityMixin",
     "LootContextMixin",
     "LootTableMixin",

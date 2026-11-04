@@ -242,7 +242,8 @@ public class ApothSpawnerTile extends SpawnerBlockEntity {
 
         protected boolean isActivated(Level level, BlockPos pos) {
             boolean hasPlayer = this.getStatValue(SpawnerStats.IGNORE_PLAYERS) || this.isNearPlayer(level, pos);
-            return hasPlayer && (!this.getStatValue(SpawnerStats.REDSTONE_CONTROL) || ApothSpawnerTile.this.level.hasNeighborSignal(pos));
+            boolean redstoneEnabled = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().spawnerRedstoneControl && this.getStatValue(SpawnerStats.REDSTONE_CONTROL);
+            return hasPlayer && (!redstoneEnabled || ApothSpawnerTile.this.level.hasNeighborSignal(pos));
         }
 
         private void delay(Level pLevel, BlockPos pPos) {

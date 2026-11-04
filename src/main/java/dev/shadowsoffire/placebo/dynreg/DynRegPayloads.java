@@ -93,6 +93,57 @@ public class DynRegPayloads {
         }
     }
 
+    public record Tags(Identifier registryId, java.util.Map<Identifier, java.util.List<Identifier>> tags) implements CustomPacketPayload {
+        public static final Type<Tags> TYPE = new Type<>(Placebo.loc("dynreg_sync_tags"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Tags> CODEC = StreamCodec.of(
+            (buf, msg) -> {
+                buf.writeIdentifier(msg.registryId());
+                buf.writeVarInt(msg.tags().size());
+                for (java.util.Map.Entry<Identifier, java.util.List<Identifier>> entry : msg.tags().entrySet()) {
+                    buf.writeIdentifier(entry.getKey());
+                    buf.writeVarInt(entry.getValue().size());
+                    for (Identifier id : entry.getValue()) {
+                        buf.writeIdentifier(id);
+                    }
+                }
+            },
+            buf -> {
+                Identifier regId = buf.readIdentifier();
+                int tagCount = buf.readVarInt();
+                java.util.Map<Identifier, java.util.List<Identifier>> tags = new java.util.HashMap<>(tagCount);
+                for (int i = 0; i < tagCount; i++) {
+                    Identifier tagId = buf.readIdentifier();
+                    int entryCount = buf.readVarInt();
+                    java.util.List<Identifier> entries = new java.util.ArrayList<>(entryCount);
+                    for (int j = 0; j < entryCount; j++) {
+                        entries.add(buf.readIdentifier());
+                    }
+                    tags.put(tagId, entries);
+                }
+                return new Tags(regId, tags);
+            }
+        );
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+
+        public static class Provider implements PayloadProvider<Tags> {
+            @Override
+            public Type<Tags> getType() { return TYPE; }
+            @Override
+            public StreamCodec<? super RegistryFriendlyByteBuf, Tags> getCodec() { return CODEC; }
+            @Override
+            public void handleClient(Tags msg, Player player) {
+                DynamicRegistry<?> reg = DynamicRegistry.getRegistry(msg.registryId());
+                if (reg != null) {
+                    reg.acceptClientTags(msg.tags());
+                }
+            }
+        }
+    }
+
     public record End(Identifier registryId) implements CustomPacketPayload {
         public static final Type<End> TYPE = new Type<>(Placebo.loc("dynreg_sync_end"));
         public static final StreamCodec<RegistryFriendlyByteBuf, End> CODEC = StreamCodec.composite(

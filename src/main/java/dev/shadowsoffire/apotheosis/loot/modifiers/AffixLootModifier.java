@@ -50,13 +50,19 @@ public class AffixLootModifier extends ContextualLootModifier {
             if (entry.pattern.matches(LootContextAccess.getQueriedLootTableId(ctx))) {
                 if (ctx.getRandom().nextFloat() <= entry.chance()) {
 
-                    AffixLootEntry lootEntry;
+                    AffixLootEntry lootEntry = null;
                     if (!entry.entries.isEmpty()) {
                         List<Weighted<AffixLootEntry>> resolved = entry.entries.stream().mapMulti(TieredWeights.wrapFilterHolders(gCtx)).toList();
-                        lootEntry = WeightedRandom.getRandomItem(ctx.getRandom(), resolved, Weighted::weight).get().value();
+                        if (!resolved.isEmpty()) {
+                            lootEntry = WeightedRandom.getRandomItem(ctx.getRandom(), resolved, Weighted::weight).map(Weighted::value).orElse(null);
+                        }
                     }
                     else {
                         lootEntry = AffixLootRegistry.INSTANCE.getRandomItem(gCtx);
+                    }
+
+                    if (lootEntry == null) {
+                        continue;
                     }
 
                     // Resolve the rarity for the entry, preferring a rarity from this loot modifier if available, but using the loot entry otherwise.

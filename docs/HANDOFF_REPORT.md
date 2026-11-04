@@ -1,51 +1,40 @@
-# Handoff Report — Comprehensive 32-Point Stabilization Audit & Integrity Hardening
+# Handoff Report — Second-Pass Audit Hardening & System Integrity
 
 - **Date**: 2026-11-04
 - **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.20.1+, YACL 3.9.6, JEI 31.17.0.108, Jade 26.3.5+fabric)
 - **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar`
-- **Status**: **Audit Addressed; 78/78 Tests Passing; Build Green.**
+- **Status**: **Second-Pass Audit Resolved; 83/83 Tests Passing; Full Build Green.**
 
 ---
 
 ## 1. Scope & Audit Resolution Summary
 
-Following the full static codebase audit of `1.0.0-alpha.4` across 571 Java source files, all 32 findings were systematically addressed across 5 focused clusters:
+Following the full static codebase audit and subsequent second-pass verification, all findings have been thoroughly resolved across 5 functional areas:
 
-### Cluster 1: Item Loss & Menu Safety
-- **Gem Case Item Conservation (Finding #1)**: Guarded `depositGem` with a re-entrancy lock and stopped unconditional erasure of slot 0. Partially rejected stacks and leftover gems remain safely in the input slot.
-- **Sparse Purity Map Handling (Finding #24)**: Replaced unboxing with `map.getOrDefault(..., 0)` in `GemUpgradeMatch`; guarded against zero/negative purity ordinals; extracted upgrade materials before updating internal counts.
-- **Salvaging Output Range & Item Conservation (Finding #26, #27)**: Added canonical constructor validation `min <= max` in `SalvagingRecipe.OutputData`; guarded against empty recipe matches so unmatched items are never wiped; clamped random ranges in `getSalvageCounts`.
+### 1. Invoker Registration & Crash Prevention
+- **`LivingEntityInvoker` Registration**: Added `"LivingEntityInvoker"` to `apotheosis.mixins.json` and validated all 4 target methods (`apoth$callDropCustomDeathLoot`, `apoth$callDropEquipment`, `apoth$callOnEffectUpdated`, `apoth$callCanRide`) against Minecraft 26.3 `LivingEntity`. Added automated regression test `testLivingEntityInvokerRegistered` in `SaveCompatibilityTest`.
 
-### Cluster 2: Packet Validation, Bounds, Reach & Resource Leaks
-- **Packet Direction Validation (Finding #6)**: Implemented explicit `isClientbound()` and `isServerbound()` contracts in `PayloadProvider` and enforced channel registration directions in `PayloadHelper`.
-- **Dynamic Registry Payload Protection (Finding #4)**: Added `MAX_JSON_BYTES` (2MB limit) and readable-bytes bounds checks in `DynRegPayloads` to prevent negative-size arrays and memory exhaust attacks.
-- **Packet & Menu Index Bounds (Finding #5)**: Added boundary guards to `LinkItemToChatPayload`, `AugmentingMenu`, `GemCuttingMenu`, and `GemCaseMenu`.
-- **Workstation Reach & Validity (Finding #28)**: Enforced `isWithinBlockInteractionRange(pos, 4.0)` and block entity removal checks in `BlockEntityMenu`, `GemCuttingMenu`, and `ReforgingMenu`.
-- **Listener Leaks & UI Updates (Finding #25, #29, #30)**: Unregistered client/server listeners on `EnchLibraryContainer` close; hooked slot updates in `ReforgingMenu` and `GemCuttingMenu`; notified active gem-case menus and nearby players when upgrade materials change.
+### 2. Projectile Dispatch Timing & Re-entry Safety
+- **Firing Dispatch Timing**: Shifted `ProjectileMixin` firing dispatch to `@Inject(at = @At("TAIL"), method = "shoot(DDDFF)V")` so arrow motion/delta vectors are fully initialized before affixes inspect velocity.
+- **Spectral Arrow Recursion Guard**: Pre-tagged `apoth.generated` in `SpectralShotAffix` *before* firing the secondary arrow, and added `apoth$IN_SHOOT` thread-local re-entrancy protection in `ProjectileMixin`.
 
-### Cluster 3: Structure Generation & Aux Damage Lifecycle
-- **Template NBT Mutation Guard (Finding #8)**: Replaced in-place mutation of template entity NBT with an `@ModifyArg` copy and thread-local settings deque in `StructureTemplateMixin`.
-- **Auxiliary Damage Ticking (Finding #23)**: Injected `baseTick` in `LivingEntityMixin` on the server to invoke `AuxDmgTracker.tick()`, properly clearing auxiliary damage immunity timers.
+### 3. Attack Source Targeting & Exception Safety
+- **Attack Source Disambiguation**: Targeted `@Nullable ItemStack itemSource` (with main-hand fallback) instead of iterating every equipped item in `EnchantmentHelperMixin.apoth_doPostAttackEffects`.
+- **Invulnerability Timer Safety**: Wrapped `target.invulnerableTime` modification in `try { ... } finally { target.invulnerableTime = old; }`.
 
-### Cluster 4: Gameplay Hook Dispatch & Global Loot Modifiers
-- **Global Loot Modifiers (Finding #3)**: Restored 6 loot modifier JSONs; implemented `LootModifierManager` with priority ordering; injected `LootTable.getRandomItems` and `ReloadableServerResources` to capture table keys and apply modifiers.
-- **Affix & Gem Gameplay Dispatch (Finding #2)**:
-  - `EnchantmentHelperMixin`: Dispatched `getDamageProtection`, `modifyDamage`, `doPostAttack`, `doPostHurt`, `processDurabilityChange`, and `getItemEnchantmentLevel` (with re-entrancy prevention).
-  - `ProjectileMixin`: Dispatched `onProjectileFired`, `copyToProjectile`, and `onProjectileImpact`.
-  - `LivingEntityMixin`: Dispatched `onShieldBlock`, `DamageReductions`, and `onHurt`.
-  - `ServerPlayerGameModeMixin`: Dispatched `onBlockBreak` to socketed gems and affixes upon block destruction.
-- **Block Break Protection & Fake Players (Finding #22)**: Dispatched Fabric's `PlayerBlockBreakEvents.BEFORE` in `CommonHooks.fireBlockBreak`; validated server level match and added level cleanup in `FakePlayerFactory`.
-- **Potion Charms & Flight Cleanup (Finding #31, #32)**: Removed premature inventory tick suppression on potion charms; checked external flight sources before revoking creative flight.
+### 4. Gameplay Hooks & Network Synchronization
+- **`onItemUse` Dispatch**: Wired from `ItemStackMixin.useOn(UseOnContext)` to socketed gems and affixes (`StoneformingAffix`, `EnlightenedAffix`).
+- **`modifyIncomingDamageTags` Dispatch**: Wired at `HEAD` of `LivingEntity.hurtServer` for `MagicalArrowAffix`.
+- **`modifyEntityLoot` Dispatch**: Wired in `LivingEntityMixin` with death-drop capture via `EntityMixin.spawnAtLocation` (`FestiveAffix`, `TelepathicAffix`).
+- **Dynamic Tags Network Sync**: Implemented `DynRegPayloads.Tags` payload, sent before `End` in `DynamicRegistry.syncToPlayer`, staged and bound via `bindTags` on the client in `completeClientSync`. Registered payload provider in `DynamicRegistryManager` and hooked `EnchantmentInfoLoader.syncToPlayer` to `SYNC_DATA_PACK_CONTENTS`.
+- **World Tier Maximum Unlocked Tier Sync**: Added `maxUnlockedTier` to `WorldTierPayload` and synchronized across join, dimension travel, respawn, and tier advancement.
 
-### Cluster 5: Dynamic Registries, Configuration, & State Lifecycles
-- **Unresolved Gem Conservation (Finding #7)**: Preserved unresolvable gem holders across saves via `unresolvedGems` in `GemCaseTile`.
-- **Dynamic Tag Reload Listener (Finding #9)**: Registered `DynamicTagManager` as `IdentifiableResourceReloadListener` (`placebo:dynamic_registry_tags`).
-- **Dynamic Registry Reload Broadcast (Finding #10, #11)**: Broadcasted dynamic registry sync on `ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS`; cleared lookup cache on server stop.
-- **Transactional Reload (Finding #6)**: Preserved previous valid state in `DynamicRegistry` and `RarityRegistry` on reload errors.
-- **Loot Pool Fallback Restraint (Finding #19)**: Distinguished empty pool from failed resolution in `TieredDynamicRegistry` and `GemLootPoolEntry`.
-- **Extensible Gem Models (Finding #18)**: Enabled resource-pack defined gem model mappings in `GemModel` and logged baking errors.
-- **Safe Attachment Registration (Finding #21)**: Logged and rethrown attachment registration exceptions instead of returning null.
-- **Configuration & World Tier Lifecycles (Finding #12, #14, #16, #20)**: Safely defaulted `GenContext.dummy`; distinguished integrated vs remote servers; backed up corrupted configs to `.invalid`; separated active world tier from max unlocked tier; and reset client tutorial dismiss state on disconnect.
+### 5. Configuration Ownership & Persistence Integrity
+- **Integrated Server Config Ownership**: Added `ServerLifecycleHooks.isIntegratedServerRunning()` and guarded `ApotheosisConfig.setRemoteServerConfig` and `isRemoteServer` so singleplayer integrated servers retain authoritative local settings without remote decoupling. Wired unconsumed server settings (`maxEnchantmentLevelLimit`, `critDamageModifierCap`, `spawnerRedstoneControl`).
+- **Flight Cooperative Ownership**: Added `AttributesUtil.EXTERNAL_FLIGHT_PREDICATES` and protected `PlayerMixin` flight revocation against other active flight-granting mods.
+- **Structure Placement Exception Safety**: Replaced head/return injection on `placeInWorld` with `@WrapOperation` on `placeEntities` with `try/finally` in `StructureTemplateMixin`.
+- **Loot Modifier Pool Guards**: Added non-empty checks before `getRandomItem` in `AffixLootModifier` and `GemLootModifier`.
+- **Unknown Gem Preservation & Reconciliation**: Stored unresolved gems across saves in `GemCaseTile` and added `reconcileUnresolvedGems()` to merge them back into storage when their definitions are registered. Tested in `SaveCompatibilityTest`.
 
 ---
 
@@ -208,14 +197,13 @@ FabricatedApotheosis/
    - Delegated background rendering in `WorldTierTutorialScreen` to parent screen.
 
 ### 4.2 Verification & Build Artifacts
-- **Automated Tests**: 75/75 passed (`./gradlew test`).
+- **Automated Tests**: 83/83 passed (`./gradlew test`).
 - **Dedicated Server Boot**: Loaded in 0.205s with 0 dynamic registry errors.
-- **Release Candidate JAR**: `build/libs/fabricated-apotheosis-1.0.0-alpha.3.jar`
-- **SHA-256 Checksum**: `94f4841d226200fa263c288cf896f1f339e9d7a9743dc6e8399d7d68b64ddbd6`
+- **Release Candidate JAR**: `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar`
 
 ---
 
 ## 5. Final Release Posture
 
-The project is at **1.0.0-alpha.3 Release Candidate**.
+The project is at **1.0.0-alpha.5 Release Candidate** with all 32 primary audit items and second-pass runtime/timing defects repaired.
 **Do NOT publish releases without explicit user instruction.**

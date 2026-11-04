@@ -40,6 +40,8 @@ public class AttributesUtil {
         return Math.min(entity.getAttached(ALObjects.Attachments.OVERHEAL_ABSORPTION), entity.getAbsorptionAmount());
     }
 
+    public static final java.util.List<java.util.function.Predicate<net.minecraft.world.entity.player.Player>> EXTERNAL_FLIGHT_PREDICATES = new java.util.concurrent.CopyOnWriteArrayList<>();
+
     /**
      * Records the portion of the entity's current absorption that was granted by {@link ALObjects.Attributes#OVERHEAL}.
      */

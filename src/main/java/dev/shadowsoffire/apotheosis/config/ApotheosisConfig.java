@@ -81,6 +81,9 @@ public class ApotheosisConfig {
      * otherwise returns the local server configuration.
      */
     public static ServerConfig getServer() {
+        if (!isRemoteServer()) {
+            return localServerConfig;
+        }
         ServerConfig remote = remoteServerConfig;
         return remote != null ? remote : localServerConfig;
     }
@@ -106,8 +109,7 @@ public class ApotheosisConfig {
         if (remoteServerConfig == null) {
             return false;
         }
-        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
-        if (server != null && !server.isDedicatedServer()) {
+        if (net.neoforged.neoforge.server.ServerLifecycleHooks.isIntegratedServerRunning()) {
             return false;
         }
         return true;
@@ -117,6 +119,10 @@ public class ApotheosisConfig {
      * Sets the remote server gameplay configuration received over the network.
      */
     public static void setRemoteServerConfig(ServerConfig config) {
+        if (net.neoforged.neoforge.server.ServerLifecycleHooks.isIntegratedServerRunning()) {
+            remoteServerConfig = null;
+            return;
+        }
         config.validate();
         remoteServerConfig = config;
         LOGGER.info("Applied authoritative server configuration received from remote server.");

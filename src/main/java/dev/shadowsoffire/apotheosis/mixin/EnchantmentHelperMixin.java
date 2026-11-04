@@ -69,16 +69,19 @@ public abstract class EnchantmentHelperMixin {
     @Inject(at = @At("TAIL"), method = "doPostAttackEffectsWithItemSource(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/item/ItemStack;)V")
     private static void apoth_doPostAttackEffectsWithItemSource(ServerLevel level, Entity target, DamageSource damageSource, @Nullable ItemStack itemSource, CallbackInfo ci) {
         if (damageSource.getEntity() instanceof LivingEntity user) {
-            for (EquipmentSlot slot : EquipmentSlot.VALUES) {
-                ItemStack s = user.getItemBySlot(slot);
-                SocketHelper.getGems(s).doPostAttack(user, target);
+            ItemStack attackingItem = (itemSource != null && !itemSource.isEmpty()) ? itemSource : user.getMainHandItem();
+            if (!attackingItem.isEmpty()) {
+                SocketHelper.getGems(attackingItem).doPostAttack(user, target);
 
-                var affixes = AffixHelper.getAffixes(s);
+                var affixes = AffixHelper.getAffixes(attackingItem);
                 for (AffixInstance inst : affixes.values()) {
                     int old = target.invulnerableTime;
                     target.invulnerableTime = 0;
-                    inst.doPostAttack(user, target);
-                    target.invulnerableTime = old;
+                    try {
+                        inst.doPostAttack(user, target);
+                    } finally {
+                        target.invulnerableTime = old;
+                    }
                 }
             }
         }

@@ -63,13 +63,13 @@ public class SpectralShotAffix extends Affix {
             if (!user.level().isClientSide() && proj instanceof AbstractArrow arrow) {
                 ArrowItem arrowitem = (ArrowItem) Items.SPECTRAL_ARROW;
                 AbstractArrow spectralArrow = arrowitem.createArrow(user.level(), Items.SPECTRAL_ARROW.getDefaultInstance(), user, inst.stack());
+                AttributesUtil.getPersistentData(spectralArrow).putBoolean("apoth.generated", true);
                 spectralArrow.shoot(user.getXRot(), user.getYRot(), 0.0F, 2.0F, 1.0F);
                 this.cloneMotion(arrow, spectralArrow);
                 spectralArrow.setCritArrow(arrow.isCritArrow());
                 spectralArrow.setBaseDamage(arrow.baseDamage);
                 spectralArrow.setRemainingFireTicks(arrow.getRemainingFireTicks());
                 spectralArrow.pickup = Pickup.CREATIVE_ONLY;
-                AttributesUtil.getPersistentData(spectralArrow).putBoolean("apoth.generated", true);
                 arrow.level().addFreshEntity(spectralArrow);
             }
         }

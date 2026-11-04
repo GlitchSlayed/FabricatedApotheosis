@@ -78,11 +78,34 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
         this.maxCount = maxCount;
     }
 
+    public void reconcileUnresolvedGems() {
+        if (this.unresolvedGems.isEmpty()) return;
+        Iterator<Map.Entry<Identifier, CompoundTag>> it = this.unresolvedGems.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Identifier, CompoundTag> entry = it.next();
+            DynamicHolder<Gem> gem = GemRegistry.INSTANCE.holder(entry.getKey());
+            if (gem.isBound()) {
+                CompoundTag purityTag = entry.getValue();
+                EnumMap<Purity, Integer> map = this.gems.computeIfAbsent(gem, g -> new EnumMap<>(Purity.class));
+                for (Purity p : Purity.values()) {
+                    int savedCount = purityTag.getIntOr(p.getSerializedName(), 0);
+                    if (savedCount > 0) {
+                        int currentCount = map.getOrDefault(p, 0);
+                        map.put(p, Math.min(this.maxCount, currentCount + savedCount));
+                    }
+                }
+                it.remove();
+            }
+        }
+    }
+
     public Object2ObjectMap<DynamicHolder<Gem>, EnumMap<Purity, Integer>> getGems() {
+        this.reconcileUnresolvedGems();
         return this.gems;
     }
 
     public EnumMap<Purity, Integer> getGems(DynamicHolder<Gem> gem) {
+        this.reconcileUnresolvedGems();
         return this.gems.computeIfAbsent(gem, g -> new EnumMap<>(Purity.class));
     }
 
@@ -95,6 +118,7 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
     }
 
     public void depositGem(ItemStack stack) {
+        this.reconcileUnresolvedGems();
         dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem gem = dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem.of(stack);
         if (!gem.isValid()) return;
         EnumMap<Purity, Integer> map = this.getGems(gem.gem());
@@ -205,6 +229,7 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
     }
 
     public void saveGemData(CompoundTag tag) {
+        this.reconcileUnresolvedGems();
         CompoundTag gems = new CompoundTag();
         for (var entry : this.unresolvedGems.entrySet()) {
             gems.put(entry.getKey().toString(), entry.getValue().copy());

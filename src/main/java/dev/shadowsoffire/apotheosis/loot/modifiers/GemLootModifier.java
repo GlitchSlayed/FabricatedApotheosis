@@ -47,10 +47,12 @@ public class GemLootModifier extends ContextualLootModifier {
                 if (ctx.getRandom().nextFloat() <= entry.chance()) {
                     Purity purity = Purity.random(gCtx, entry.purities);
 
-                    Gem gem;
+                    Gem gem = null;
                     if (!entry.gems.isEmpty()) {
                         List<Weighted<Gem>> resolved = entry.gems.stream().mapMulti(TieredWeights.wrapFilterHolders(gCtx)).toList();
-                        gem = WeightedRandom.getRandomItem(ctx.getRandom(), resolved, Weighted::weight).get().value();
+                        if (!resolved.isEmpty()) {
+                            gem = WeightedRandom.getRandomItem(ctx.getRandom(), resolved, Weighted::weight).map(Weighted::value).orElse(null);
+                        }
                     }
                     else {
                         gem = GemRegistry.INSTANCE.getRandomItem(gCtx);
