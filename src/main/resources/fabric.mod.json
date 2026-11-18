@@ -5,12 +5,20 @@
   "name": "Fabricated Apotheosis",
   "description": "Port of the Apotheosis ecosystem to Minecraft 26.3 Fabric with YACL configuration.",
   "authors": [
-    "Shadows_of_Fire",
-    "Fabric Port Contributors"
+    "Shadows_of_Fire"
+  ],
+  "contributors": [
+    {
+      "name": "GlitchSLayed",
+      "contact": {
+        "homepage": "https://github.com/GlitchSlayed"
+      }
+    }
   ],
   "contact": {
-    "homepage": "https://github.com/Shadows-of-Fire/Apotheosis",
-    "sources": "https://github.com/Shadows-of-Fire/Apotheosis"
+    "homepage": "https://github.com/GlitchSlayed/FabricatedApotheosis",
+    "sources": "https://github.com/GlitchSlayed/FabricatedApotheosis",
+    "issues": "https://github.com/GlitchSlayed/FabricatedApotheosis/issues"
   },
   "license": "MIT",
   "icon": "assets/apotheosis/icon.png",

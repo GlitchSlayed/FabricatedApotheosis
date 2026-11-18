@@ -77,7 +77,7 @@ cd FabricatedApotheosis
 ./gradlew build
 
 # The compiled distributable will be located at:
-# build/libs/fabricated-apotheosis-1.0.0-alpha.1.jar
+# build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar
 ```
 
 ### Running Test Environments
@@ -113,6 +113,6 @@ Extensive design, migration, and audit documentation is available in the [`docs/
   - [Apothic Attributes](https://github.com/Shadows-of-Fire/Apothic-Attributes)
   - [Apothic Enchanting](https://github.com/Shadows-of-Fire/Apothic-Enchanting)
   - [Apothic Spawners](https://github.com/Shadows-of-Fire/Apothic-Spawners)
-- **Porting & Maintenance**: Fabric Port Contributors.
+- **Porting & Maintenance**: [GlitchSLayed](https://github.com/GlitchSlayed) ([FabricatedApotheosis](https://github.com/GlitchSlayed/FabricatedApotheosis)).
 - **Code License**: Licensed under the [MIT License](LICENSE).
 - **Assets License**: All upstream texture, model, audio, and language assets remain **All Rights Reserved** by Shadows_of_Fire. See [LICENSE_ASSETS](LICENSE_ASSETS) and [NOTICE](NOTICE) for full attributions.
