@@ -14,6 +14,7 @@ import dev.shadowsoffire.apotheosis.affix.AffixRegistry;
 import dev.shadowsoffire.apotheosis.affix.effect.AttributeToggleAffix;
 import dev.shadowsoffire.apotheosis.affix.reforging.ReforgingMenu;
 import dev.shadowsoffire.apotheosis.commands.AffixCommand;
+import dev.shadowsoffire.apotheosis.commands.BonusModifierCommand;
 import dev.shadowsoffire.apotheosis.commands.BossCommand;
 import dev.shadowsoffire.apotheosis.commands.CategoryCheckCommand;
 import dev.shadowsoffire.apotheosis.commands.DebugWeightCommand;
@@ -57,6 +58,7 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.minecraft.commands.Commands;
@@ -151,6 +153,7 @@ public class AdventureModule {
             AffixCommand.register(root);
             WorldTierCommand.register(root);
             BossCommand.register(root);
+            BonusModifierCommand.register(root, registryAccess);
 
             var debug = Commands.literal("debug").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
             DebugWeightCommand.register(debug, registryAccess);
@@ -198,6 +201,7 @@ public class AdventureModule {
         // Player Join
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayer player = handler.player;
+            PayloadHelper.sendToPlayer(player, new AdventureConfig.ConfigPayload());
             WorldTier tier = WorldTier.getTier(player);
             WorldTier max = ModAttachments.getData(player, Attachments.MAX_UNLOCKED_TIER);
             PayloadHelper.sendToPlayer(player, new WorldTierPayload(tier, max != null ? max : tier));
@@ -211,6 +215,14 @@ public class AdventureModule {
                     aug.apply(player.level(), player);
                 }
                 ModAttachments.setData(player, Attachments.TIER_AUGMENTS_APPLIED, true);
+            }
+        });
+
+        // Re-sync AdventureConfig and ServerConfig on datapack reload (/reload)
+        ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register((player, joined) -> {
+            if (!joined) {
+                PayloadHelper.sendToPlayer(player, new dev.shadowsoffire.apotheosis.config.network.ApotheosisConfigPayload(dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getLocalServer()));
+                PayloadHelper.sendToPlayer(player, new AdventureConfig.ConfigPayload());
             }
         });
 

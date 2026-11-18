@@ -97,6 +97,63 @@ public class ConfigMigration {
                         } else if ("Show Enchanted Book Metadata".equalsIgnoreCase(keyPart)) {
                             clientConfig.showEnchantedBookMetadata = Boolean.parseBoolean(valPart);
                             modified = true;
+                        } else if ("Boss Spawn Cooldown".equalsIgnoreCase(keyPart)) {
+                            serverConfig.bossSpawnCooldown = Integer.parseInt(valPart);
+                            modified = true;
+                        } else if ("Boss Auto-Aggro".equalsIgnoreCase(keyPart)) {
+                            serverConfig.bossAutoAggro = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Boss Glowing On Spawn".equalsIgnoreCase(keyPart)) {
+                            serverConfig.bossGlowOnSpawn = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Boss Announcement Range".equalsIgnoreCase(keyPart)) {
+                            serverConfig.bossAnnounceRange = Float.parseFloat(valPart);
+                            modified = true;
+                        } else if ("Curse Boss Items".equalsIgnoreCase(keyPart)) {
+                            serverConfig.curseBossItems = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Spawner Value Chance".equalsIgnoreCase(keyPart)) {
+                            serverConfig.spawnerValueChance = Float.parseFloat(valPart);
+                            modified = true;
+                        } else if ("WorldGen Debug".equalsIgnoreCase(keyPart)) {
+                            serverConfig.worldGenDebug = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Underground Trader".equalsIgnoreCase(keyPart)) {
+                            serverConfig.undergroundTrader = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Upgrade Sigil Cost".equalsIgnoreCase(keyPart)) {
+                            serverConfig.upgradeSigilCost = Integer.parseInt(valPart);
+                            modified = true;
+                        } else if ("Upgrade Level Cost".equalsIgnoreCase(keyPart)) {
+                            serverConfig.upgradeLevelCost = Integer.parseInt(valPart);
+                            modified = true;
+                        } else if ("Reroll Sigil Cost".equalsIgnoreCase(keyPart)) {
+                            serverConfig.rerollSigilCost = Integer.parseInt(valPart);
+                            modified = true;
+                        } else if ("Reroll Level Cost".equalsIgnoreCase(keyPart)) {
+                            serverConfig.rerollLevelCost = Integer.parseInt(valPart);
+                            modified = true;
+                        } else if ("Cleave Players".equalsIgnoreCase(keyPart)) {
+                            serverConfig.cleaveHitsPlayers = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Torch Placement Item".equalsIgnoreCase(keyPart)) {
+                            serverConfig.torchItem = valPart;
+                            modified = true;
+                        } else if ("Enable Equipment Comparisons".equalsIgnoreCase(keyPart)) {
+                            clientConfig.enableEquipmentCompare = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Enable Affix Item Effects".equalsIgnoreCase(keyPart)) {
+                            clientConfig.enableAffixItemEffects = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Enable Item Linking".equalsIgnoreCase(keyPart)) {
+                            serverConfig.enableItemLinking = Boolean.parseBoolean(valPart);
+                            modified = true;
+                        } else if ("Item Linking Cooldown".equalsIgnoreCase(keyPart)) {
+                            serverConfig.itemLinkingCooldown = Integer.parseInt(valPart);
+                            modified = true;
+                        } else if ("Enable Manual World Tier Changes".equalsIgnoreCase(keyPart)) {
+                            serverConfig.enableManualWorldTierChanges = Boolean.parseBoolean(valPart);
+                            modified = true;
                         }
                     }
                 }

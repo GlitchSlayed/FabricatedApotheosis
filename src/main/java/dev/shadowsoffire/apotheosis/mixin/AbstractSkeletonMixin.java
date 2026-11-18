@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import dev.shadowsoffire.apotheosis.config.ApotheosisConfig;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
@@ -44,6 +45,10 @@ public abstract class AbstractSkeletonMixin extends Monster implements CrossbowA
 
     @Inject(method = "performRangedAttack", at = @At("HEAD"), cancellable = true)
     public void apoth_performRangedCrossbowAttack(LivingEntity target, float velocity, CallbackInfo ci) {
+        var cfg = ApotheosisConfig.getServer();
+        if (!cfg.enableAdventure || !cfg.enableSkeletonCrossbows) {
+            return;
+        }
         ItemStack crossbow = this.apoth_getCrossbow();
         if (!crossbow.isEmpty()) {
             this.performCrossbowAttack(this, 1.6F);
@@ -55,6 +60,11 @@ public abstract class AbstractSkeletonMixin extends Monster implements CrossbowA
     public void apoth_pickCrossbowIfAvailable(CallbackInfo ci) {
         if (this.level() != null && !this.level().isClientSide()) {
             this.goalSelector.removeGoal(this.apoth_crossbowGoal);
+
+            var cfg = ApotheosisConfig.getServer();
+            if (!cfg.enableAdventure || !cfg.enableSkeletonCrossbows) {
+                return;
+            }
 
             ItemStack crossbow = this.apoth_getCrossbow();
             if (!crossbow.isEmpty()) {
@@ -68,7 +78,8 @@ public abstract class AbstractSkeletonMixin extends Monster implements CrossbowA
 
     @Inject(method = "canUseNonMeleeWeapon", at = @At("RETURN"), cancellable = true)
     private void apoth_canUseCrossbow(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
-        if (stack.getItem() instanceof CrossbowItem) {
+        var cfg = ApotheosisConfig.getServer();
+        if (cfg.enableAdventure && cfg.enableSkeletonCrossbows && stack.getItem() instanceof CrossbowItem) {
             cir.setReturnValue(true);
         }
     }

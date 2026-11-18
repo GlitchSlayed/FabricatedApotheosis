@@ -26,7 +26,7 @@ import net.minecraft.world.level.WorldGenLevel;
 
 public class AdventureConfig {
 
-    public static final List<Identifier> DIM_WHITELIST = new ArrayList<>();
+    public static final List<Identifier> DIM_WHITELIST = new ArrayList<>(List.of(Identifier.withDefaultNamespace("overworld")));
 
     // Boss Stats
     public static boolean curseBossItems = false;
@@ -125,6 +125,32 @@ public class AdventureConfig {
     public static boolean canGenerateIn(WorldGenLevel world) {
         ResourceKey<Level> key = world.getLevel().dimension();
         return DIM_WHITELIST.contains(key.identifier());
+    }
+
+    /**
+     * Resolves a configured item ID string into {@link #torchItem}, falling back to {@link Items#TORCH}
+     * if the identifier is invalid or resolves to {@link Items#AIR}.
+     */
+    public static void resolveTorchItem(String torch) {
+        if (torch == null || torch.isBlank()) {
+            torchItem = Items.TORCH;
+            return;
+        }
+        try {
+            Identifier id = Identifier.tryParse(torch.trim());
+            if (id == null) {
+                throw new IllegalArgumentException("Malformed identifier: " + torch);
+            }
+            Item item = BuiltInRegistries.ITEM.getValue(id);
+            if (item == Items.AIR) {
+                throw new IllegalArgumentException("Unknown or air item: " + torch);
+            }
+            torchItem = item;
+        }
+        catch (Exception ex) {
+            Apotheosis.LOGGER.warn("Invalid torch item '{}', falling back to minecraft:torch", torch, ex);
+            torchItem = Items.TORCH;
+        }
     }
 
     public static record ConfigPayload(Item affixTorch, int upgradeSigilCost, int upgradeLevelCost, int rerollSigilCost, int rerollLevelCost, boolean charmsInCuriosOnly, boolean manualWorldTierChanges) implements CustomPacketPayload {

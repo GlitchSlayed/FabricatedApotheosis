@@ -20,7 +20,8 @@ public class EnderDragonFightMixin {
 
     @Inject(method = "createNewDragon", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"))
     private void apoth_finalizeEnderDragons(CallbackInfoReturnable<EnderDragon> ci, @Local EnderDragon dragon) {
-        if (!ApotheosisConfig.getServer().enableAdventure) {
+        var cfg = ApotheosisConfig.getServer();
+        if (!cfg.enableAdventure || !cfg.applyWorldTierToEndAndWither) {
             return;
         }
         if (dragon.level() instanceof ServerLevelAccessor level) {

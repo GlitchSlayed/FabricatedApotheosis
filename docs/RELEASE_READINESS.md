@@ -3,7 +3,7 @@
 - **Candidate Identity**: Fabricated Apotheosis `1.0.0-alpha.5`
 - **Target Platform**: Minecraft 26.3 Fabric (Loom 1.17.21, Fabric Loader 0.19.5, Fabric API 0.161.0+26.3, Java 25)
 - **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar`
-- **Release Status**: **Pre-release `1.0.0-alpha.5` Verified (Tests, Build, Server Boot, Dev & Prism OpenGL Client Join)**
+- **Status**: **All 98/98 Mixin-Transformed Tests Passing; Server, OpenGL Dev & Vulkan Prism Client Verified (`1.0.0-alpha.5`)**
 - **Date**: 2026-11-18
 
 ---
@@ -85,19 +85,19 @@ Every feature across all ecosystem subsystems has been reconciled against actual
 ## 5. Execution and Verification Summary
 
 - **Automated Unit Tests (`fabric-loader-junit` Mixin-transformed JVM)**:
-  - Command: `./gradlew test --rerun-tasks`
-  - Result: **92/92 passed**, 0 failures, 0 skipped across 17 test classes.
+  - Command: `./gradlew --no-daemon test --rerun-tasks`
+  - Result: **98/98 passed**, 0 failures, 0 errors, 0 skipped across 17 test classes.
 - **Dedicated Server Boot & Shutdown**:
-  - Command: `./gradlew runServer --args="--nogui"` (graceful `stop` after `Done`)
-  - Result: Booted in `0.241s`, loaded 1910 advancements, loaded all 13 dynamic registries, 10 `placebo:gear_sets` tags with 0 errors, 6 global loot modifiers, 6 enchantment info overrides, 6 data-map entries, and applied 342 biome modifications across 57 biomes, then saved and stopped cleanly (`exit 0`).
+  - Command: `./gradlew --no-daemon runServer --args="--nogui"` (graceful `stop` after `Done`)
+  - Result: Booted in `0.234s`, loaded 1910 advancements, loaded all 13 dynamic registries, 10 `placebo:gear_sets` tags with 0 errors, 6 global loot modifiers, 6 enchantment info overrides, 6 data-map entries, and applied 342 biome modifications across 57 biomes, then stopped cleanly (`exit 0`).
 - **Artifact Build**:
   - Command: `./gradlew build`
   - Result: **BUILD SUCCESSFUL** (`fabricated-apotheosis-1.0.0-alpha.5.jar` and `-sources.jar`, clean of reference/upstream trees).
-- **Automated Client World Join (OpenGL 4.6 Mesa 26.2.6)**:
-  - **Dev Client (`./gradlew --no-daemon runClient --args="--quickPlaySingleplayer AutoTestWorld"`)**: Booted cleanly, initialized OpenGL backend, loaded all client Mixins and dynamic registries, and joined singleplayer world without crash or Mixin errors.
-  - **Prism Launcher `"26.3 testing"` (`prismlauncher -l "26.3 testing" -w "AutoTestWorld" -o "DevTester"`)**: Booted `1.0.0-alpha.5` alongside Sodium `0.9.3-beta.5+mc26.3`, ImmediatelyFast `1.17.1+26.3`, Jade `26.3.5+fabric`, Lithium, C2ME, ModMenu, and EnchDesc; loaded `ApotheosisJadePlugin` and joined singleplayer world cleanly with zero Mixin/mod conflicts.
+- **Automated Client World Join (OpenGL & Vulkan)**:
+  - **Dev Client (`./gradlew --no-daemon runClient --args="--quickPlaySingleplayer AutoTestWorld"`)**: Booted cleanly on **OpenGL 4.6 (Core Profile) Mesa 26.2.6**, loaded all client Mixins and dynamic registries without item-atlas model rejection warnings (`hammer`, `star_cube`), and joined `AutoTestWorld` cleanly (`DEV_CLIENT_RESULT: joined_and_ticked`).
+  - **Prism Launcher `"26.3 testing"` (`prismlauncher -l "26.3 testing" -w "New World" -o "DevTester"`)**: Booted `1.0.0-alpha.5` on **Vulkan 1.4.354 radv Mesa 26.2.6** alongside Sodium `0.9.3-beta.5+mc26.3`, ImmediatelyFast `1.17.1+26.3`, Jade `26.3.5+fabric`, Lithium, C2ME, ModernFix, EntityCulling, FerriteCore, DynamicFPS, ModMenu, and EnchDesc; migrated `ServerConfig` v1 -> v2, loaded `ApotheosisJadePlugin`, and joined `New World` cleanly (`PRISM_RESULT: joined_and_ticked`).
 - **Explicit Unverified Cases**:
-  - Interactive UI/rendering inspection (boss beams, radial overlays, JEI screens), Vulkan backend execution, and live multiplayer sessions were not tested here (`OpenGL` client launch passed; `Vulkan` was not tested).
+  - Interactive UI/gameplay walkthroughs (boss beams, radial overlays, JEI/YACL screen clicks) and live multi-client multiplayer sessions were not tested here (singleplayer client launch and world join passed on both `OpenGL` and `Vulkan`).
 
 ---
 

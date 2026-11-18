@@ -8,6 +8,7 @@
     "AbstractRecipeBookScreenAccessor",
     "AbstractContainerScreenMixin",
     "AbstractSkeletonRendererMixin",
+    "EffectsInInventoryMixin",
     "EntityRendererMixin",
     "GuiGraphicsExtractorMixin",
     "GuiRendererMixin",

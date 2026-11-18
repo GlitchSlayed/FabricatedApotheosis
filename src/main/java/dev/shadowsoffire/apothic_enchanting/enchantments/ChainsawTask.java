@@ -49,6 +49,7 @@ public class ChainsawTask implements PlaceboTaskQueue.Task {
         int minY = this.hits.keySet().intStream().min().getAsInt();
         Queue<BlockPos> queue = this.hits.get(minY);
         int breaks = 0;
+        int maxBreaks = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().chainsawBreaksPerTick;
         while (!queue.isEmpty()) {
             BlockPos pos = queue.poll();
             for (BlockPos p : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 1, 1))) {
@@ -62,7 +63,7 @@ public class ChainsawTask implements PlaceboTaskQueue.Task {
                     }
                 }
             }
-            if (breaks > 5) break;
+            if (breaks >= maxBreaks) break;
         }
         if (queue.isEmpty()) this.hits.remove(minY);
 

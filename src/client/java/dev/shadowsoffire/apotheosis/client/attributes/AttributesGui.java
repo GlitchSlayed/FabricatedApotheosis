@@ -133,10 +133,11 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
 
     private void updateButtonPosition() {
         AbstractContainerScreenAccessor accessor = (AbstractContainerScreenAccessor) this.parent;
+        var clientCfg = ApotheosisConfig.getClient();
         Offset offset = new Offset(
-            AnchorPoint.TOP_RIGHT,
-            ApotheosisConfig.getClient().attributesGuiOffsetX,
-            ApotheosisConfig.getClient().attributesGuiOffsetY
+            clientCfg.getAnchorPoint(),
+            clientCfg.attributesGuiOffsetX,
+            clientCfg.attributesGuiOffsetY
         );
         ButtonPlacement.positionGuiButton(this.toggleBtn, offset, accessor.apoth_getLeftPos(), accessor.apoth_getTopPos());
     }

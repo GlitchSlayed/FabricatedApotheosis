@@ -50,6 +50,9 @@ import dev.shadowsoffire.apothic_attributes.api.ALObjects;
 import dev.shadowsoffire.placebo.dynreg.DynamicHolder;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
+import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
+import net.fabricmc.fabric.api.client.model.loading.v1.SimpleUnbakedExtraModel;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
@@ -65,9 +68,16 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositione
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.block.dispatch.BlockModelRotation;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.renderer.blockentity.BeaconRenderer;
 import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.resources.model.SimpleModelWrapper;
+import net.minecraft.client.resources.model.geometry.QuadCollection;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.resources.model.sprite.TextureSlots;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -97,6 +107,9 @@ public class AdventureModuleClient {
 
     public static final int COMPARE_PADDING = 18;
 
+    public static final ExtraModelKey<BlockStateModel> HAMMER_MODEL = ExtraModelKey.create(() -> "apotheosis:hammer");
+    public static final ExtraModelKey<BlockStateModel> STAR_CUBE_MODEL = ExtraModelKey.create(() -> "apotheosis:star_cube");
+
     public static final int[] GHOST_ALPHA_TIERS = {
         0x40, 0x48, 0x50, 0x58, 0x60, 0x68, 0x70, 0x78, 0x80, 0x88,
         0x90, 0x98, 0xA0, 0xA8, 0xB0, 0xB8, 0xC0, 0xC8, 0xD0, 0xD8, 0xE0
@@ -105,6 +118,12 @@ public class AdventureModuleClient {
     private static final List<BossSpawnData> BOSS_SPAWNS = new ArrayList<>();
 
     public static void init() {
+        // Register standalone block state models for block entity renderers (using item atlas textures)
+        ModelLoadingPlugin.register(ctx -> {
+            ctx.addModel(HAMMER_MODEL, createUnfilteredBlockStateModel(Apotheosis.loc("item/hammer")));
+            ctx.addModel(STAR_CUBE_MODEL, createUnfilteredBlockStateModel(Apotheosis.loc("item/star_cube")));
+        });
+
         // Register workstation screens
         MenuScreens.register(Menus.REFORGING, ReforgingScreen::new);
         MenuScreens.register(Menus.SALVAGE, SalvagingScreen::new);
@@ -197,6 +216,21 @@ public class AdventureModuleClient {
             GemCuttingRecipeCache.clear();
             ReforgingRecipeCache.clear();
             WorldTier.clientTutorialDismissed = false;
+        });
+    }
+
+    /**
+     * Bakes an item-atlas standalone model into a {@link BlockStateModel} without
+     * Fabric API's block-atlas rejection filter, for block entity renderers paired with
+     * {@link net.minecraft.client.renderer.Sheets#cutoutItemSheet()} / {@code translucentItemSheet()}.
+     */
+    private static SimpleUnbakedExtraModel<BlockStateModel> createUnfilteredBlockStateModel(Identifier id) {
+        return new SimpleUnbakedExtraModel<>(id, (resolvedModel, baker) -> {
+            TextureSlots slots = resolvedModel.getTopTextureSlots();
+            boolean ao = resolvedModel.getTopAmbientOcclusion();
+            Material.Baked particle = resolvedModel.resolveParticleMaterial(slots, baker);
+            QuadCollection quads = resolvedModel.bakeTopGeometry(slots, baker, BlockModelRotation.IDENTITY);
+            return new SingleVariant(new SimpleModelWrapper(quads, ao, particle));
         });
     }
 

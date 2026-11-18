@@ -26,7 +26,8 @@ public class WitherSkullBlockMixin {
 
     @Inject(method = "checkSpawn(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/SkullBlockEntity;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"))
     private static void apoth_finalizeWithers(Level level, BlockPos pos, SkullBlockEntity be, CallbackInfo ci, @Local WitherBoss wither) {
-        if (!ApotheosisConfig.getServer().enableAdventure) {
+        var cfg = ApotheosisConfig.getServer();
+        if (!cfg.enableAdventure || !cfg.applyWorldTierToEndAndWither) {
             return;
         }
         if (level instanceof ServerLevelAccessor accessor) {

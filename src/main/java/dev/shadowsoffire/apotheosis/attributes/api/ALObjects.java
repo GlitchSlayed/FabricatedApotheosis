@@ -11,10 +11,12 @@ import dev.shadowsoffire.apotheosis.attributes.effects.GrievousEffect;
 import dev.shadowsoffire.apotheosis.attributes.effects.KnowledgeEffect;
 import dev.shadowsoffire.apotheosis.attributes.effects.SunderingEffect;
 import dev.shadowsoffire.apotheosis.attributes.effects.VitalityEffect;
+import dev.shadowsoffire.apothic_attributes.modifiers.StackAttributeModifiers;
 import dev.shadowsoffire.placebo.registry.DeferredHelper;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -300,6 +302,18 @@ public class ALObjects {
         public static final TagKey<DamageType> IS_PHYSICAL = TagKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath("c", "is_physical"));
     }
 
+    public static class Components {
+        public static DataComponentType<StackAttributeModifiers> BONUS_STACK_ATTRIBUTE_MODIFIERS;
+
+        public static void bootstrap() {
+            if (BONUS_STACK_ATTRIBUTE_MODIFIERS == null) {
+                BONUS_STACK_ATTRIBUTE_MODIFIERS = R.component("bonus_stack_attribute_modifiers", b -> b
+                    .persistent(StackAttributeModifiers.CODEC)
+                    .networkSynchronized(StackAttributeModifiers.STREAM_CODEC));
+            }
+        }
+    }
+
     public static void bootstrap() {
         Attributes.bootstrap();
         MobEffects.bootstrap();
@@ -308,5 +322,6 @@ public class ALObjects {
         Sounds.bootstrap();
         DamageTypes.bootstrap();
         Attachments.bootstrap();
+        Components.bootstrap();
     }
 }

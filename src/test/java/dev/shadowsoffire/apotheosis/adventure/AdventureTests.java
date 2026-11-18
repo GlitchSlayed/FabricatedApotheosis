@@ -352,4 +352,63 @@ public class AdventureTests {
             RarityRegistry.INSTANCE.completeClientSync();
         });
     }
+
+    @Test
+    @DisplayName("CommonTooltipUtil.appendBossData emits boss rarity tooltip for tagged invaders")
+    public void testCommonTooltipUtilBossData() throws Exception {
+        java.lang.reflect.Field f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+        f.setAccessible(true);
+        sun.misc.Unsafe unsafe = (sun.misc.Unsafe) f.get(null);
+
+        dev.shadowsoffire.apotheosis.attributes.api.ALObjects.Attachments.bootstrap();
+        assertNotNull(dev.shadowsoffire.apotheosis.attributes.api.ALObjects.Attachments.PERSISTENT_DATA,
+            "PERSISTENT_DATA attachment must be registered under fabric-loader-junit");
+
+        @SuppressWarnings("serial")
+        class MockBossMob extends net.minecraft.world.entity.monster.skeleton.Skeleton {
+            net.minecraft.nbt.CompoundTag pdata;
+            public MockBossMob() { super(null, null); }
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> T getAttachedOrCreate(net.fabricmc.fabric.api.attachment.v1.AttachmentType<T> type) {
+                if (type == dev.shadowsoffire.apotheosis.attributes.api.ALObjects.Attachments.PERSISTENT_DATA) {
+                    if (this.pdata == null) {
+                        this.pdata = new net.minecraft.nbt.CompoundTag();
+                    }
+                    return (T) this.pdata;
+                }
+                return super.getAttachedOrCreate(type);
+            }
+            @Override
+            public net.minecraft.world.entity.ai.attributes.AttributeMap getAttributes() {
+                return new net.minecraft.world.entity.ai.attributes.AttributeMap(
+                    net.minecraft.world.entity.ai.attributes.AttributeSupplier.builder().build());
+            }
+        }
+
+        MockBossMob mockBoss = (MockBossMob) unsafe.allocateInstance(MockBossMob.class);
+        java.util.List<net.minecraft.network.chat.Component> untaggedLines = new java.util.ArrayList<>();
+        dev.shadowsoffire.apotheosis.util.CommonTooltipUtil.appendBossData(null, mockBoss, untaggedLines::add);
+        assertTrue(untaggedLines.isEmpty(), "Untagged entity should produce no boss tooltip lines");
+
+        Identifier testRarityId = Identifier.fromNamespaceAndPath("test", "mythic_boss_tooltip");
+        LootRarity testRarity = new LootRarity(
+            net.minecraft.network.chat.TextColor.fromRgb(0xFF8000),
+            net.minecraft.world.item.Items.NETHER_STAR.builtInRegistryHolder(),
+            dev.shadowsoffire.apotheosis.tiers.TieredWeights.EMPTY,
+            List.of(),
+            100,
+            dev.shadowsoffire.apotheosis.loot.RarityRenderData.DEFAULT,
+            net.minecraft.sounds.SoundEvents.END_PORTAL_SPAWN
+        );
+        RarityRegistry.INSTANCE.registerForTesting(testRarityId, testRarity);
+        dev.shadowsoffire.apotheosis.attributes.api.AttributesUtil.getPersistentData(mockBoss)
+            .putString(dev.shadowsoffire.apotheosis.mobs.types.Invader.RARITY_KEY, testRarityId.toString());
+
+        java.util.List<net.minecraft.network.chat.Component> taggedLines = new java.util.ArrayList<>();
+        dev.shadowsoffire.apotheosis.util.CommonTooltipUtil.appendBossData(null, mockBoss, taggedLines::add);
+        assertFalse(taggedLines.isEmpty(), "Tagged invader must emit boss rarity tooltip line");
+        assertTrue(taggedLines.get(0).getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc
+            && "info.apotheosis.boss".equals(tc.getKey()));
+    }
 }

@@ -3,7 +3,7 @@
 - **Date**: 2026-11-18
 - **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.19.5+, YACL 3.9.6, JEI 31.17.0.108, Jade 26.3.5+fabric)
 - **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar`
-- **Status**: **All 92/92 Mixin-Transformed Tests Passing; Server & Client World-Join Verified (`1.0.0-alpha.5`).**
+- **Status**: **All 98/98 Mixin-Transformed Tests Passing; Server, OpenGL Dev & Vulkan Prism Client Verified (`1.0.0-alpha.5`).**
 
 ---
 
@@ -226,6 +226,30 @@ FabricatedApotheosis/
 - **Automated Client World-Join Verification**:
   - **Dev Client (`./gradlew --no-daemon runClient --args="--quickPlaySingleplayer AutoTestWorld"`)**: Launched OpenGL 4.6 (`Mesa 26.2.6`), loaded all client Mixins and dynamic registries, integrated-synced client state, logged player into world (`JOINED=True`, `CRASH_SEEN=False`), and ticked world/chunks live without Mixin or render crashes.
   - **Prism Launcher (`26.3 testing`)**: Replaced `alpha.3` with `fabricated-apotheosis-1.0.0-alpha.5.jar` and launched alongside `sodium 0.9.3-beta.5+mc26.3`, `immediatelyfast 1.17.1+26.3`, `jade 26.3.5+fabric`, `lithium`, `c2me`, `ferritecore`, `entityculling`, `modmenu`, and `enchdesc`; loaded `ApotheosisJadePlugin`, joined singleplayer test world as `DevTester` (`PRISM_JOINED=True`, `CRASH_SEEN=False`), loaded terrain & entities cleanly.
-- **Remaining Unverified Areas**: Interactive in-game feature walkthroughs (boss beams, radial overlays, JEI screens), Vulkan backend execution, and multi-client multiplayer sessions remain unverified here (`OpenGL` client launch and singleplayer join were tested; `Vulkan` was not).
+- **Remaining Unverified Areas**: Interactive in-game feature walkthroughs (boss beams, radial overlays, JEI screens) and multi-client multiplayer sessions remain unverified here (`OpenGL` dev client and `Vulkan` Prism client launches both joined and ticked cleanly).
 
-Release **`1.0.0-alpha.5`** is built, verified, and tagged upon explicit user instruction.
+---
+
+## 6. Upstream 26.1.2 Full-Stack Parity Audit & Schema v2 Config Overhaul (`1.0.0-alpha.5`)
+
+### 6.1 Upstream Parity Fixes
+- **Adventure Worldgen & Torches (`AdventureConfig`)**: Fixed empty `DIM_WHITELIST` bug by defaulting to `minecraft:overworld`; added `resolveTorchItem(String)` with vanilla fallback.
+- **Spawner Compatibility (`ApothicSpawnersCompat`)**: Implemented `applyStats(PresetSpawnerStats, SpawnerBlockEntity)` and `CAPTURING` enchantment key support.
+- **Boss Inspector Tooltip (`CommonTooltipUtil.appendBossData`)**: Formatted `Invader.RARITY_KEY` and boss modifiers via `AttributeFormatting.toComponent` in IDE inspection mode.
+- **Tile Entity Models & Renderers**: Implemented spinning reforging hammer (`ReforgingTableTileRenderer`, `HAMMER_MODEL`) and floating augmenting star cube (`AugmentingTableTileRenderer`, `STAR_CUBE_MODEL`) using `ExtraModelKey<BlockStateModel>` + `SimpleUnbakedExtraModel` item-atlas unfiltered baking (`createUnfilteredBlockStateModel`), `Sheets.cutoutItemSheet()` / `Sheets.translucentItemSheet()`, and 26.3 `PoseStack.rotate` / `rotateDegrees`.
+- **Bonus Attribute Stack Component & Command**: Added `ALObjects.Components.BONUS_STACK_ATTRIBUTE_MODIFIERS` integrated into `ItemStackMixin` (`forEachModifier`), and ported `/apotheosis add_bonus_modifier` (`BonusModifierCommand`).
+- **Network Sync, Placebo Commands & Effect Tooltips**: Broadcast `AdventureConfig.ConfigPayload` + `ApotheosisConfigPayload` on player join and datapack reload; ported `/placebo hand`, `/placebo serialize_loot_table`, and `/placebo get_dimension_type` (`PlaceboCommand`); added `EffectsInInventoryMixin` + `AttributesClientTooltipHandler.enrichEffectTooltip` for inventory mob effect modifier tooltips.
+
+### 6.2 Schema v2 Config Expansion (71 Options) & 6-Category YACL Overhaul
+- **Server & Client Config Expansion**: Bumped `ServerConfig` and `ClientConfig` to `CURRENT_SCHEMA_VERSION = 2` with automatic v1 -> v2 migration in `ApotheosisConfig` and legacy key support in `ConfigMigration`. Expanded `ServerConfig` to **55 validated/clamped options** (Spawners instability/capturing, Enchanting anvil/trident/chainsaw, Attributes & Combat curves, Bosses & Invaders, Affixes & Augmenting costs, QoL tier/linking settings, Worldgen & Wanderer settings, and 4 module toggles) and `ClientConfig` to **16 options** (`attributesGuiAnchorPoint`, `enableEquipmentCompare`, `disableQuarkOnAffixItems`).
+- **Consumer Wiring**: Wired all 14 gameplay/client consumers (`ALCombatRules`, `AttributesUtil`, `AttributeEvents`, `ApothEnchEvents`, `EnchantmentMixin`, `ChainsawTask`, `ApothSpawnerTile`, `LivingEntityMixin`, `WandererSpawnerMixin`, `AnvilBlockMixin`, `AbstractSkeletonMixin`, `EnderDragonFightMixin`, `WitherSkullBlockMixin`, `MobMixin`, `AttributesGui`) and rebroadcast config payloads on local save.
+- **YACL Screen (`ApotheosisConfigScreen`)**: Rebuilt into 6 categories (`Client Preferences`, `Gameplay: Adventure & Bosses`, `Gameplay: Worldgen & Wanderer`, `Gameplay: Spawners & Enchanting`, `Gameplay: Attributes & Combat`, `Module Toggles`) exposing all 71 options with `OptionGroup`s, `ListOption<String>` editors, `EnumControllerBuilder`, `StringControllerBuilder`, and `.available(!isRemote)`.
+
+### 6.3 Latest Post-Edit Verification Results
+- **Automated Tests (`./gradlew --no-daemon test --rerun-tasks`)**: **98/98 tests passed** across 17 test classes under `fabric-loader-junit` (`0 failures, 0 errors, 0 skipped`).
+- **Build & Packaging (`./gradlew build`)**: **BUILD SUCCESSFUL** producing `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar` and `-sources.jar` cleanly.
+- **Dedicated Server (`./gradlew --no-daemon runServer --args="--nogui"`)**: Booted cleanly to `Done (0.234s)! For help, type "help"`, loaded all 13 dynamic registries, 1910 advancements, 10 gear-set tags, 6 enchantment info overrides, 6 global loot modifiers, 4 invader spawn rules, 2 loot category overrides, 342 biome modifications, and exited `0` on `stop`.
+- **Dev Client (OpenGL 4.6 Mesa 26.2.6)**: `./gradlew --no-daemon runClient --args="--quickPlaySingleplayer AutoTestWorld"` joined and ticked (`DEV_CLIENT_RESULT: joined_and_ticked`) with zero item-atlas model warnings (`hammer`, `star_cube`) and zero Apotheosis/Mixin errors.
+- **Prism Launcher `"26.3 testing"` (Vulkan 1.4.354 radv Mesa 26.2.6)**: Joined `New World` as `DevTester` (`PRISM_RESULT: joined_and_ticked`), migrated `ServerConfig` v1 -> v2, loaded `ApotheosisJadePlugin` alongside Sodium, ImmediatelyFast, Jade, Lithium, C2ME, ModernFix, EntityCulling, FerriteCore, DynamicFPS, ModMenu, and EnchDesc with zero Apotheosis/Mixin errors.
+
+Release **`1.0.0-alpha.5`** is built, verified, and updated cleanly upon user request.

@@ -26,5 +26,22 @@ public class ClientConfigTest {
         assertEquals(1000, config.attributesGuiOffsetX);
         assertEquals(-1000, config.attributesGuiOffsetY);
         assertEquals(0, config.sculkShelfNoiseChance);
+
+        // Verify v2 fields and anchor point normalization
+        assertEquals(2, config.schemaVersion);
+        assertEquals("TOP_RIGHT", config.attributesGuiAnchorPoint);
+        assertTrue(config.enableEquipmentCompare);
+        assertTrue(config.disableQuarkOnAffixItems);
+
+        config.attributesGuiAnchorPoint = "bottom_left";
+        config.validate();
+        assertEquals("BOTTOM_LEFT", config.attributesGuiAnchorPoint);
+        assertEquals(dev.shadowsoffire.placebo.util.Offset.AnchorPoint.BOTTOM_LEFT, config.getAnchorPoint());
+
+        config.attributesGuiAnchorPoint = "INVALID_ANCHOR";
+        config.hiddenAttributes = null;
+        config.validate();
+        assertEquals("TOP_RIGHT", config.attributesGuiAnchorPoint);
+        assertTrue(config.hiddenAttributes.isEmpty());
     }
 }

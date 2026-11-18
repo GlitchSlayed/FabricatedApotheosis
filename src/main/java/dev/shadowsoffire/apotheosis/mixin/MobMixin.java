@@ -32,7 +32,8 @@ public abstract class MobMixin {
     @Inject(method = "checkDespawn()V", at = @At("HEAD"), cancellable = true)
     private void apoth_checkGolemBossDespawn(CallbackInfo ci) {
         Mob self = (Mob) (Object) this;
-        if (self instanceof AbstractGolem g && !g.level().isClientSide() && g.tickCount > 12000 && AttributesUtil.getPersistentData(g).getBooleanOr("apoth.boss", false)) {
+        int despawnTicks = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().golemBossDespawnTicks;
+        if (self instanceof AbstractGolem g && !g.level().isClientSide() && g.tickCount > despawnTicks && AttributesUtil.getPersistentData(g).getBooleanOr("apoth.boss", false)) {
             Entity player = g.level().getNearestPlayer(g, -1.0D);
             if (player != null) {
                 double dist = player.distanceToSqr(g);

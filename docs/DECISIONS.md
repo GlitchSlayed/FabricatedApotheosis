@@ -249,5 +249,21 @@
   - **Configuration Polish**: Expose all client preferences and server gameplay rules via YACL with clear descriptions and impact tags. Disable server-authoritative options with `.available(!isRemote)` when connected to remote servers, and restore local singleplayer configuration cleanly on `ClientPlayConnectionEvents.DISCONNECT`.
 - **Consequences**: Robust optional integrations that never crash when dependencies are absent, full compliance with Fabric packaging standards, verified server-side validation on all recipe transfers, and pristine dedicated server safety.
 
+---
+
+## ADR-020: Schema v2 Full-Stack Configuration Expansion & 6-Category YACL Architecture
+
+- **Status**: Accepted (2026-11-18)
+- **Context**: An in-depth parity audit against the pinned NeoForge 26.1.2 `upstream/` stack (`Apotheosis`, `Placebo`, `Apothic-Attributes`, `Apothic-Enchanting`, `Apothic-Spawners`) revealed customizable gameplay mechanics, combat/enchanting curve constants, worldgen/wanderer frequencies, boss rules, and client UI preferences that were previously hardcoded rather than user-configurable, plus an empty `AdventureConfig.DIM_WHITELIST` default.
+- **Decision**:
+  - Bump both `ServerConfig` and `ClientConfig` `CURRENT_SCHEMA_VERSION` to `2` with automatic v1 -> v2 migration while preserving existing v0 and legacy `.cfg` paths in `ConfigMigration`.
+  - Expand `ServerConfig` to **55 validated and clamped options** across Spawners, Enchanting, Attributes & Combat curves, Bosses & Invaders, Affixes & Augmenting, QoL (`enableManualWorldTierChanges`, `enableItemLinking`, `itemLinkingCooldown`), Worldgen & Wanderer (`generationDimensionWhitelist` defaulting to `minecraft:overworld`, `spawnerValueChance`, `worldGenDebug`, `wandererMaxChance`, `wandererRngRoll`, `wandererDespawnDelay`), and the 4 module toggles (`enableSpawners`, `enableAttributes`, `enableEnchanting`, `enableAdventure`).
+  - Expand `ClientConfig` to **16 options**, adding `attributesGuiAnchorPoint` (`Offset.AnchorPoint`), `enableEquipmentCompare`, and `disableQuarkOnAffixItems`.
+  - Synchronize `ApotheosisConfigPayload` and `AdventureConfig.ConfigPayload` on player join, server datapack reload (`SYNC_DATA_PACK_CONTENTS`), and local server config save.
+  - Reorganize `ApotheosisConfigScreen` into 6 categorized YACL tabs (`Client Preferences`, `Gameplay: Adventure & Bosses`, `Gameplay: Worldgen & Wanderer`, `Gameplay: Spawners & Enchanting`, `Gameplay: Attributes & Combat`, `Module Toggles`) using `OptionGroup`, `ListOption<String>`, `EnumControllerBuilder`, `StringControllerBuilder`, and `.available(!isRemote)` locking.
+  - Keep item-atlas tile-entity models (`HAMMER_MODEL`, `STAR_CUBE_MODEL`) baked via `SimpleUnbakedExtraModel` + `createUnfilteredBlockStateModel` + `Sheets.cutoutItemSheet()` / `Sheets.translucentItemSheet()` instead of block-atlas `blockStateModel` helpers.
+- **Consequences**: Complete parity configurability across the entire ecosystem without hardcoding balance constants, clean remote-server safety, clean v1 -> v2 upgrades verified in live server/client boots, and zero item-atlas model rejection warnings on OpenGL or Vulkan backends.
+
+
 
 

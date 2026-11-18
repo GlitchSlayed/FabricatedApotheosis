@@ -84,10 +84,11 @@ public class AttributeEvents {
         RandomSource rand = target.getRandom();
         float damage = initialAmount;
 
+        float degradation = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().multicritDegradationFactor;
         while (rand.nextFloat() <= critChance && critDmg > 1.0F) {
             critChance--;
             damage += initialAmount * (critDmg - 1.0F);
-            critDmg *= 0.85F;
+            critDmg *= degradation;
         }
 
         if (damage > initialAmount && !attacker.level().isClientSide() && attacker.level() instanceof ServerLevel serverLevel) {

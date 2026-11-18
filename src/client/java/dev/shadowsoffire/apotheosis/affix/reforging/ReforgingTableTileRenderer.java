@@ -40,8 +40,42 @@ public class ReforgingTableTileRenderer implements BlockEntityRenderer<Reforging
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void submit(State state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        // Visual refinement of in-world hammer animation is deferred to Milestone 10.
+        BlockStateModel model = Minecraft.getInstance().getModelManager().getModel(AdventureModuleClient.HAMMER_MODEL);
+        if (model == null) {
+            return;
+        }
+
+        float px = 1F / 16F;
+
+        poseStack.pushPose();
+
+        poseStack.scale(1.25F, 1.25F, 1.25F);
+        poseStack.translate(8.5F * px / 1.25F, 16F * px / 1.25F - 0.015F, 7F * px / 1.25F);
+        poseStack.rotateDegrees(Axis.YP, 45F);
+        poseStack.rotateDegrees(Axis.XP, 90F);
+
+        float sinSq;
+        if (state.step1) {
+            float factor = state.time % 60 + state.partialTicks;
+            float sin = Mth.sin(factor * Mth.PI / 120F);
+            sinSq = sin * sin;
+        }
+        else {
+            float factor = state.time % 5 + state.partialTicks;
+            float sin = Mth.sin(Mth.HALF_PI + factor * Mth.PI / 10F);
+            sinSq = sin * sin;
+        }
+
+        poseStack.translate(0.125F * sinSq, 0F, -0.15F * sinSq);
+        poseStack.rotateDegrees(Axis.YN, 45F * sinSq);
+
+        List<BlockStateModelPart> parts = new ArrayList<>();
+        model.collectParts(RandomSource.create(), parts);
+
+        submitNodeCollector.submitBlockModel(poseStack, Sheets.cutoutItemSheet(), parts, new int[] { -1 }, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+        poseStack.popPose();
     }
 
     public static class State extends BlockEntityRenderState {

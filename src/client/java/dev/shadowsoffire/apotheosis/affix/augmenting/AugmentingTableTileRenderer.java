@@ -42,8 +42,48 @@ public class AugmentingTableTileRenderer implements BlockEntityRenderer<Augmenti
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void submit(State state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        // Visual refinement of in-world star cube animation is deferred to Milestone 10.
+        if (state.stage == AnimationStage.HIDING) {
+            return;
+        }
+
+        BlockStateModel model = Minecraft.getInstance().getModelManager().getModel(AdventureModuleClient.STAR_CUBE_MODEL);
+        if (model == null) {
+            return;
+        }
+
+        float px = 1F / 16F;
+
+        poseStack.pushPose();
+        poseStack.translate(5F * px, 5F * px, 5F * px);
+
+        switch (state.stage) {
+            case HIDING -> {}
+            case RISING -> {
+                float progress = (state.time + state.partialTicks) / AugmentingTableTile.RISE_TIME;
+                float rise = Mth.lerp(progress, 0.1F * px, 11F * px);
+                poseStack.translate(0F, rise, 0F);
+            }
+            case FALLING -> {
+                float progress = (AugmentingTableTile.RISE_TIME - state.time + state.partialTicks) / AugmentingTableTile.RISE_TIME;
+                float rise = Mth.lerp(progress, 11F * px, 0.1F * px);
+                poseStack.translate(0F, rise, 0F);
+            }
+            case SPINNING -> {
+                float rotation = (state.time % 360 + state.partialTicks) * Mth.PI / 180F;
+                poseStack.translate(0F, 11F * px, 0F);
+                poseStack.translate(3F * px, 3F * px, 3F * px);
+                poseStack.rotate(new Quaternionf().rotationXYZ(rotation, 0F, rotation));
+                poseStack.translate(-3F * px, -3F * px, -3F * px);
+            }
+        }
+
+        List<BlockStateModelPart> parts = new ArrayList<>();
+        model.collectParts(RandomSource.create(), parts);
+
+        submitNodeCollector.submitBlockModel(poseStack, Sheets.translucentItemSheet(), parts, new int[] { -1 }, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+        poseStack.popPose();
     }
 
     public static class State extends BlockEntityRenderState {

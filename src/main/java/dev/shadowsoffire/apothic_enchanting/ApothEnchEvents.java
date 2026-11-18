@@ -133,7 +133,7 @@ public class ApothEnchEvents {
             enchants.removeIf(h -> h.is(EnchantmentTags.CURSE));
             EnchantmentHelper.setEnchantments(stack, enchants.toImmutable());
 
-            e.setXpCost(30);
+            e.setXpCost(dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().prismaticWebCost);
             e.setMaterialCost(1);
             e.setOutput(stack);
             return;
@@ -143,7 +143,7 @@ public class ApothEnchEvents {
             && (e.getRight().is(Items.IRON_BLOCK) || e.getRight().is(ConventionalItemTags.STORAGE_BLOCKS_IRON))) {
             ItemStack out = left.transmuteCopy(Items.ANVIL);
             e.setOutput(out);
-            e.setXpCost(5);
+            e.setXpCost(dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().anvilRepairXpCost);
             e.setMaterialCost(1);
             return;
         }

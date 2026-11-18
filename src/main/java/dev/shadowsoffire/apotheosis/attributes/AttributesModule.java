@@ -23,6 +23,7 @@ public class AttributesModule {
 
         // 1. Bootstrap registrations
         ALObjects.bootstrap();
+        dev.shadowsoffire.apothic_attributes.api.ALObjects.bootstrap();
 
         // 2. Register network payloads
         PayloadTypeRegistry.clientboundPlay().register(CritParticlePayload.TYPE, CritParticlePayload.CODEC);

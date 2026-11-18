@@ -28,7 +28,7 @@ public class AttributesUtil {
      * Computes the maximum total absorption that {@link ALObjects.Attributes#OVERHEAL} will fill up to, which is 50% of the entity's max health.
      */
     public static float getOverhealCap(LivingEntity entity) {
-        return entity.getMaxHealth() * 0.5F;
+        return entity.getMaxHealth() * dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().overhealMaxAbsorptionRatio;
     }
 
     /**

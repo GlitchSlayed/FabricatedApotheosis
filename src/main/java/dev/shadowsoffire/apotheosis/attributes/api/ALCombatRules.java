@@ -48,7 +48,8 @@ public class ALCombatRules {
      * @see #getDamageAfterProtection(LivingEntity, DamageSource, float, float)
      */
     public static float getProtDamageReduction(float protPoints) {
-        return 1.0F - Math.min(0.025F * protPoints, 0.85F);
+        var cfg = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer();
+        return 1.0F - Math.min(cfg.protectionFactorPerPoint * protPoints, cfg.protectionMaxCap);
     }
 
     /**
@@ -126,6 +127,7 @@ public class ALCombatRules {
      * A returned value of 1.0 will nullify enemy armor bypass. Max is 0.60 (60%).
      */
     public static float getBypassResistance(float damage, float armor, float toughness) {
-        return Math.min(toughness * 0.02F, 0.60F);
+        var cfg = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer();
+        return Math.min(toughness * cfg.toughnessBypassResistPerPoint, cfg.toughnessMaxBypassResist);
     }
 }

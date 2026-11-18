@@ -304,4 +304,28 @@ public class SpawnerTests {
             serverCfg.maxSpawnDelayLimit = origMax;
         }
     }
+
+    @Test
+    @DisplayName("ApothicSpawnersCompat.applyStats configures PresetSpawnerStats on ApothSpawnerTile")
+    public void testPresetSpawnerStatsApplication() {
+        ApothSpawnerTile tile = createTile();
+        dev.shadowsoffire.apotheosis.util.PresetSpawnerStats stats = dev.shadowsoffire.apotheosis.util.PresetSpawnerStats.builder()
+            .stat(dev.shadowsoffire.apotheosis.util.PresetSpawnerStats.MIN_DELAY, 80)
+            .stat(dev.shadowsoffire.apotheosis.util.PresetSpawnerStats.MAX_DELAY, 240)
+            .stat(dev.shadowsoffire.apotheosis.util.PresetSpawnerStats.SPAWN_COUNT, 7)
+            .stat(dev.shadowsoffire.apotheosis.util.PresetSpawnerStats.YOUTHFUL, true)
+            .build();
+
+        stats.apply(tile);
+
+        assertEquals(80, SpawnerStats.MIN_DELAY.getValue(tile));
+        assertEquals(240, SpawnerStats.MAX_DELAY.getValue(tile));
+        assertEquals(7, SpawnerStats.SPAWN_COUNT.getValue(tile));
+        assertTrue(SpawnerStats.YOUTHFUL.getValue(tile));
+
+        // Plain SpawnerBlockEntity (non-ApothSpawnerTile) must be safely ignored without throwing
+        net.minecraft.world.level.block.entity.SpawnerBlockEntity plain =
+            new net.minecraft.world.level.block.entity.SpawnerBlockEntity(BlockPos.ZERO, Blocks.SPAWNER.defaultBlockState());
+        assertDoesNotThrow(() -> dev.shadowsoffire.apotheosis.compat.spawners.ApothicSpawnersCompat.applyStats(stats, plain));
+    }
 }

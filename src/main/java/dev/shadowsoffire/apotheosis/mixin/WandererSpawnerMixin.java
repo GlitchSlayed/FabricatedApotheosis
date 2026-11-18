@@ -26,17 +26,20 @@ public class WandererSpawnerMixin {
 
     @ModifyConstant(method = "tick", constant = @Constant(intValue = 75))
     public int apoth_replaceMaxChance(int old) {
-        return ApotheosisConfig.getServer().enableAdventure ? 90 : old;
+        var cfg = ApotheosisConfig.getServer();
+        return cfg.enableAdventure ? cfg.wandererMaxChance : old;
     }
 
     @ModifyConstant(method = "spawn", constant = @Constant(intValue = 10))
     public int apoth_replaceRng(int old) {
-        return ApotheosisConfig.getServer().enableAdventure ? 4 : old;
+        var cfg = ApotheosisConfig.getServer();
+        return cfg.enableAdventure ? cfg.wandererRngRoll : old;
     }
 
     @ModifyConstant(method = "spawn", constant = @Constant(intValue = 48000))
     public int apoth_replaceDespawnDelay(int old) {
-        return ApotheosisConfig.getServer().enableAdventure ? 28000 : old;
+        var cfg = ApotheosisConfig.getServer();
+        return cfg.enableAdventure ? cfg.wandererDespawnDelay : old;
     }
 
     @Inject(at = @At("HEAD"), method = "findSpawnPositionNear", cancellable = true)

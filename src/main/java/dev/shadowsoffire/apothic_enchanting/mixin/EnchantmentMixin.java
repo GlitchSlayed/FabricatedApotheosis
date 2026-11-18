@@ -24,7 +24,10 @@ public class EnchantmentMixin {
      */
     @Inject(method = { "isSupportedItem", "canEnchant" }, at = @At("RETURN"), cancellable = true)
     private void apoth_allowTridentEnchantments(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
-        if (!cir.getReturnValueZ() && ApotheosisConfig.getServer().enableEnchanting && stack.getItem() instanceof TridentItem) {
+        if (!cir.getReturnValueZ()
+            && ApotheosisConfig.getServer().enableEnchanting
+            && ApotheosisConfig.getServer().allowTridentCombatEnchantments
+            && stack.getItem() instanceof TridentItem) {
             Enchantment self = (Enchantment) (Object) this;
             if (self.description().getContents() instanceof TranslatableContents tc) {
                 String key = tc.getKey();

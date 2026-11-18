@@ -156,8 +156,11 @@ public abstract class ItemStackMixin implements IFestiveMarker, CachedObjectSour
     @Inject(method = "forEachModifier(Lnet/minecraft/world/entity/EquipmentSlot;Ljava/util/function/BiConsumer;)V", at = @At("TAIL"))
     private void apoth_forEachModifier(EquipmentSlot slot, BiConsumer<Holder<Attribute>, AttributeModifier> action, CallbackInfo ci) {
         ItemStack ths = (ItemStack) (Object) this;
-        if (!SocketHelper.getGems(ths).isEmpty() || AffixHelper.hasAffixes(ths)) {
-            var event = new StackAttributeModifiersEvent(ths, StackAttributeModifiers.EMPTY);
+        StackAttributeModifiers bonus = dev.shadowsoffire.apotheosis.attributes.api.ALObjects.Components.BONUS_STACK_ATTRIBUTE_MODIFIERS != null
+            ? ths.get(dev.shadowsoffire.apotheosis.attributes.api.ALObjects.Components.BONUS_STACK_ATTRIBUTE_MODIFIERS)
+            : null;
+        if (!SocketHelper.getGems(ths).isEmpty() || AffixHelper.hasAffixes(ths) || bonus != null) {
+            var event = new StackAttributeModifiersEvent(ths, bonus != null ? bonus : StackAttributeModifiers.EMPTY);
             SocketHelper.getGems(ths).addModifiers(event);
             AffixHelper.streamAffixes(ths).forEach(inst -> inst.addModifiers(event));
             var apothSlot = EquipmentSlotCompat.fromVanilla(slot);
@@ -174,8 +177,12 @@ public abstract class ItemStackMixin implements IFestiveMarker, CachedObjectSour
     @Inject(method = "forEachModifier(Lnet/minecraft/world/entity/EquipmentSlotGroup;Lorg/apache/commons/lang3/function/TriConsumer;)V", at = @At("TAIL"))
     private void apoth_forEachModifierGroup(EquipmentSlotGroup group, TriConsumer<Holder<Attribute>, AttributeModifier, ItemAttributeModifiers.Display> action, CallbackInfo ci) {
         ItemStack ths = (ItemStack) (Object) this;
-        if (!SocketHelper.getGems(ths).isEmpty() || AffixHelper.hasAffixes(ths)) {
-            var event = new StackAttributeModifiersEvent(ths, StackAttributeModifiers.EMPTY);
+        StackAttributeModifiers bonus = dev.shadowsoffire.apotheosis.attributes.api.ALObjects.Components.BONUS_STACK_ATTRIBUTE_MODIFIERS != null
+            ? ths.get(dev.shadowsoffire.apotheosis.attributes.api.ALObjects.Components.BONUS_STACK_ATTRIBUTE_MODIFIERS)
+            : null;
+        StackAttributeModifiers visibleBonus = bonus != null && bonus.showInTooltip() ? bonus : StackAttributeModifiers.EMPTY;
+        if (!SocketHelper.getGems(ths).isEmpty() || AffixHelper.hasAffixes(ths) || !visibleBonus.modifiers().isEmpty()) {
+            var event = new StackAttributeModifiersEvent(ths, visibleBonus);
             SocketHelper.getGems(ths).addModifiers(event);
             AffixHelper.streamAffixes(ths).forEach(inst -> inst.addModifiers(event));
             for (var entry : event.getModifiers()) {

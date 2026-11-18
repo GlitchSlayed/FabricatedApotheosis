@@ -22,7 +22,8 @@ public class AnvilBlockMixin {
 
     @Inject(method = "onLand", at = @At("TAIL"))
     private void apoth_gemSmashing(Level level, BlockPos pos, BlockState state, BlockState replaceableState, net.minecraft.world.entity.item.FallingBlockEntity fallingBlock, CallbackInfo ci) {
-        if (level.isClientSide() || !ApotheosisConfig.getServer().enableAdventure) {
+        var cfg = ApotheosisConfig.getServer();
+        if (level.isClientSide() || !cfg.enableAdventure || !cfg.enableGemSmashing) {
             return;
         }
         List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos));

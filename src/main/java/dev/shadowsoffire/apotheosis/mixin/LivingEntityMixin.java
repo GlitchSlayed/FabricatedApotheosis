@@ -314,7 +314,9 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
         if (killer instanceof LivingEntity living) {
             var capturingPair = net.minecraft.world.item.enchantment.EnchantmentHelper.getHighestLevel(living.getWeaponItem(), dev.shadowsoffire.apothic_spawners.ASObjects.CAPTURING);
             if (capturingPair != null && !self.getType().builtInRegistryHolder().is(dev.shadowsoffire.apothic_spawners.ASObjects.BLACKLISTED_FROM_SPAWNERS)) {
-                if (self.level().getRandom().nextFloat() < capturingPair.getSecond() * capturingPair.getFirst()) {
+                float scale = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().capturingDropChancePerLevel / 0.005F;
+                float chance = capturingPair.getSecond() * capturingPair.getFirst() * scale;
+                if (self.level().getRandom().nextFloat() < chance) {
                     net.minecraft.world.item.SpawnEggItem.byId(self.getType()).ifPresent(eggItem -> {
                         ItemStack egg = new ItemStack(eggItem);
                         self.spawnAtLocation(serverLevel, egg);

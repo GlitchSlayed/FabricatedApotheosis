@@ -157,15 +157,45 @@ public class ApotheosisConfig {
         syncModuleConfigs();
     }
 
-    private static void syncModuleConfigs() {
+    public static void syncModuleConfigs() {
         dev.shadowsoffire.apothic_spawners.ASConfig.load();
         dev.shadowsoffire.apothic_enchanting.ApothEnchConfig.syncFromClientConfig();
         ServerConfig s = getServer();
         if (s != null) {
             dev.shadowsoffire.apotheosis.AdventureConfig.bossSpawnCooldown = s.bossSpawnCooldown;
             dev.shadowsoffire.apotheosis.AdventureConfig.bossGlowOnSpawn = s.bossGlowOnSpawn;
+            dev.shadowsoffire.apotheosis.AdventureConfig.bossAnnounceRange = s.bossAnnounceRange;
+            dev.shadowsoffire.apotheosis.AdventureConfig.bossAutoAggro = s.bossAutoAggro;
             dev.shadowsoffire.apotheosis.AdventureConfig.curseBossItems = s.curseBossItems;
             dev.shadowsoffire.apotheosis.AdventureConfig.undergroundTrader = s.undergroundTrader;
+            dev.shadowsoffire.apotheosis.AdventureConfig.spawnerValueChance = s.spawnerValueChance;
+            dev.shadowsoffire.apotheosis.AdventureConfig.worldGenDebug = s.worldGenDebug;
+            dev.shadowsoffire.apotheosis.AdventureConfig.cleaveHitsPlayers = s.cleaveHitsPlayers;
+            dev.shadowsoffire.apotheosis.AdventureConfig.resolveTorchItem(s.torchItem);
+            dev.shadowsoffire.apotheosis.AdventureConfig.upgradeSigilCost = s.upgradeSigilCost;
+            dev.shadowsoffire.apotheosis.AdventureConfig.upgradeLevelCost = s.upgradeLevelCost;
+            dev.shadowsoffire.apotheosis.AdventureConfig.rerollSigilCost = s.rerollSigilCost;
+            dev.shadowsoffire.apotheosis.AdventureConfig.rerollLevelCost = s.rerollLevelCost;
+            dev.shadowsoffire.apotheosis.AdventureConfig.enableItemLinking = s.enableItemLinking;
+            dev.shadowsoffire.apotheosis.AdventureConfig.itemLinkingCooldown = s.itemLinkingCooldown;
+            dev.shadowsoffire.apotheosis.AdventureConfig.enableManualWorldTierChanges = s.enableManualWorldTierChanges;
+
+            dev.shadowsoffire.apotheosis.AdventureConfig.DIM_WHITELIST.clear();
+            if (s.generationDimensionWhitelist != null) {
+                for (String dim : s.generationDimensionWhitelist) {
+                    if (dim == null || dim.isBlank()) continue;
+                    net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(dim.trim());
+                    if (id != null) {
+                        dev.shadowsoffire.apotheosis.AdventureConfig.DIM_WHITELIST.add(id);
+                    }
+                }
+            }
+        }
+        ClientConfig c = getClient();
+        if (c != null) {
+            dev.shadowsoffire.apotheosis.AdventureConfig.enableEquipmentCompare = c.enableEquipmentCompare;
+            dev.shadowsoffire.apotheosis.AdventureConfig.disableQuarkOnAffixItems = c.disableQuarkOnAffixItems;
+            dev.shadowsoffire.apotheosis.AdventureConfig.enableAffixItemEffects = c.enableAffixItemEffects;
         }
     }
 
@@ -202,9 +232,16 @@ public class ApotheosisConfig {
             try (FileReader reader = new FileReader(clientFile)) {
                 ClientConfig loaded = GSON.fromJson(reader, ClientConfig.class);
                 if (loaded != null) {
+                    boolean upgraded = loaded.schemaVersion < ClientConfig.CURRENT_SCHEMA_VERSION;
+                    if (upgraded) {
+                        loaded.schemaVersion = ClientConfig.CURRENT_SCHEMA_VERSION;
+                    }
                     loaded.validate();
                     clientConfig = loaded;
                     LOGGER.info("Loaded client preferences from {}", clientFile.getName());
+                    if (upgraded) {
+                        saveClient();
+                    }
                     return;
                 }
             } catch (Exception e) {
@@ -255,6 +292,20 @@ public class ApotheosisConfig {
             LOGGER.debug("Atomically saved server configuration to {}", serverFile.getName());
         } catch (IOException e) {
             LOGGER.error("Failed to atomically save server configuration to {}", serverFile.getName(), e);
+        }
+
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null && server.getPlayerList() != null) {
+            try {
+                var cfgPayload = new dev.shadowsoffire.apotheosis.config.network.ApotheosisConfigPayload(localServerConfig);
+                var advPayload = new dev.shadowsoffire.apotheosis.AdventureConfig.ConfigPayload();
+                for (var player : server.getPlayerList().getPlayers()) {
+                    dev.shadowsoffire.placebo.network.PayloadHelper.sendToPlayer(player, cfgPayload);
+                    dev.shadowsoffire.placebo.network.PayloadHelper.sendToPlayer(player, advPayload);
+                }
+            } catch (Throwable t) {
+                LOGGER.debug("Skipping live server config broadcast during saveLocalServer: {}", t.getMessage());
+            }
         }
     }
 

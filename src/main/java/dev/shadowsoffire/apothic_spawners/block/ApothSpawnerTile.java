@@ -153,7 +153,7 @@ public class ApothSpawnerTile extends SpawnerBlockEntity {
         if (this.capturedSpawnData == null && this.level != null) {
             this.capturedSpawnData = this.spawner.spawnPotentials.getRandom(this.level.getRandom()).orElse(null);
         }
-        this.unstableTicks = INSTABILITY_DURATION_TICKS;
+        this.unstableTicks = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().spawnerInstabilityDurationTicks;
         this.setChanged();
         if (this.level != null && !this.level.isClientSide()) {
             BlockState state = this.level.getBlockState(this.getBlockPos());
@@ -164,16 +164,17 @@ public class ApothSpawnerTile extends SpawnerBlockEntity {
     private void detonateUnstable(ServerLevel level, BlockPos pos) {
         SpawnData data = this.capturedSpawnData != null ? this.capturedSpawnData : this.spawner.nextSpawnData;
         RandomSource rand = level.getRandom();
+        var serverCfg = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer();
 
         level.removeBlock(pos, false);
-        level.explode(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, INSTABILITY_RADIUS, Level.ExplosionInteraction.BLOCK);
+        level.explode(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, serverCfg.spawnerInstabilityExplosionRadius, Level.ExplosionInteraction.BLOCK);
 
         if (data != null) {
             try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(this::toString, ApothicSpawners.LOGGER)) {
                 ValueInput input = TagValueInput.create(reporter, level.registryAccess(), data.getEntityToSpawn());
                 EntityType<?> type = EntityType.by(input).orElse(null);
                 if (type != null) {
-                    for (int i = 0; i < UNSTABLE_MOB_COUNT; i++) {
+                    for (int i = 0; i < serverCfg.spawnerUnstableMobCount; i++) {
                         double x = pos.getX() + 0.5 + (rand.nextDouble() - rand.nextDouble()) * 1.5;
                         double y = pos.getY() + (rand.nextDouble() - 0.5);
                         double z = pos.getZ() + 0.5 + (rand.nextDouble() - rand.nextDouble()) * 1.5;

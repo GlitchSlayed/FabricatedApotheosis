@@ -30,8 +30,10 @@ public class CombatRulesTest {
         frozenField.set(BuiltInRegistries.MOB_EFFECT, false);
         frozenField.set(BuiltInRegistries.SOUND_EVENT, false);
         frozenField.set(BuiltInRegistries.PARTICLE_TYPE, false);
+        frozenField.set(BuiltInRegistries.DATA_COMPONENT_TYPE, false);
 
         ALObjects.bootstrap();
+        dev.shadowsoffire.apothic_attributes.api.ALObjects.bootstrap();
     }
 
     @Test
@@ -228,5 +230,76 @@ public class CombatRulesTest {
         } finally {
             serverCfg.knowledgeMultiplier = orig;
         }
+    }
+
+    @Test
+    public void testCustomizableCombatAndOverhealCurves() throws Exception {
+        var serverCfg = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer();
+        float origProtFactor = serverCfg.protectionFactorPerPoint;
+        float origProtCap = serverCfg.protectionMaxCap;
+        float origBypassFactor = serverCfg.toughnessBypassResistPerPoint;
+        float origBypassCap = serverCfg.toughnessMaxBypassResist;
+        float origOverheal = serverCfg.overhealMaxAbsorptionRatio;
+        try {
+            serverCfg.protectionFactorPerPoint = 0.05F;
+            serverCfg.protectionMaxCap = 0.50F;
+            assertEquals(0.75F, ALCombatRules.getProtDamageReduction(5.0F), 0.001F);
+            assertEquals(0.50F, ALCombatRules.getProtDamageReduction(20.0F), 0.001F);
+
+            serverCfg.toughnessBypassResistPerPoint = 0.04F;
+            serverCfg.toughnessMaxBypassResist = 0.80F;
+            assertEquals(0.40F, ALCombatRules.getBypassResistance(10.0F, 10.0F, 10.0F), 0.001F);
+            assertEquals(0.80F, ALCombatRules.getBypassResistance(10.0F, 10.0F, 50.0F), 0.001F);
+
+            serverCfg.overhealMaxAbsorptionRatio = 1.25F;
+            Field unsafeField = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+            unsafeField.setAccessible(true);
+            sun.misc.Unsafe unsafe = (sun.misc.Unsafe) unsafeField.get(null);
+            class MockHealthLiving extends net.minecraft.world.entity.monster.skeleton.Skeleton {
+                public MockHealthLiving() { super(null, null); }
+                @Override public double getAttributeValue(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attr) {
+                    return attr.equals(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) ? 20.0D : 0.0D;
+                }
+            }
+            var mockLiving = (MockHealthLiving) unsafe.allocateInstance(MockHealthLiving.class);
+            assertEquals(25.0F, dev.shadowsoffire.apotheosis.attributes.api.AttributesUtil.getOverhealCap(mockLiving), 0.001F);
+        } finally {
+            serverCfg.protectionFactorPerPoint = origProtFactor;
+            serverCfg.protectionMaxCap = origProtCap;
+            serverCfg.toughnessBypassResistPerPoint = origBypassFactor;
+            serverCfg.toughnessMaxBypassResist = origBypassCap;
+            serverCfg.overhealMaxAbsorptionRatio = origOverheal;
+        }
+    }
+
+    @Test
+    public void testBonusStackAttributeModifiersComponent() {
+        assertNotNull(ALObjects.Components.BONUS_STACK_ATTRIBUTE_MODIFIERS);
+        try {
+            net.minecraft.world.item.Items.DIAMOND_SWORD.builtInRegistryHolder().components();
+        } catch (NullPointerException e) {
+            net.minecraft.world.item.Items.DIAMOND_SWORD.builtInRegistryHolder().bindComponents(net.minecraft.core.component.DataComponentMap.EMPTY);
+        }
+
+        net.minecraft.world.item.ItemStack sword = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD);
+        var mods = dev.shadowsoffire.apothic_attributes.modifiers.StackAttributeModifiers.EMPTY.withModifierAdded(
+            ALObjects.Attributes.CRIT_CHANCE,
+            new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                net.minecraft.resources.Identifier.fromNamespaceAndPath("test", "bonus_crit"),
+                0.25D,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE
+            ),
+            dev.shadowsoffire.apothic_attributes.api.ALObjects.EquipmentSlotGroups.MAINHAND
+        );
+        sword.set(ALObjects.Components.BONUS_STACK_ATTRIBUTE_MODIFIERS, mods);
+
+        java.util.List<net.minecraft.world.entity.ai.attributes.AttributeModifier> collected = new java.util.ArrayList<>();
+        sword.forEachModifier(net.minecraft.world.entity.EquipmentSlot.MAINHAND, (attr, modif) -> {
+            if (attr.equals(ALObjects.Attributes.CRIT_CHANCE)) {
+                collected.add(modif);
+            }
+        });
+        assertEquals(1, collected.size());
+        assertEquals(0.25D, collected.get(0).amount(), 1e-6);
     }
 }
