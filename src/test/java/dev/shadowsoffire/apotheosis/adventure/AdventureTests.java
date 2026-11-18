@@ -85,7 +85,9 @@ public class AdventureTests {
             var unused = Apoth.BuiltInRegs.LOOT_CATEGORY_KEY;
             Class.forName("dev.shadowsoffire.apotheosis.Apoth$LootCategories");
             if (Apoth.BuiltInRegs.LOOT_CATEGORY instanceof net.minecraft.core.MappedRegistry<?> mapped) {
-                mapped.freeze();
+                try {
+                    mapped.freeze();
+                } catch (IllegalStateException ignored) {}
             }
             LootCategory.Inner.rebuildSortedValueList();
             LootCategory.registerOverride(Items.DIAMOND_SWORD, Apoth.LootCategories.MELEE_WEAPON);

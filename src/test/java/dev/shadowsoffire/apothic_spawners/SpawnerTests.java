@@ -53,13 +53,18 @@ public class SpawnerTests {
         ApothicSpawners.init();
         ALObjects.bootstrap();
         if (SpawnerStats.REGISTRY instanceof net.minecraft.core.MappedRegistry<?> mapped) {
-            mapped.freeze();
+            try {
+                mapped.freeze();
+            } catch (IllegalStateException ignored) {
+                // Already frozen or tags bound from another test suite in the same JVM
+            }
         }
 
         java.lang.reflect.Method bindTagsMethod = net.minecraft.core.Holder.Reference.class.getDeclaredMethod("bindTags", java.util.Collection.class);
         bindTagsMethod.setAccessible(true);
         bindTagsMethod.invoke(EntityTypes.WARDEN.builtInRegistryHolder(), java.util.List.of(ASObjects.BLACKLISTED_FROM_SPAWNERS));
         bindTagsMethod.invoke(EntityTypes.ELDER_GUARDIAN.builtInRegistryHolder(), java.util.List.of(ASObjects.BLACKLISTED_FROM_SPAWNERS));
+        bindTagsMethod.invoke(EntityTypes.ZOMBIE.builtInRegistryHolder(), java.util.List.of());
     }
 
     private ApothSpawnerTile createTile() {
@@ -273,5 +278,30 @@ public class SpawnerTests {
         assertEquals(0.5F, SpawnerStats.INITIAL_HEALTH.getValue(restoredTile), 0.001F);
         assertTrue(SpawnerStats.IGNORE_CONDITIONS.getValue(restoredTile));
         assertEquals(2, SpawnerStats.ECHOING.getValue(restoredTile));
+    }
+
+    @Test
+    @DisplayName("Spawner Delay Stats Respect ServerConfig Min/Max Delay Limits")
+    public void testServerDelayLimitsClampStats() {
+        var serverCfg = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer();
+        int origMin = serverCfg.minSpawnDelayLimit;
+        int origMax = serverCfg.maxSpawnDelayLimit;
+        try {
+            serverCfg.minSpawnDelayLimit = 40;
+            serverCfg.maxSpawnDelayLimit = 1000;
+
+            ApothSpawnerTile tile = createTile();
+            SpawnerStats.MIN_DELAY.setValue(tile, 10);
+            assertEquals(40, SpawnerStats.MIN_DELAY.getValue(tile), "MIN_DELAY must clamp to minSpawnDelayLimit");
+
+            SpawnerStats.MAX_DELAY.setValue(tile, 5000);
+            assertEquals(1000, SpawnerStats.MAX_DELAY.getValue(tile), "MAX_DELAY must clamp to maxSpawnDelayLimit");
+
+            SpawnerStats.MAX_DELAY.setValue(tile, 5);
+            assertEquals(40, SpawnerStats.MAX_DELAY.getValue(tile), "MAX_DELAY must clamp to minSpawnDelayLimit");
+        } finally {
+            serverCfg.minSpawnDelayLimit = origMin;
+            serverCfg.maxSpawnDelayLimit = origMax;
+        }
     }
 }

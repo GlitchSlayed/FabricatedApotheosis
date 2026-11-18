@@ -28,6 +28,9 @@ public class ApothicSpawners {
         BlockEntityTypes.MOB_SPAWNER.factory = ApothSpawnerTile::new;
 
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+            if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableSpawners) {
+                return InteractionResult.PASS;
+            }
             if (world.getBlockEntity(hitResult.getBlockPos()) instanceof ApothSpawnerTile) {
                 ItemStack stack = player.getItemInHand(hand);
                 if (stack.getItem() instanceof SpawnEggItem) {

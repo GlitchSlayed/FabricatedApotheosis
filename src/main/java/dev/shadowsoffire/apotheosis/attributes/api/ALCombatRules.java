@@ -82,7 +82,8 @@ public class ALCombatRules {
         }
 
         if (armor <= 0) {
-            return amount + (DEFAULT_NEGATIVE_ARMOR_FACTOR * -armor * amount);
+            float negFactor = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().negativeArmorFactor;
+            return amount + (negFactor * -armor * amount);
         }
 
         float reduction = getArmorDamageReduction(amount, armor, toughness);

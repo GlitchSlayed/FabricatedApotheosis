@@ -1,35 +1,62 @@
 package dev.shadowsoffire.apotheosis.client.compat.jei;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
 
 import dev.shadowsoffire.apotheosis.Apoth;
 import dev.shadowsoffire.apotheosis.Apotheosis;
+import dev.shadowsoffire.apotheosis.affix.Affix;
+import dev.shadowsoffire.apotheosis.affix.AffixRegistry;
+import dev.shadowsoffire.apotheosis.affix.UnnamingRecipe;
+import dev.shadowsoffire.apotheosis.affix.effect.StoneformingAffix;
 import dev.shadowsoffire.apotheosis.affix.salvaging.SalvagingRecipeCache;
 import dev.shadowsoffire.apotheosis.affix.salvaging.SalvagingScreen;
 import dev.shadowsoffire.apotheosis.client.attributes.AttributesGui;
 import dev.shadowsoffire.apotheosis.client.attributes.AttributesGuiHolder;
+import dev.shadowsoffire.apotheosis.client.compat.jei.PotionCharmExtension.PotionCharmSubtypes;
+import dev.shadowsoffire.apotheosis.client.compat.jei.StoneformingCategory.StoneformingDisplay;
 import dev.shadowsoffire.apotheosis.client.mixin.AbstractContainerScreenAccessor;
+import dev.shadowsoffire.apotheosis.compat.enchanting.ApothicEnchantingCompat;
+import dev.shadowsoffire.apotheosis.compat.enchanting.CharmInfusionRecipe;
+import dev.shadowsoffire.apotheosis.recipe.MaliceRecipe;
+import dev.shadowsoffire.apotheosis.recipe.PotionCharmRecipe;
+import dev.shadowsoffire.apotheosis.recipe.SupremacyRecipe;
+import dev.shadowsoffire.apotheosis.socket.AddSocketsRecipe;
+import dev.shadowsoffire.apotheosis.socket.WithdrawalRecipe;
+import dev.shadowsoffire.apotheosis.socket.gem.Gem;
+import dev.shadowsoffire.apotheosis.socket.gem.GemRegistry;
+import dev.shadowsoffire.apotheosis.socket.gem.Purity;
+import dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem;
 import dev.shadowsoffire.apotheosis.socket.gem.cutting.GemCuttingRecipeCache;
+import dev.shadowsoffire.apotheosis.socket.gem.storage.GemCaseScreen;
+import dev.shadowsoffire.apotheosis.util.SizedUpgradeRecipe;
 import dev.shadowsoffire.apothic_enchanting.Ench;
 import dev.shadowsoffire.apothic_enchanting.table.ApothEnchantmentMenu;
 import dev.shadowsoffire.apothic_enchanting.table.ApothEnchantmentScreen;
 import dev.shadowsoffire.apothic_enchanting.table.infusion.InfusionRecipeCache;
-import dev.shadowsoffire.apothic_spawners.ASObjects;
 import dev.shadowsoffire.apothic_spawners.compat.SpawnerRecipeCache;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
+import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
+import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
+import mezz.jei.api.registration.ISubtypeRegistration;
+import mezz.jei.api.registration.IVanillaCategoryExtensionRegistration;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.Blocks;
 
@@ -50,7 +77,8 @@ public class ApotheosisJeiPlugin implements IModPlugin {
             new SpawnerCategory(helper),
             new SalvagingCategory(helper),
             new GemCuttingCategory(helper),
-            new InfusionRecipeCategory(helper)
+            new InfusionRecipeCategory(helper),
+            new StoneformingCategory(helper)
         );
     }
 
@@ -61,7 +89,22 @@ public class ApotheosisJeiPlugin implements IModPlugin {
         registration.addRecipes(GemCuttingCategory.TYPE, GemCuttingRecipeCache.all().stream().map(RecipeHolder::value).toList());
         registration.addRecipes(InfusionRecipeCategory.TYPE, InfusionRecipeCache.all());
 
+        List<StoneformingDisplay> stoneforming = AffixRegistry.INSTANCE.getValues().stream()
+            .filter(StoneformingAffix.class::isInstance)
+            .sorted(Comparator.comparing(Affix::id))
+            .map(affix -> new StoneformingDisplay(AffixRegistry.INSTANCE.holder(affix)))
+            .toList();
+        registration.addRecipes(StoneformingCategory.TYPE, stoneforming);
+
         // Ingredient Information
+        Component socketInfo = Component.translatable("info.apotheosis.socketing");
+        for (Gem gem : GemRegistry.INSTANCE.getValues()) {
+            for (Purity purity : Purity.ALL_PURITIES) {
+                if (purity.isAtLeast(gem.getMinPurity())) {
+                    registration.addIngredientInfo(gem.toStack(purity), VanillaTypes.ITEM_STACK, socketInfo);
+                }
+            }
+        }
         registration.addIngredientInfo(Blocks.SPAWNER, Component.translatable("info.apoth_spawners.spawner"));
         registration.addIngredientInfo(Apoth.Items.GEM_DUST.value(), Component.translatable("info.apotheosis.gem_dust"));
         registration.addIngredientInfo(Apoth.Items.SIGIL_OF_SOCKETING.value(), Component.translatable("info.apotheosis.socketing"));
@@ -71,6 +114,26 @@ public class ApotheosisJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(Ench.Items.LIBRARY.value(), Component.translatable("info.apothic_enchanting.library"));
         registration.addIngredientInfo(Blocks.ENCHANTING_TABLE, Component.translatable("info.apothic_enchanting.enchanting_table"));
         registration.addIngredientInfo(Ench.Blocks.APOTHIC_ENCHANTING_TABLE.value(), Component.translatable("info.apothic_enchanting.enchanting_table"));
+    }
+
+    @Override
+    public void registerItemSubtypes(ISubtypeRegistration registration) {
+        registration.registerSubtypeInterpreter(Apoth.Items.GEM.value(), new GemSubtypes());
+        registration.registerSubtypeInterpreter(Apoth.Items.POTION_CHARM.value(), new PotionCharmSubtypes());
+    }
+
+    @Override
+    public void registerVanillaCategoryExtensions(IVanillaCategoryExtensionRegistration registration) {
+        registration.getCraftingCategory().addExtension(PotionCharmRecipe.class, new PotionCharmExtension());
+        if (ApothicEnchantingCompat.isLoaded()) {
+            InfusionRecipeCategory.registerExtension(CharmInfusionRecipe.class, new CharmInfusionExtension());
+        }
+        registration.getSmithingCategory().addExtension(SizedUpgradeRecipe.class, new SizedUpgradeRecipeExtension());
+        registration.getSmithingCategory().addExtension(AddSocketsRecipe.class, new AddSocketsExtension());
+        registration.getSmithingCategory().addExtension(WithdrawalRecipe.class, new WithdrawalExtension());
+        registration.getSmithingCategory().addExtension(UnnamingRecipe.class, new UnnamingExtension());
+        registration.getSmithingCategory().addExtension(MaliceRecipe.class, new MaliceExtension());
+        registration.getSmithingCategory().addExtension(SupremacyRecipe.class, new SupremacyExtension());
     }
 
     @Override
@@ -117,7 +180,25 @@ public class ApotheosisJeiPlugin implements IModPlugin {
             }
         });
 
+        registration.addGuiContainerHandler(GemCaseScreen.class, new IGuiContainerHandler<GemCaseScreen>() {
+            @Override
+            public List<Rect2i> getGuiExtraAreas(GemCaseScreen screen) {
+                return screen.getExclusionAreas();
+            }
+        });
+
         registration.addRecipeClickArea(ApothEnchantmentScreen.class, 145, -15, 27, 15, InfusionRecipeCategory.TYPE);
         registration.addRecipeClickArea(SalvagingScreen.class, 98, 34, 18, 18, SalvagingCategory.TYPE);
+    }
+
+    static class GemSubtypes implements ISubtypeInterpreter<ItemStack> {
+        @Override
+        public @Nullable Object getSubtypeData(ItemStack stack, UidContext context) {
+            UnsocketedGem inst = UnsocketedGem.of(stack);
+            if (!inst.isValid()) {
+                return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+            }
+            return inst.gem().getId() + "@" + inst.purity().getSerializedName();
+        }
     }
 }

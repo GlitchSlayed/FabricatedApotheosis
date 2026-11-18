@@ -68,7 +68,7 @@ public class ApothSpawnerItem extends BlockItem {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag tooltipFlag) {
-        if (stack.has(DataComponents.BLOCK_ENTITY_DATA)) {
+        if (stack.has(DataComponents.BLOCK_ENTITY_DATA) && dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getClient().detailedSpawnerTooltips) {
             if (isShiftDown.getAsBoolean()) {
                 TypedEntityData<BlockEntityType<?>> data = stack.get(DataComponents.BLOCK_ENTITY_DATA);
                 ApothSpawnerTile tooltipTile = new ApothSpawnerTile(BlockPos.ZERO, Blocks.SPAWNER.defaultBlockState());

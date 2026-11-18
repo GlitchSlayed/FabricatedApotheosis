@@ -23,7 +23,8 @@ public class KnowledgeEffect extends MobEffect {
 
     @Override
     public void createModifiers(int amplifier, BiConsumer<Holder<Attribute>, AttributeModifier> consumer) {
-        double multiplier = DEFAULT_KNOWLEDGE_MULT * (amplifier + 1) - 1.0D;
+        double knowledgeMult = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().knowledgeMultiplier;
+        double multiplier = knowledgeMult * (amplifier + 1) - 1.0D;
         consumer.accept(ALObjects.Attributes.EXPERIENCE_GAINED, new AttributeModifier(MODIFIER_ID, multiplier, Operation.ADD_MULTIPLIED_TOTAL));
     }
 
@@ -32,7 +33,8 @@ public class KnowledgeEffect extends MobEffect {
         var inst = map.getInstance(ALObjects.Attributes.EXPERIENCE_GAINED);
         if (inst != null) {
             inst.removeModifier(MODIFIER_ID);
-            double multiplier = DEFAULT_KNOWLEDGE_MULT * (amplifier + 1) - 1.0D;
+            double knowledgeMult = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().knowledgeMultiplier;
+            double multiplier = knowledgeMult * (amplifier + 1) - 1.0D;
             inst.addPermanentModifier(new AttributeModifier(MODIFIER_ID, multiplier, Operation.ADD_MULTIPLIED_TOTAL));
         }
     }

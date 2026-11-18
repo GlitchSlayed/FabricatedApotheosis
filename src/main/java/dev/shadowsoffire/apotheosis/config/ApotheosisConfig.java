@@ -125,6 +125,7 @@ public class ApotheosisConfig {
         }
         config.validate();
         remoteServerConfig = config;
+        syncModuleConfigs();
         LOGGER.info("Applied authoritative server configuration received from remote server.");
     }
 
@@ -134,6 +135,7 @@ public class ApotheosisConfig {
     public static void clearRemoteServerConfig() {
         if (remoteServerConfig != null) {
             remoteServerConfig = null;
+            syncModuleConfigs();
             LOGGER.info("Cleared remote server configuration; restored local configuration.");
         }
     }
@@ -151,6 +153,19 @@ public class ApotheosisConfig {
             LOGGER.info("Successfully migrated legacy configuration settings. Saving updated configs...");
             saveLocalServer();
             saveClient();
+        }
+        syncModuleConfigs();
+    }
+
+    private static void syncModuleConfigs() {
+        dev.shadowsoffire.apothic_spawners.ASConfig.load();
+        dev.shadowsoffire.apothic_enchanting.ApothEnchConfig.syncFromClientConfig();
+        ServerConfig s = getServer();
+        if (s != null) {
+            dev.shadowsoffire.apotheosis.AdventureConfig.bossSpawnCooldown = s.bossSpawnCooldown;
+            dev.shadowsoffire.apotheosis.AdventureConfig.bossGlowOnSpawn = s.bossGlowOnSpawn;
+            dev.shadowsoffire.apotheosis.AdventureConfig.curseBossItems = s.curseBossItems;
+            dev.shadowsoffire.apotheosis.AdventureConfig.undergroundTrader = s.undergroundTrader;
         }
     }
 
@@ -233,6 +248,7 @@ public class ApotheosisConfig {
      */
     public static void saveLocalServer() {
         localServerConfig.validate();
+        syncModuleConfigs();
         File serverFile = getServerFile();
         try {
             atomicWrite(serverFile.toPath(), GSON.toJson(localServerConfig));
@@ -247,6 +263,7 @@ public class ApotheosisConfig {
      */
     public static void saveClient() {
         clientConfig.validate();
+        syncModuleConfigs();
         File clientFile = getClientFile();
         try {
             atomicWrite(clientFile.toPath(), GSON.toJson(clientConfig));

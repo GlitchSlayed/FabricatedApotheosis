@@ -1,5 +1,6 @@
 package dev.shadowsoffire.placebo.dynreg.tag;
 
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,11 @@ public class DynamicTagManager extends SimplePreparableReloadListener<Map<Dynami
     @Override
     public Identifier getFabricId() {
         return ID;
+    }
+
+    @Override
+    public Collection<Identifier> getFabricDependencies() {
+        return DynamicRegistry.allRegistries().keySet();
     }
 
     @Override

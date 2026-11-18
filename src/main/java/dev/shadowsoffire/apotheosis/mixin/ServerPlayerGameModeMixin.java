@@ -23,22 +23,37 @@ public abstract class ServerPlayerGameModeMixin {
     @Unique
     private static final ThreadLocal<BlockState> apoth$DESTROYED_STATE = new ThreadLocal<>();
 
+    @Unique
+    private static final ThreadLocal<ServerPlayer> apoth$PREVIOUS_BREAKER = new ThreadLocal<>();
+
     @Inject(method = "destroyBlock", at = @At("HEAD"))
     private void apoth_setBreaker(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+        apoth$PREVIOUS_BREAKER.set(AttributesUtil.CURRENT_BREAKER.get());
         AttributesUtil.CURRENT_BREAKER.set(this.player);
         apoth$DESTROYED_STATE.set(this.player.level().getBlockState(pos));
     }
 
     @Inject(method = "destroyBlock", at = @At("RETURN"))
     private void apoth_clearBreaker(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
-        AttributesUtil.CURRENT_BREAKER.remove();
         BlockState preState = apoth$DESTROYED_STATE.get();
         apoth$DESTROYED_STATE.remove();
-        if (cir.getReturnValue() && preState != null) {
-            ItemStack stack = this.player.getMainHandItem();
-            if (!stack.isEmpty()) {
-                dev.shadowsoffire.apotheosis.socket.SocketHelper.getGems(stack).onBlockBreak(this.player, this.player.level(), pos, preState);
-                dev.shadowsoffire.apotheosis.affix.AffixHelper.streamAffixes(stack).forEach(inst -> inst.onBlockBreak(this.player, this.player.level(), pos, preState));
+        try {
+            if (cir.getReturnValue() && preState != null) {
+                ItemStack stack = this.player.getMainHandItem();
+                if (!stack.isEmpty()) {
+                    dev.shadowsoffire.apotheosis.socket.SocketHelper.getGems(stack).onBlockBreak(this.player, this.player.level(), pos, preState);
+                    dev.shadowsoffire.apotheosis.affix.AffixHelper.streamAffixes(stack).forEach(inst -> inst.onBlockBreak(this.player, this.player.level(), pos, preState));
+                }
+                dev.shadowsoffire.apotheosis.affix.effect.RadialAffix.onBreak(this.player, pos);
+                dev.shadowsoffire.apotheosis.socket.gem.bonus.special.RadialBonus.onBreak(this.player, pos);
+            }
+        } finally {
+            ServerPlayer prev = apoth$PREVIOUS_BREAKER.get();
+            apoth$PREVIOUS_BREAKER.remove();
+            if (prev != null) {
+                AttributesUtil.CURRENT_BREAKER.set(prev);
+            } else {
+                AttributesUtil.CURRENT_BREAKER.remove();
             }
         }
     }

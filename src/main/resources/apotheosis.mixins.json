@@ -6,10 +6,15 @@
   "mixins": [
     "AbstractArrowAccessor",
     "AbstractArrowMixin",
+    "AbstractSkeletonMixin",
+    "AnvilBlockMixin",
+    "AttributeInstanceMixin",
     "BaseSpawnerAccessor",
     "BlockMixin",
     "CombatRulesMixin",
+    "DamageSourceMixin",
     "EnchantmentHelperMixin",
+    "EnderDragonFightMixin",
     "EntityAccessor",
     "EntityInvoker",
     "EntityMixin",
@@ -19,6 +24,7 @@
     "LivingEntityMixin",
     "LootContextMixin",
     "LootTableMixin",
+    "MHFMixinLivingEntity",
     "MobMixin",
     "NearestAttackableTargetGoalAccessor",
     "NearestAttackableTargetGoalMixin",
@@ -26,8 +32,11 @@
     "ProjectileMixin",
     "ReloadableServerResourcesMixin",
     "ServerPlayerGameModeMixin",
+    "SmithingMenuMixin",
     "StructureTemplateMixin",
-    "ThrownTridentMixin"
+    "ThrownTridentMixin",
+    "WandererSpawnerMixin",
+    "WitherSkullBlockMixin"
   ],
   "injectors": {
     "defaultRequire": 1

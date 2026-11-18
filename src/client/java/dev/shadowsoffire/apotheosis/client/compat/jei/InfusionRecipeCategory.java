@@ -1,7 +1,9 @@
 package dev.shadowsoffire.apotheosis.client.compat.jei;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import dev.shadowsoffire.apothic_enchanting.ApothicEnchanting;
 import dev.shadowsoffire.apothic_enchanting.Ench;
@@ -42,6 +44,7 @@ public class InfusionRecipeCategory implements IRecipeCategory<InfusionRecipe> {
     public static final Identifier UID = ApothicEnchanting.loc("enchanting");
     public static final IRecipeType<InfusionRecipe> TYPE = IRecipeType.create(ApothicEnchanting.MODID, "enchanting", InfusionRecipe.class);
     public static final Identifier TEXTURES = ApothicEnchanting.loc("textures/gui/enchanting_jei.png");
+    private static final Map<Class<?>, Extension<?>> EXTENSIONS = new HashMap<>();
 
     private final IDrawable background;
     private final IDrawable icon;
@@ -79,11 +82,25 @@ public class InfusionRecipeCategory implements IRecipeCategory<InfusionRecipe> {
     }
 
     @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void setRecipe(IRecipeLayoutBuilder builder, InfusionRecipe recipe, IFocusGroup focuses) {
         IRecipeSlotBuilder input = builder.addSlot(RecipeIngredientRole.INPUT, 6, 6);
         IRecipeSlotBuilder output = builder.addSlot(RecipeIngredientRole.OUTPUT, 37, 6);
-        output.add(VanillaTypes.ITEM_STACK, recipe.getOutput().create());
-        input.add(recipe.getInput());
+        Extension ext = EXTENSIONS.get(recipe.getClass());
+        if (ext != null) {
+            ext.setRecipe(builder, input, output, recipe, focuses);
+        } else {
+            output.add(VanillaTypes.ITEM_STACK, recipe.getOutput().create());
+            input.add(recipe.getInput());
+        }
+    }
+
+    public static <T extends InfusionRecipe> void registerExtension(Class<T> cls, Extension<T> ext) {
+        EXTENSIONS.put(cls, ext);
+    }
+
+    public interface Extension<T extends InfusionRecipe> {
+        void setRecipe(IRecipeLayoutBuilder builder, IRecipeSlotBuilder input, IRecipeSlotBuilder output, T recipe, IFocusGroup focuses);
     }
 
     @Override

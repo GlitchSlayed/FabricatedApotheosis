@@ -279,7 +279,17 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
 
             if (!isDynamic) {
                 list.add(CommonComponents.EMPTY);
-                list.add(Component.translatable("apothic_attributes.gui.current", valueComp).withStyle(ChatFormatting.GRAY));
+                MutableComponent currentLine = Component.translatable("apothic_attributes.gui.current", valueComp).withStyle(ChatFormatting.GRAY);
+                if (ApotheosisConfig.getClient().displayAttributeDeltas) {
+                    double delta = inst.getValue() - inst.getBaseValue();
+                    if (Math.abs(delta) > 1.0E-4) {
+                        Component deltaComp = AttributeFormatting.toValueComponent(holder, Operation.ADD_VALUE, delta, flag).withColor(color);
+                        currentLine.append(Component.literal(" (").withStyle(ChatFormatting.DARK_GRAY))
+                            .append(deltaComp)
+                            .append(Component.literal(")").withStyle(ChatFormatting.DARK_GRAY));
+                    }
+                }
+                list.add(currentLine);
 
                 Component base = Component.translatable("apothic_attributes.gui.base", baseComp).withStyle(ChatFormatting.GRAY);
 

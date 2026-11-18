@@ -57,8 +57,11 @@ public record SocketedGems(ImmutableList<GemInstance> gems) implements List<GemI
         this.streamValidGems().forEach(inst -> {
             int old = target.invulnerableTime;
             target.invulnerableTime = 0;
-            inst.doPostAttack(user, target);
-            target.invulnerableTime = old;
+            try {
+                inst.doPostAttack(user, target);
+            } finally {
+                target.invulnerableTime = old;
+            }
         });
     }
 

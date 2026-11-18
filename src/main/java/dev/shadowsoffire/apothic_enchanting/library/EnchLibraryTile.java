@@ -48,6 +48,8 @@ public abstract class EnchLibraryTile extends BlockEntity {
 
     protected final Object2IntMap<Holder<Enchantment>> points = new Object2IntOpenHashMap<>();
     protected final Object2IntMap<Holder<Enchantment>> maxLevels = new Object2IntOpenHashMap<>();
+    protected final Object2IntMap<Identifier> unresolvedPoints = new Object2IntOpenHashMap<>();
+    protected final Object2IntMap<Identifier> unresolvedLevels = new Object2IntOpenHashMap<>();
     protected final Set<EnchLibraryContainer> activeContainers = new HashSet<>();
     protected final Storage<ItemVariant> itemStorage = new EnchLibStorage();
     protected final int maxLevel;
@@ -134,28 +136,45 @@ public abstract class EnchLibraryTile extends BlockEntity {
         return (int) Math.pow(2, level - 1);
     }
 
-    private Map<String, Integer> toStringMap(Object2IntMap<Holder<Enchantment>> source) {
+    private Map<String, Integer> toStringMap(Object2IntMap<Holder<Enchantment>> source, Object2IntMap<Identifier> unresolved) {
         Map<String, Integer> out = new HashMap<>();
+        for (Object2IntMap.Entry<Identifier> e : unresolved.object2IntEntrySet()) {
+            out.put(e.getKey().toString(), e.getIntValue());
+        }
         for (Object2IntMap.Entry<Holder<Enchantment>> e : source.object2IntEntrySet()) {
             e.getKey().unwrapKey().ifPresent(k -> out.put(k.identifier().toString(), e.getIntValue()));
         }
         return out;
     }
 
-    private void fromStringMap(Map<String, Integer> source, Object2IntMap<Holder<Enchantment>> target, RegistryLookup<Enchantment> lookup) {
+    private void fromStringMap(Map<String, Integer> source, Object2IntMap<Holder<Enchantment>> target, Object2IntMap<Identifier> unresolved, RegistryLookup<Enchantment> lookup) {
         target.clear();
+        unresolved.clear();
         for (Map.Entry<String, Integer> e : source.entrySet()) {
-            Optional<Holder.Reference<Enchantment>> ench = lookup.get(ResourceKey.create(Registries.ENCHANTMENT, Identifier.tryParse(e.getKey())));
-            if (ench.isEmpty()) continue;
+            Identifier id = Identifier.tryParse(e.getKey());
+            if (id == null) continue;
+            Optional<Holder.Reference<Enchantment>> ench = lookup.get(ResourceKey.create(Registries.ENCHANTMENT, id));
+            if (ench.isEmpty()) {
+                unresolved.put(id, e.getValue().intValue());
+                continue;
+            }
             target.put(ench.get(), e.getValue().intValue());
         }
+    }
+
+    public Object2IntMap<Identifier> getUnresolvedPoints() {
+        return unresolvedPoints;
+    }
+
+    public Object2IntMap<Identifier> getUnresolvedLevels() {
+        return unresolvedLevels;
     }
 
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
-        output.store("points", POINTS_CODEC, toStringMap(this.points));
-        output.store("levels", POINTS_CODEC, toStringMap(this.maxLevels));
+        output.store("points", POINTS_CODEC, toStringMap(this.points, this.unresolvedPoints));
+        output.store("levels", POINTS_CODEC, toStringMap(this.maxLevels, this.unresolvedLevels));
     }
 
     @Override
@@ -163,8 +182,8 @@ public abstract class EnchLibraryTile extends BlockEntity {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         RegistryLookup<Enchantment> lookup = input.lookup().lookupOrThrow(Registries.ENCHANTMENT);
-        fromStringMap(input.read("points", POINTS_CODEC).orElse(Map.of()), this.points, lookup);
-        fromStringMap(input.read("levels", POINTS_CODEC).orElse(Map.of()), this.maxLevels, lookup);
+        fromStringMap(input.read("points", POINTS_CODEC).orElse(Map.of()), this.points, this.unresolvedPoints, lookup);
+        fromStringMap(input.read("levels", POINTS_CODEC).orElse(Map.of()), this.maxLevels, this.unresolvedLevels, lookup);
         // Invoked on both the chunk-sync path (via the default handleUpdateTag → loadWithComponents)
         // and the incremental packet path (ClientPacketListener.handleBlockEntityData → loadWithComponents).
         // activeContainers is empty during disk-load, so this is a no-op there.
@@ -174,8 +193,8 @@ public abstract class EnchLibraryTile extends BlockEntity {
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
-        tag.put("points", POINTS_CODEC.encodeStart(NbtOps.INSTANCE, toStringMap(this.points)).getOrThrow());
-        tag.put("levels", POINTS_CODEC.encodeStart(NbtOps.INSTANCE, toStringMap(this.maxLevels)).getOrThrow());
+        tag.put("points", POINTS_CODEC.encodeStart(NbtOps.INSTANCE, toStringMap(this.points, this.unresolvedPoints)).getOrThrow());
+        tag.put("levels", POINTS_CODEC.encodeStart(NbtOps.INSTANCE, toStringMap(this.maxLevels, this.unresolvedLevels)).getOrThrow());
         return tag;
     }
 

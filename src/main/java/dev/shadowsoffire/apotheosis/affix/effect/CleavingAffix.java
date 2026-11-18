@@ -94,19 +94,22 @@ public class CleavingAffix extends Affix {
     public void doPostAttack(AffixInstance inst, LivingEntity user, Entity target) {
         if (ApothicAttributes.getLocalAtkStrength(user) >= 0.98 && !cleaving && !user.level().isClientSide()) {
             cleaving = true;
-            float chance = this.getChance(inst.getRarity(), inst.level());
-            int targets = this.getTargets(inst.getRarity(), inst.level());
-            if (user.level().getRandom().nextFloat() < chance && user instanceof Player player) {
-                List<Entity> nearby = target.level().getEntities(target, new AABB(target.blockPosition()).inflate(6), cleavePredicate(user, target));
-                for (Entity e : nearby) {
-                    if (targets > 0) {
-                        user.attackStrengthTicker = 300;
-                        player.attack(e);
-                        targets--;
+            try {
+                float chance = this.getChance(inst.getRarity(), inst.level());
+                int targets = this.getTargets(inst.getRarity(), inst.level());
+                if (user.level().getRandom().nextFloat() < chance && user instanceof Player player) {
+                    List<Entity> nearby = target.level().getEntities(target, new AABB(target.blockPosition()).inflate(6), cleavePredicate(user, target));
+                    for (Entity e : nearby) {
+                        if (targets > 0) {
+                            user.attackStrengthTicker = 300;
+                            player.attack(e);
+                            targets--;
+                        }
                     }
                 }
+            } finally {
+                cleaving = false;
             }
-            cleaving = false;
         }
     }
 

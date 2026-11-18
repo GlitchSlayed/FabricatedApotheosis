@@ -89,6 +89,12 @@ public abstract class EnchantmentHelperMixin {
         if (target instanceof LivingEntity livingTarget) {
             for (EquipmentSlot slot : EquipmentSlot.VALUES) {
                 ItemStack s = livingTarget.getItemBySlot(slot);
+                if (s.isEmpty()) continue;
+                var cat = dev.shadowsoffire.apotheosis.loot.LootCategory.forItem(s);
+                var apothSlot = dev.shadowsoffire.apothic_attributes.modifiers.EquipmentSlotCompat.fromVanilla(slot);
+                if (cat.isNone() || apothSlot == null || !cat.getSlots().test(apothSlot)) {
+                    continue;
+                }
                 SocketHelper.getGems(s).doPostHurt(livingTarget, damageSource);
 
                 var affixes = AffixHelper.getAffixes(s);

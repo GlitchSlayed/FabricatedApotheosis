@@ -61,6 +61,7 @@ public class EnchantmentInfoLoader implements SimpleSynchronousResourceReloadLis
     public void onResourceManagerReload(ResourceManager manager) {
         LOGGER.info("Loading enchantment info data maps with staged validation...");
         Map<Identifier, EnchantmentInfo> staged = new HashMap<>();
+        int errorCount = 0;
 
         try {
             Map<Identifier, List<Resource>> resourceStacks = manager.listResourceStacks("data_maps/enchantment", id -> id.getPath().endsWith("enchantment_info.json"));
@@ -70,7 +71,11 @@ public class EnchantmentInfoLoader implements SimpleSynchronousResourceReloadLis
                 for (Resource res : stackEntry.getValue()) {
                     try (Reader reader = new InputStreamReader(res.open(), StandardCharsets.UTF_8)) {
                         JsonElement json = JsonParser.parseReader(reader);
-                        if (!json.isJsonObject()) continue;
+                        if (!json.isJsonObject()) {
+                            errorCount++;
+                            LOGGER.error("Enchantment info resource {} from {} is not a JSON object", fileId, res.sourcePackId());
+                            continue;
+                        }
                         JsonObject obj = json.getAsJsonObject();
 
                         // Top-level "replace": true clears previous entries from lower packs
@@ -95,6 +100,7 @@ public class EnchantmentInfoLoader implements SimpleSynchronousResourceReloadLis
                             for (Map.Entry<String, JsonElement> entry : values.entrySet()) {
                                 Identifier enchId = Identifier.tryParse(entry.getKey());
                                 if (enchId == null) {
+                                    errorCount++;
                                     LOGGER.warn("Malformed enchantment identifier '{}' in {}", entry.getKey(), fileId);
                                     continue;
                                 }
@@ -105,15 +111,24 @@ public class EnchantmentInfoLoader implements SimpleSynchronousResourceReloadLis
                                     continue;
                                 }
 
-                                EnchantmentInfo.CODEC.codec().parse(JsonOps.INSTANCE, val)
-                                    .resultOrPartial(err -> LOGGER.error("Failed to parse enchantment info for {} in {}: {}", enchId, fileId, err))
-                                    .ifPresent(info -> staged.put(enchId, info));
+                                com.mojang.serialization.DataResult<EnchantmentInfo> parsed = EnchantmentInfo.CODEC.codec().parse(JsonOps.INSTANCE, val);
+                                if (parsed.error().isPresent()) {
+                                    errorCount++;
+                                    LOGGER.error("Failed to parse enchantment info for {} in {}: {}", enchId, fileId, parsed.error().get().message());
+                                }
+                                parsed.result().ifPresent(info -> staged.put(enchId, info));
                             }
                         }
                     } catch (Exception e) {
+                        errorCount++;
                         LOGGER.error("Error reading enchantment info resource {} from {}", fileId, res.sourcePackId(), e);
                     }
                 }
+            }
+
+            if (errorCount > 0 && !INFO_MAP.isEmpty()) {
+                LOGGER.error("Enchantment info reload encountered {} error(s); keeping previous valid state ({} entries)", errorCount, INFO_MAP.size());
+                return;
             }
 
             // Atomic publication

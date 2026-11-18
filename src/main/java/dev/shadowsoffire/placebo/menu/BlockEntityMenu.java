@@ -20,10 +20,10 @@ public abstract class BlockEntityMenu<T extends BlockEntity> extends PlaceboCont
 
     @Override
     public boolean stillValid(Player pPlayer) {
-        if (this.tile == null || this.tile.isRemoved()) {
+        if (this.tile == null || this.tile.isRemoved() || this.level == null || pPlayer.level() != this.level) {
             return false;
         }
-        if (!this.tile.getType().isValid(this.level.getBlockState(this.pos))) {
+        if (this.level.getBlockEntity(this.pos) != this.tile || !this.tile.getType().isValid(this.level.getBlockState(this.pos))) {
             return false;
         }
         return pPlayer.isWithinBlockInteractionRange(this.pos, 4.0);

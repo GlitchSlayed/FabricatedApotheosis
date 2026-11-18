@@ -124,6 +124,10 @@ public abstract class GemCaseTile extends BlockEntity implements TickingBlockEnt
         return this.getCount(dev.shadowsoffire.apotheosis.socket.gem.GemRegistry.INSTANCE.holder(gem), purity);
     }
 
+    public int getMaxCount() {
+        return this.maxCount;
+    }
+
     public void depositGem(ItemStack stack) {
         this.reconcileUnresolvedGems();
         dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem gem = dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem.of(stack);

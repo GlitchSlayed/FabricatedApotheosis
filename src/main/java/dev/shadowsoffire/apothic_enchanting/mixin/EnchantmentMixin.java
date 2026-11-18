@@ -5,15 +5,37 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import dev.shadowsoffire.apotheosis.config.ApotheosisConfig;
 import dev.shadowsoffire.apothic_enchanting.ApothicEnchanting;
 import dev.shadowsoffire.apothic_enchanting.util.TooltipUtil;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.item.enchantment.Enchantment;
 
 @Mixin(value = Enchantment.class, priority = 1500)
 public class EnchantmentMixin {
+
+    /**
+     * Allows Tridents to accept Sharpness, Looting, and Piercing (restoring parity with upstream TridentItemMixin).
+     */
+    @Inject(method = { "isSupportedItem", "canEnchant" }, at = @At("RETURN"), cancellable = true)
+    private void apoth_allowTridentEnchantments(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        if (!cir.getReturnValueZ() && ApotheosisConfig.getServer().enableEnchanting && stack.getItem() instanceof TridentItem) {
+            Enchantment self = (Enchantment) (Object) this;
+            if (self.description().getContents() instanceof TranslatableContents tc) {
+                String key = tc.getKey();
+                if ("enchantment.minecraft.sharpness".equals(key)
+                    || "enchantment.minecraft.looting".equals(key)
+                    || "enchantment.minecraft.piercing".equals(key)) {
+                    cir.setReturnValue(true);
+                }
+            }
+        }
+    }
 
     /**
      * Adjusts the color of the enchantment text if above the vanilla max.

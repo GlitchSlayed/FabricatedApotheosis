@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:brewing",
+  "input": {
+    "item": "minecraft:potion",
+    "potion_contents": {
+      "potions": "apothic_attributes:strong_vitality"
+    }
+  },
+  "output": {
+    "id": "minecraft:potion",
+    "components": {
+      "minecraft:potion_contents": {
+        "potion": "apothic_attributes:strong_grievous"
+      }
+    }
+  },
+  "reagent": {
+    "item": "minecraft:fermented_spider_eye"
+  }
+}

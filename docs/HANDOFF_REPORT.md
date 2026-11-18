@@ -1,9 +1,9 @@
-# Handoff Report — Third-Pass Audit Hardening & System Integrity
+# Handoff Report — Final Port Completion, Mixin Verification & Stabilization
 
-- **Date**: 2026-11-04
-- **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.20.1+, YACL 3.9.6, JEI 31.17.0.108, Jade 26.3.5+fabric)
-- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar`
-- **Status**: **Third-Pass Audit Resolved; 88/88 Tests Passing; Full Build Green.**
+- **Date**: 2026-11-18
+- **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.19.5+, YACL 3.9.6, JEI 31.17.0.108, Jade 26.3.5+fabric)
+- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.4.jar`
+- **Status**: **All 92/92 Mixin-Transformed Tests Passing; Clean Dedicated Server Boot; Full Build Green.**
 
 ---
 
@@ -206,7 +206,23 @@ FabricatedApotheosis/
 
 ---
 
-## 5. Final Release Posture
+## 5. Final Port Completion, Runtime Mixin & Datapack Verification (`1.0.0-alpha.4`)
 
-The project is at **1.0.0-alpha.5 Release Candidate** with all 32 primary audit items and second-pass runtime/timing defects repaired.
-**Do NOT publish releases without explicit user instruction.**
+### 5.1 Completed Mixins, Gameplay Hooks & Client Polish
+- **Common Mixins & Duck Interfaces**: Added `DamageSourceMixin` (`DamageSourceExtension`), `AttributeInstanceMixin` (`AttributeInstanceExt`), `SmithingMenuMixin`, `AnvilBlockMixin`, `AbstractSkeletonMixin` (crossbow skeletons), `EnderDragonFightMixin`, `WitherSkullBlockMixin`, `MHFMixinLivingEntity`, `WandererSpawnerMixin`, `EnchantmentMixin` (trident Sharpness/Looting/Piercing), and `CachedObjectSource` on `ItemStackMixin`; extracted `EntityDropCapture` outside `EntityMixin` so Mixin classloading rules are strictly satisfied.
+- **Gameplay & Client Wiring**: Wired `Omnetic` (`PlayerMixin`), `Radial` (`ServerPlayerGameModeMixin` + `RadialProgressTracker` outlines/crumbling), `Telepathic` block drops (`BlockMixin`), `AntiGravityArrowBonus` / `apoth.burns_in_sun` / boss `IN_WALL` (`EntityMixin`), slot eligibility & cold damage (`LivingEntityMixin`, `EnchantmentHelperMixin`), boss golem despawn (`MobMixin`), cursor socketing (`GemItem.overrideStackedOnOther`), `/apotheosis debug` weight command (`DebugWeightCommand`), `ItemStackRenderStateMixin`/`GuiGraphicsExtractorMixin`/`GuiRendererMixin`/`HudMixin` (26.3 `Hud.setOverlayMessage` override), boss beams, and item comparison tooltips (`AdventureModuleClient`).
+- **Compat & Resources**: Added Jade Adventure boss provider (`AdventureServerDataProvider` / `AdventureClientProvider`), JEI `StoneformingCategory` + 8 crafting/infusion extensions, `ApothDataMapsLoader` + `LootCategoryOverridesPayload`, 173 26.3 `minecraft:brewing` recipes, missing loot tables, paintings, villager trades, lang files, and tags.
+
+### 5.2 Runtime & Reload Bugs Caught and Resolved
+1. **`RarityRegistry.commitReload` BiMap Collision**: Calling `this.holder(r)` before `super.commitReload` returned `emptyHolder()` for every rarity during server startup; switched to `this.holder(entry.getKey())` and assigned `materialMap`/`sorted` before `super.commitReload`.
+2. **`DynamicTagManager` Reload Ordering**: Added explicit `ResourceLoader.addListenerOrdering(reg.getId(), DynamicTagManager.ID)` during `DynamicRegistry.registerRegistry` and `getFabricDependencies()` on `DynamicTagManager` so all 10 `placebo:gear_sets` tags resolve cleanly after `placebo:gear_sets` commits.
+3. **26.3 Loot Condition & Entity SubPredicate Schema**: Updated `gem_entity_drops.json` and `gem_entity_drops_from_real_players.json` from `"condition"` + `"type_specific"` to 26.3 `"type"` + direct `"apotheosis:is_monster": {}` map key.
+4. **Atomic Reload Rollback & Hardening**: Preserved previous valid registry/data states on parse or decode errors in `DynamicRegistry` and `EnchantmentInfoLoader`; enabled unconditional module init with live `enable*` runtime gating; synced `ApotheosisConfig` consumers (`negativeArmorFactor`, `knowledgeMultiplier`, `maxBookshelfRange`, `sculkShelfParticles`, `detailedSpawnerTooltips`, spawner delay limits, attribute deltas); hardened `stillValid`, `GemCaseMenu` input slot capacity/validity, `EnchLibraryTile` unresolved enchantment preservation, and `try/finally` state guards.
+
+### 5.3 Observed Verification Results (Post-Final Edit)
+- **Automated Tests (`./gradlew test --rerun-tasks`)**: Added `net.fabricmc:fabric-loader-junit:0.19.5` so tests execute under transformed Knot/Mixin classloading; **92/92 tests passed** across all 17 suites (`0 failures, 0 errors, 0 skipped`).
+- **Build & Artifact Check (`./gradlew build`)**: Succeeded cleanly (`verifyNoDuplicateClasses` and `validateAccessWidener` passed; `fabricated-apotheosis-1.0.0-alpha.4.jar` and `-sources.jar` contain zero reference or upstream leakage).
+- **Dedicated Server Smoke Check (`./gradlew runServer --args="--nogui"`)**: Booted Minecraft 26.3 server to `Done (0.241s)!` with 0 Mixin errors, 13/13 dynamic registries loaded (`5` rarities, `50` affix loot entries, `99` affixes, `1` augment, `4` elites, `23` invaders, `30` gear sets, `21` gems, `1` purity weights, `1` rarity override, `9` rogue spawners, `27` tier augments, `26` enchanting stats), `10` `placebo:gear_sets` tags loaded with 0 missing references, `6` enchantment info overrides, `6` global loot modifiers, `4` invader spawn rules, `2` loot category overrides, `342` biome modifications, and clean `stop` exit (`0`).
+- **Remaining Unverified Areas**: Live client launch, OpenGL/Vulkan graphical rendering inspection (RenderPearl pipelines, boss beams, radial overlays, screens), JEI/Jade in-game overlays, and multi-client multiplayer sessions were not executed in this headless verification run and require manual in-game testing.
+
+The codebase build (`1.0.0-alpha.4`) is verified clean for automated tests, packaging, and dedicated server startup. **Do NOT publish releases without explicit user instruction.**

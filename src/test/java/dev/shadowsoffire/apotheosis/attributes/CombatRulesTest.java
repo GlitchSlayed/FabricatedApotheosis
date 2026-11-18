@@ -214,4 +214,19 @@ public class CombatRulesTest {
         AttributeEvents.noRecurse = false;
         assertFalse(AttributeEvents.noRecurse);
     }
+
+    @Test
+    public void testKnowledgeEffectUsesConfiguredMultiplier() {
+        var serverCfg = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer();
+        float orig = serverCfg.knowledgeMultiplier;
+        try {
+            serverCfg.knowledgeMultiplier = 6.0F;
+            var effect = new dev.shadowsoffire.apotheosis.attributes.effects.KnowledgeEffect();
+            double[] captured = { Double.NaN };
+            effect.createModifiers(1, (attr, mod) -> captured[0] = mod.amount());
+            assertEquals(11.0D, captured[0], 1e-6);
+        } finally {
+            serverCfg.knowledgeMultiplier = orig;
+        }
+    }
 }

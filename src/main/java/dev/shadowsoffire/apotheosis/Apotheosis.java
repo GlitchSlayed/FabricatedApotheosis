@@ -51,22 +51,11 @@ public class Apotheosis implements ModInitializer {
         // 4b. Ensure core Apoth registries and loot categories are bootstrapped
         Apoth.bootstrap();
 
-        // 5. Initialize approved modules according to configuration
-        if (ApotheosisConfig.getServer().enableAttributes) {
-            AttributesModule.init();
-        }
-
-        if (ApotheosisConfig.getServer().enableEnchanting) {
-            EnchantingModule.init();
-        }
-
-        if (ApotheosisConfig.getServer().enableSpawners) {
-            SpawnersModule.init();
-        }
-
-        if (ApotheosisConfig.getServer().enableAdventure) {
-            AdventureModule.init();
-        }
+        // 5. Initialize all approved modules unconditionally so registries, payloads, and attributes always exist
+        AttributesModule.init();
+        EnchantingModule.init();
+        SpawnersModule.init();
+        AdventureModule.init();
 
         // 6. Initialize optional integrations and documentation support
         IntegrationsModule.init();

@@ -91,7 +91,9 @@ public class SaveCompatibilityTest {
             var unused = Apoth.BuiltInRegs.LOOT_CATEGORY_KEY;
             Class.forName("dev.shadowsoffire.apotheosis.Apoth$LootCategories");
             if (Apoth.BuiltInRegs.LOOT_CATEGORY instanceof net.minecraft.core.MappedRegistry<?> mapped) {
-                mapped.freeze();
+                try {
+                    mapped.freeze();
+                } catch (IllegalStateException ignored) {}
             }
             dev.shadowsoffire.apotheosis.loot.LootCategory.Inner.rebuildSortedValueList();
             dev.shadowsoffire.apotheosis.loot.LootCategory.registerOverride(net.minecraft.world.item.Items.DIAMOND_SWORD, Apoth.LootCategories.MELEE_WEAPON);
@@ -366,8 +368,8 @@ public class SaveCompatibilityTest {
     @Test
     @DisplayName("Verify IFestiveMarker implementation and ordinary mob death safety")
     public void testFestiveMarkerImplementedOnItemStack() throws Exception {
-        assertTrue(dev.shadowsoffire.apotheosis.util.IFestiveMarker.class.isAssignableFrom(dev.shadowsoffire.apotheosis.mixin.ItemStackMixin.class),
-            "ItemStackMixin must implement IFestiveMarker");
+        assertTrue(dev.shadowsoffire.apotheosis.util.IFestiveMarker.class.isAssignableFrom(ItemStack.class),
+            "ItemStack must implement IFestiveMarker via ItemStackMixin");
 
         // Verify that ordinary equipped mob death does not crash
         java.lang.reflect.Field f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
@@ -382,7 +384,80 @@ public class SaveCompatibilityTest {
             "Ordinary mob with equipped items dying must never throw ClassCastException");
     }
 
+    @Test
+    @DisplayName("Verify runtime Mixin duck interfaces on transformed Minecraft classes")
+    public void testRuntimeMixinDuckInterfaces() {
+        ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
+        assertTrue((Object) stack instanceof dev.shadowsoffire.apotheosis.util.IFestiveMarker,
+            "Transformed ItemStack must implement IFestiveMarker");
+        assertTrue((Object) stack instanceof dev.shadowsoffire.placebo.util.CachedObject.CachedObjectSource,
+            "Transformed ItemStack must implement CachedObjectSource");
+        assertTrue(dev.shadowsoffire.apotheosis.mixin.LivingEntityInvoker.class.isAssignableFrom(MockSkeleton.class),
+            "Transformed LivingEntity must implement LivingEntityInvoker");
+
+        net.minecraft.world.entity.ai.attributes.AttributeInstance inst =
+            new net.minecraft.world.entity.ai.attributes.AttributeInstance(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, c -> {});
+        assertTrue((Object) inst instanceof dev.shadowsoffire.apotheosis.util.AttributeInstanceExt,
+            "Transformed AttributeInstance must implement AttributeInstanceExt");
+        dev.shadowsoffire.apotheosis.util.AttributeInstanceExt ext =
+            dev.shadowsoffire.apotheosis.util.AttributeInstanceExt.of(inst);
+        int before = ext.apoth$getModificationCount();
+        inst.setBaseValue(24.0D);
+        assertTrue(ext.apoth$getModificationCount() > before,
+            "AttributeInstanceExt modification count must increment on setBaseValue");
+
+        Holder<net.minecraft.world.damagesource.DamageType> dmgType = Holder.direct(
+            new net.minecraft.world.damagesource.DamageType("test", 0.0F)
+        );
+        net.minecraft.world.damagesource.DamageSource src = new net.minecraft.world.damagesource.DamageSource(dmgType);
+        assertTrue((Object) src instanceof dev.shadowsoffire.apotheosis.util.DamageSourceExtension,
+            "Transformed DamageSource must implement DamageSourceExtension");
+        dev.shadowsoffire.apotheosis.util.DamageSourceExtension dmgExt =
+            (dev.shadowsoffire.apotheosis.util.DamageSourceExtension) (Object) src;
+        dmgExt.addTag(net.minecraft.tags.DamageTypeTags.BYPASSES_ARMOR);
+        assertTrue(src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_ARMOR),
+            "Added DamageType tag must be honored by DamageSource.is(TagKey)");
+        dmgExt.removeTag(net.minecraft.tags.DamageTypeTags.BYPASSES_ARMOR);
+        assertFalse(src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_ARMOR),
+            "Removed added DamageType tag must no longer match DamageSource.is(TagKey)");
+    }
+
+    @Test
+    @DisplayName("Verify EnchLibraryTile preserves unresolved enchantments across save and load")
+    public void testEnchLibraryUnresolvedPreservation() {
+        var library = new dev.shadowsoffire.apothic_enchanting.library.EnchLibraryTile.BasicLibraryTile(
+            BlockPos.ZERO, Ench.Blocks.LIBRARY.value().defaultBlockState());
+
+        var emptyEnchReg = new net.minecraft.core.MappedRegistry<net.minecraft.world.item.enchantment.Enchantment>(
+            net.minecraft.core.registries.Registries.ENCHANTMENT, com.mojang.serialization.Lifecycle.stable());
+        net.minecraft.core.HolderLookup.Provider lookup =
+            net.minecraft.core.HolderLookup.Provider.create(java.util.stream.Stream.of(emptyEnchReg));
+
+        CompoundTag inputTag = new CompoundTag();
+        CompoundTag pointsTag = new CompoundTag();
+        pointsTag.putInt("modded:future_enchant_v2", 16);
+        CompoundTag levelsTag = new CompoundTag();
+        levelsTag.putInt("modded:future_enchant_v2", 5);
+        inputTag.put("points", pointsTag);
+        inputTag.put("levels", levelsTag);
+
+        library.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+            net.minecraft.util.ProblemReporter.DISCARDING, lookup, inputTag));
+
+        Identifier unresolvedId = Identifier.fromNamespaceAndPath("modded", "future_enchant_v2");
+        assertEquals(16, library.getUnresolvedPoints().getInt(unresolvedId));
+        assertEquals(5, library.getUnresolvedLevels().getInt(unresolvedId));
+
+        CompoundTag savedTag = library.saveWithoutMetadata(lookup);
+        assertEquals(16, savedTag.getCompoundOrEmpty("points").getIntOr("modded:future_enchant_v2", 0),
+            "Unresolved library enchantment points must be preserved across save/load");
+        assertEquals(5, savedTag.getCompoundOrEmpty("levels").getIntOr("modded:future_enchant_v2", 0),
+            "Unresolved library max level must be preserved across save/load");
+    }
+
     static class MockSkeleton extends net.minecraft.world.entity.monster.skeleton.Skeleton {
+        private CompoundTag mockPersistentData;
+
         public MockSkeleton() {
             super(null, null);
         }
@@ -391,29 +466,41 @@ public class SaveCompatibilityTest {
         public ItemStack getItemBySlot(net.minecraft.world.entity.EquipmentSlot slot) {
             return slot == net.minecraft.world.entity.EquipmentSlot.MAINHAND ? new ItemStack(Items.BOW) : ItemStack.EMPTY;
         }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T getAttachedOrCreate(net.fabricmc.fabric.api.attachment.v1.AttachmentType<T> type) {
+            if (type == ALObjects.Attachments.PERSISTENT_DATA) {
+                if (this.mockPersistentData == null) {
+                    this.mockPersistentData = new CompoundTag();
+                }
+                return (T) this.mockPersistentData;
+            }
+            return super.getAttachedOrCreate(type);
+        }
     }
 
     @Test
     @DisplayName("Verify scoped death drop capture stack and nesting safety")
     public void testScopedDeathDropCaptureSafety() {
-        assertNull(dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext());
+        assertNull(dev.shadowsoffire.apotheosis.util.EntityDropCapture.peekCaptureContext());
 
-        dev.shadowsoffire.apotheosis.mixin.EntityMixin.DropCaptureContext outer =
-            new dev.shadowsoffire.apotheosis.mixin.EntityMixin.DropCaptureContext(null);
-        dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$pushCaptureContext(outer);
-        assertSame(outer, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext());
+        dev.shadowsoffire.apotheosis.util.EntityDropCapture.DropCaptureContext outer =
+            new dev.shadowsoffire.apotheosis.util.EntityDropCapture.DropCaptureContext(null);
+        dev.shadowsoffire.apotheosis.util.EntityDropCapture.pushCaptureContext(outer);
+        assertSame(outer, dev.shadowsoffire.apotheosis.util.EntityDropCapture.peekCaptureContext());
 
         // Nested call
-        dev.shadowsoffire.apotheosis.mixin.EntityMixin.DropCaptureContext inner =
-            new dev.shadowsoffire.apotheosis.mixin.EntityMixin.DropCaptureContext(null);
-        dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$pushCaptureContext(inner);
-        assertSame(inner, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext());
+        dev.shadowsoffire.apotheosis.util.EntityDropCapture.DropCaptureContext inner =
+            new dev.shadowsoffire.apotheosis.util.EntityDropCapture.DropCaptureContext(null);
+        dev.shadowsoffire.apotheosis.util.EntityDropCapture.pushCaptureContext(inner);
+        assertSame(inner, dev.shadowsoffire.apotheosis.util.EntityDropCapture.peekCaptureContext());
 
-        assertSame(inner, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$popCaptureContext());
-        assertSame(outer, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext(), "Outer context must be restored after inner finishes");
+        assertSame(inner, dev.shadowsoffire.apotheosis.util.EntityDropCapture.popCaptureContext());
+        assertSame(outer, dev.shadowsoffire.apotheosis.util.EntityDropCapture.peekCaptureContext(), "Outer context must be restored after inner finishes");
 
-        assertSame(outer, dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$popCaptureContext());
-        assertNull(dev.shadowsoffire.apotheosis.mixin.EntityMixin.apoth$peekCaptureContext(), "Context must be fully cleared after outer finishes");
+        assertSame(outer, dev.shadowsoffire.apotheosis.util.EntityDropCapture.popCaptureContext());
+        assertNull(dev.shadowsoffire.apotheosis.util.EntityDropCapture.peekCaptureContext(), "Context must be fully cleared after outer finishes");
     }
 
     @Test

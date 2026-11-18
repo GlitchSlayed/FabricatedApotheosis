@@ -59,6 +59,9 @@ public class ApothEnchEvents {
 
     public static void init() {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+            if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableEnchanting) {
+                return InteractionResult.PASS;
+            }
             ItemStack s = player.getItemInHand(hand);
             Pair<LevelBasedValue, Integer> bonemealCost = EnchantmentHelper.getHighestLevel(s, Ench.EnchantEffects.BONEMEAL_CROPS);
             if (bonemealCost != null && !player.isShiftKeyDown() && BoneMealItem.growCrop(s.copy(), world, hitResult.getBlockPos())) {
@@ -76,6 +79,9 @@ public class ApothEnchEvents {
         });
 
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableEnchanting) {
+                return InteractionResult.PASS;
+            }
             ItemStack stack = player.getItemInHand(hand);
             if (stack.getItem() instanceof EnderLeadItem lead && entity instanceof LivingEntity living) {
                 InteractionResult result = lead.interactLivingEntity(stack, player, living, hand);
@@ -87,6 +93,9 @@ public class ApothEnchEvents {
         });
 
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
+            if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableEnchanting) {
+                return;
+            }
             ChainsawTask.attemptChainsaw(world, player, pos, state);
             if (world instanceof ServerLevel sl) {
                 BoonComponent.provideBenefits(sl, pos, state, player, player.getMainHandItem());
@@ -131,7 +140,7 @@ public class ApothEnchEvents {
         }
 
         if (left.getCount() == 1 && (left.getItem() == Items.CHIPPED_ANVIL || left.getItem() == Items.DAMAGED_ANVIL)
-            && (e.getRight().is(ConventionalItemTags.STORAGE_BLOCKS_IRON) || e.getRight().is(Items.IRON_BLOCK))) {
+            && (e.getRight().is(Items.IRON_BLOCK) || e.getRight().is(ConventionalItemTags.STORAGE_BLOCKS_IRON))) {
             ItemStack out = left.transmuteCopy(Items.ANVIL);
             e.setOutput(out);
             e.setXpCost(5);
@@ -182,6 +191,7 @@ public class ApothEnchEvents {
     }
 
     public static float handleLifeMending(LivingEntity entity, float amount) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableEnchanting) return amount;
         if (entity.getType() == EntityTypes.ARMOR_STAND) return amount;
         if (entity.level().isClientSide()) return amount;
         if (amount <= 0F) return amount;
@@ -208,6 +218,7 @@ public class ApothEnchEvents {
     }
 
     public static void handleReflectiveDefenses(LivingEntity user, ServerLevel level, DamageSource source, float blockedDamage) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableEnchanting) return;
         Entity attacker = source.getDirectEntity();
         ItemStack shield = user.getUseItem();
         Pair<ReflectiveComponent, Integer> reflect = EnchantmentHelper.getHighestLevel(shield, Ench.EnchantEffects.REFLECTIVE);
@@ -225,6 +236,7 @@ public class ApothEnchEvents {
     }
 
     public static float modifyBreakSpeed(Player p, BlockState state, BlockPos pos, float speed) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableEnchanting) return speed;
         if (!p.onGround()) {
             MutableBoolean flag = new MutableBoolean(false);
             EnchantmentHelper.runIterationOnEquipment(p, (ench, level, item) -> {
@@ -252,6 +264,7 @@ public class ApothEnchEvents {
     }
 
     public static void handleDropsToXp(LivingEntity entity, DamageSource source, List<ItemEntity> drops) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableEnchanting) return;
         if (!(entity instanceof Player) && source.getEntity() instanceof Player p && !p.level().isClientSide()) {
             ItemStack stack = p.getWeaponItem();
             MutableFloat knowledge = new MutableFloat();

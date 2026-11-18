@@ -7,10 +7,19 @@
     "AbstractContainerScreenAccessor",
     "AbstractRecipeBookScreenAccessor",
     "AbstractContainerScreenMixin",
+    "AbstractSkeletonRendererMixin",
+    "EntityRendererMixin",
+    "GuiGraphicsExtractorMixin",
+    "GuiRendererMixin",
+    "HudMixin",
     "InventoryScreenMixin",
     "ItemEntityRenderStateMixin",
     "ItemEntityRendererMixin",
-    "ItemModelsMixin"
+    "ItemModelsMixin",
+    "ItemStackRenderStateMixin",
+    "KeyMappingAccessor",
+    "LevelRendererMixin",
+    "MultiPlayerGameModeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

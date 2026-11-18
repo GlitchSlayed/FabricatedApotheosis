@@ -34,9 +34,17 @@ public class SpawnerStats {
         }
     }
 
-    public static final SpawnerStat<Integer> MIN_DELAY = register("min_delay", new VanillaStat(s -> s.getSpawner().minSpawnDelay, (s, v) -> s.getSpawner().minSpawnDelay = v));
+    public static final SpawnerStat<Integer> MIN_DELAY = register("min_delay", new VanillaStat(s -> s.getSpawner().minSpawnDelay, (s, v) -> {
+        int minLimit = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().minSpawnDelayLimit;
+        int maxLimit = Math.max(minLimit, dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().maxSpawnDelayLimit);
+        s.getSpawner().minSpawnDelay = Math.clamp(v, minLimit, maxLimit);
+    }));
 
-    public static final SpawnerStat<Integer> MAX_DELAY = register("max_delay", new VanillaStat(s -> s.getSpawner().maxSpawnDelay, (s, v) -> s.getSpawner().maxSpawnDelay = v));
+    public static final SpawnerStat<Integer> MAX_DELAY = register("max_delay", new VanillaStat(s -> s.getSpawner().maxSpawnDelay, (s, v) -> {
+        int minLimit = dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().minSpawnDelayLimit;
+        int maxLimit = Math.max(minLimit, dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().maxSpawnDelayLimit);
+        s.getSpawner().maxSpawnDelay = Math.clamp(v, minLimit, maxLimit);
+    }));
 
     public static final SpawnerStat<Integer> SPAWN_COUNT = register("spawn_count", new VanillaStat(s -> s.getSpawner().spawnCount, (s, v) -> s.getSpawner().spawnCount = v));
 

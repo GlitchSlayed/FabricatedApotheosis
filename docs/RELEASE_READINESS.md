@@ -1,10 +1,10 @@
-# Release Readiness Report — Milestone 12 Release Candidate
+# Release Readiness Report — `1.0.0-alpha.4`
 
-- **Candidate Identity**: Fabricated Apotheosis `1.0.0-alpha.1`
+- **Candidate Identity**: Fabricated Apotheosis `1.0.0-alpha.4`
 - **Target Platform**: Minecraft 26.3 Fabric (Loom 1.17.21, Fabric Loader 0.19.5, Fabric API 0.161.0+26.3, Java 25)
-- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.1.jar`
-- **Release Status**: **Release Candidate Ready for Testing (DO NOT PUBLISH)**
-- **Date**: 2026-11-01
+- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.4.jar`
+- **Release Status**: **Headless Build, Mixin-Transformed Tests & Server Startup Verified (Client UI/Rendering Requires Manual Test; DO NOT PUBLISH)**
+- **Date**: 2026-11-18
 
 ---
 
@@ -84,17 +84,17 @@ Every feature across all ecosystem subsystems has been reconciled against actual
 
 ## 5. Execution and Verification Summary
 
-- **Automated Unit Tests**:
+- **Automated Unit Tests (`fabric-loader-junit` Mixin-transformed JVM)**:
   - Command: `./gradlew test --rerun-tasks`
-  - Result: **68/68 passed**, 0 failures, 0 skipped.
+  - Result: **92/92 passed**, 0 failures, 0 skipped across 17 test classes.
 - **Dedicated Server Boot & Shutdown**:
-  - Command: `./gradlew runServer --args="--nogui"`
-  - Result: Booted in 0.263s, loaded 1910 advancements, applied 342 biome modifications, prepared 100% chunks across Overworld, Nether, and The End, and stopped cleanly with zero client classes loaded.
+  - Command: `./gradlew runServer --args="--nogui"` (graceful `stop` after `Done`)
+  - Result: Booted in `0.241s`, loaded 1910 advancements, loaded all 13 dynamic registries, 10 `placebo:gear_sets` tags with 0 errors, 6 global loot modifiers, 6 enchantment info overrides, 6 data-map entries, and applied 342 biome modifications across 57 biomes, then saved and stopped cleanly (`exit 0`).
 - **Artifact Build**:
   - Command: `./gradlew build`
-  - Result: **BUILD SUCCESSFUL**.
+  - Result: **BUILD SUCCESSFUL** (`fabricated-apotheosis-1.0.0-alpha.4.jar` and `-sources.jar`, clean of reference/upstream trees).
 - **Explicit Unverified Cases**:
-  - Live Vulkan GPU driver execution and 500+ dropped item cluster profiling remain unverified due to headless environment constraints (documented in `CLIENT_FEATURE_CHECKLIST.md`).
+  - Interactive client launch, live OpenGL/Vulkan rendering (RenderPearl/GUI/boss beams/radial overlays), in-game JEI/Jade UIs, and multiplayer client sessions were not executed in this headless verification environment.
 
 ---
 

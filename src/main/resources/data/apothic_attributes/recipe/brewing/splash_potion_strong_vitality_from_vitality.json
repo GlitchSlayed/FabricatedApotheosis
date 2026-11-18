@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:brewing",
+  "input": {
+    "item": "minecraft:splash_potion",
+    "potion_contents": {
+      "potions": "apothic_attributes:vitality"
+    }
+  },
+  "output": {
+    "id": "minecraft:splash_potion",
+    "components": {
+      "minecraft:potion_contents": {
+        "potion": "apothic_attributes:strong_vitality"
+      }
+    }
+  },
+  "reagent": {
+    "item": "minecraft:glowstone_dust"
+  }
+}

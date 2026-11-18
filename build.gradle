@@ -58,6 +58,7 @@ dependencies {
 	compileOnly "maven.modrinth:jade:26.3.5+fabric"
 
 	// Testing dependencies
+	testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
 	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

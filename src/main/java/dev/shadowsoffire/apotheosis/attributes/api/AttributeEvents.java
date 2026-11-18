@@ -38,6 +38,7 @@ public class AttributeEvents {
     }
 
     public static boolean isDodging(LivingEntity target) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAttributes) return false;
         double chance = target.getAttributeValue(ALObjects.Attributes.DODGE_CHANCE);
         if (chance <= 0.0) return false;
         DODGE_RAND.setSeed(computeDodgeSeed(target));
@@ -76,6 +77,7 @@ public class AttributeEvents {
     }
 
     public static float rollCriticalStrikes(LivingEntity attacker, LivingEntity target, float initialAmount) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAttributes) return initialAmount;
         double critChance = attacker.getAttributeValue(ALObjects.Attributes.CRIT_CHANCE);
         float critDmg = Math.min((float) attacker.getAttributeValue(ALObjects.Attributes.CRIT_DAMAGE),
             dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().critDamageModifierCap);
@@ -99,6 +101,7 @@ public class AttributeEvents {
     }
 
     public static void applyMeleeAuxDamage(LivingEntity target, DamageSource source) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAttributes) return;
         if (target.level().isClientSide() || target.isDeadOrDying()) return;
         if (noRecurse) return;
         noRecurse = true;
@@ -136,6 +139,7 @@ public class AttributeEvents {
     }
 
     public static int computeDrawSpeedOffset(Player player, ItemStack stack) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAttributes) return 0;
         if (!canBenefitFromDrawSpeed(stack)) return 0;
         double t = player.getAttributeValue(ALObjects.Attributes.DRAW_SPEED) - 1.0;
         if (t == 0.0) return 0;

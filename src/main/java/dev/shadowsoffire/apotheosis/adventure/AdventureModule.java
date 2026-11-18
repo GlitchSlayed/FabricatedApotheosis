@@ -16,6 +16,7 @@ import dev.shadowsoffire.apotheosis.affix.reforging.ReforgingMenu;
 import dev.shadowsoffire.apotheosis.commands.AffixCommand;
 import dev.shadowsoffire.apotheosis.commands.BossCommand;
 import dev.shadowsoffire.apotheosis.commands.CategoryCheckCommand;
+import dev.shadowsoffire.apotheosis.commands.DebugWeightCommand;
 import dev.shadowsoffire.apotheosis.commands.GemCommand;
 import dev.shadowsoffire.apotheosis.commands.RarityCommand;
 import dev.shadowsoffire.apotheosis.commands.ReforgeCommand;
@@ -117,8 +118,9 @@ public class AdventureModule {
         PayloadHelper.registerPayload(new LinkItemToChatPayload.Provider());
         PayloadHelper.registerPayload(new GemCaseSelectPayload.Provider());
 
-        // Global Loot Modifiers
+        // Global Loot Modifiers & Data Maps
         dev.shadowsoffire.apotheosis.loot.modifiers.LootModifierManager.init();
+        ApothDataMapsLoader.init();
 
         // Fabric Transfer API ItemStorage automation for workstations
         try {
@@ -149,6 +151,11 @@ public class AdventureModule {
             AffixCommand.register(root);
             WorldTierCommand.register(root);
             BossCommand.register(root);
+
+            var debug = Commands.literal("debug").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
+            DebugWeightCommand.register(debug, registryAccess);
+            root.then(debug);
+
             dispatcher.register(root);
         });
 
@@ -199,7 +206,7 @@ public class AdventureModule {
             AttributeToggleAffix.sync(player);
 
             Boolean applied = ModAttachments.getData(player, Attachments.TIER_AUGMENTS_APPLIED);
-            if (applied == null || !applied) {
+            if (dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAdventure && (applied == null || !applied)) {
                 for (TierAugment aug : TierAugmentRegistry.getAugments(tier, Target.PLAYERS)) {
                     aug.apply(player.level(), player);
                 }
@@ -234,6 +241,9 @@ public class AdventureModule {
 
         // Entity Load into Level
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
+            if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAdventure) {
+                return;
+            }
             if (entity instanceof Mob mob) {
                 ApothMobEvents.delayedEliteMobs(mob, level);
 
@@ -255,6 +265,9 @@ public class AdventureModule {
 
         // Equipment Change
         ServerEntityEvents.EQUIPMENT_CHANGE.register((entity, slot, from, to) -> {
+            if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAdventure) {
+                return;
+            }
             if (entity instanceof ServerPlayer player) {
                 Apoth.Triggers.EQUIPPED_ITEM.trigger(player, slot, to);
                 if (slot == EquipmentSlot.FEET) {

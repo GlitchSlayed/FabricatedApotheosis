@@ -1,10 +1,13 @@
 package dev.shadowsoffire.apotheosis.client;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -19,10 +22,13 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.BlockStateModelSet;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.BlockBreakingRenderState;
+import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -103,7 +109,98 @@ public class RadialProgressTracker {
         }
     }
 
-    // Outlines and crumbling submission deferred to Milestone 10 visual refinement
+    public static void submitOutlines(PoseStack pose, LevelRenderState levelRenderState, SubmitNodeCollector collector) {
+        Set<BlockPos> blocks = getAOEBlocks();
+        if (blocks.isEmpty()) {
+            return;
+        }
+
+        Minecraft mc = Minecraft.getInstance();
+        Level level = mc.level;
+        if (level == null) {
+            return;
+        }
+
+        Vec3 camPos = levelRenderState.cameraRenderState.pos;
+
+        for (BlockPos pos : blocks) {
+            BlockState state = level.getBlockState(pos);
+            if (state.isAir()) {
+                continue;
+            }
+
+            VoxelShape shape = state.getShape(level, pos);
+            if (shape.isEmpty()) {
+                continue;
+            }
+
+            double x = pos.getX() - camPos.x;
+            double y = pos.getY() - camPos.y;
+            double z = pos.getZ() - camPos.z;
+
+            collector.submitCustomGeometry(pose, RenderTypes.lines(), (p, buffer) -> {
+                shape.forAllEdges((x1, y1, z1, x2, y2, z2) -> {
+                    Vector3f normal = new Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1)).normalize();
+                    buffer.addVertex(p, (float) (x1 + x), (float) (y1 + y), (float) (z1 + z))
+                        .setColor(0, 0, 0, 102).setNormal(p, normal).setLineWidth(2F);
+                    buffer.addVertex(p, (float) (x2 + x), (float) (y2 + y), (float) (z2 + z))
+                        .setColor(0, 0, 0, 102).setNormal(p, normal).setLineWidth(2F);
+                });
+            });
+        }
+
+        submitCrumbling(levelRenderState, blocks, mc, level, camPos, pose, collector);
+    }
+
+    private static void submitCrumbling(LevelRenderState levelRenderState, Set<BlockPos> blocks, Minecraft mc, Level level, Vec3 camPos, PoseStack pose, SubmitNodeCollector collector) {
+        MultiPlayerGameMode controller = mc.gameMode;
+        if (controller == null || !controller.isDestroying()) {
+            return;
+        }
+
+        Player player = mc.player;
+        if (player == null || lastKey == null) {
+            return;
+        }
+
+        BlockPos target = lastKey.pos;
+        int progress = -1;
+        for (BlockBreakingRenderState entry : levelRenderState.blockBreakingRenderStates) {
+            if (entry.blockPos().equals(target)) {
+                progress = entry.progress();
+                break;
+            }
+        }
+        if (progress < 0) {
+            return;
+        }
+
+        BlockState targetState = level.getBlockState(target);
+        if (!RadialUtil.isEffective(targetState, player, target)) {
+            return;
+        }
+
+        BlockStateModelSet models = mc.getModelManager().getBlockStateModelSet();
+        RandomSource rand = RandomSource.create();
+        List<BlockStateModelPart> parts = new ArrayList<>();
+
+        for (BlockPos pos : blocks) {
+            BlockState state = level.getBlockState(pos);
+            if (state.isAir()) {
+                continue;
+            }
+
+            BlockStateModel model = models.get(state);
+            rand.setSeed(state.getSeed(pos));
+            parts.clear();
+            model.collectParts(rand, parts);
+
+            pose.pushPose();
+            pose.translate(pos.getX() - camPos.x, pos.getY() - camPos.y, pos.getZ() - camPos.z);
+            collector.submitBreakingBlockModel(pose, List.copyOf(parts), progress, model.hasMaterialFlag(1));
+            pose.popPose();
+        }
+    }
 
     private static final class CacheKey {
         private final BlockPos pos;

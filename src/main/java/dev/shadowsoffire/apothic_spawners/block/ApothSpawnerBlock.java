@@ -81,6 +81,7 @@ public class ApothSpawnerBlock extends SpawnerBlock {
     @Override
     public void playerDestroy(ServerLevel level, ServerPlayer player, BlockPos pos, BlockState state, @Nullable BlockEntity te, ItemStack stack) {
         super.playerDestroy(level, player, pos, state, te, stack);
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableSpawners) return;
         level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(Enchantments.SILK_TOUCH).ifPresent(silkTouch -> {
             if (ASConfig.spawnerSilkLevel != -1 && EnchantmentHelper.getItemEnchantmentLevel(silkTouch, stack) >= ASConfig.spawnerSilkLevel) {
                 if (ASConfig.spawnerSilkDamage > 1) {
@@ -93,6 +94,9 @@ public class ApothSpawnerBlock extends SpawnerBlock {
     @Override
     @Deprecated
     public List<ItemStack> getDrops(BlockState state, Builder params) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableSpawners) {
+            return super.getDrops(state, params);
+        }
         ItemInstance tool = params.getParameter(LootContextParams.TOOL);
         Optional<Holder.Reference<Enchantment>> silkTouch = params.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(Enchantments.SILK_TOUCH);
 
@@ -116,6 +120,9 @@ public class ApothSpawnerBlock extends SpawnerBlock {
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableSpawners) {
+            return InteractionResult.PASS;
+        }
         BlockEntity te = world.getBlockEntity(pos);
         ItemStack otherStack = player.getItemInHand(hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND);
         if (te instanceof ApothSpawnerTile tile) {
@@ -152,7 +159,8 @@ public class ApothSpawnerBlock extends SpawnerBlock {
      */
     @Override
     protected void onExplosionHit(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> dropConsumer) {
-        if (level.getBlockEntity(pos) instanceof ApothSpawnerTile tile && !tile.isUnstable()) {
+        if (dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableSpawners
+            && level.getBlockEntity(pos) instanceof ApothSpawnerTile tile && !tile.isUnstable()) {
             tile.beginInstability();
             return;
         }

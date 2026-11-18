@@ -77,12 +77,22 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
 
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return stack.is(Apoth.Items.GEM);
+                if (!stack.is(Apoth.Items.GEM)) return false;
+                dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem gem = dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem.of(stack);
+                return gem.isValid() && GemCaseMenu.this.tile.getCount(gem.gem(), gem.purity()) < GemCaseMenu.this.tile.getMaxCount();
             }
 
             @Override
             public int getMaxStackSize() {
                 return 64;
+            }
+
+            @Override
+            public int getMaxStackSize(ItemStack stack) {
+                dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem gem = dev.shadowsoffire.apotheosis.socket.gem.UnsocketedGem.of(stack);
+                if (!gem.isValid()) return 0;
+                int remaining = GemCaseMenu.this.tile.getMaxCount() - GemCaseMenu.this.tile.getCount(gem.gem(), gem.purity());
+                return Math.max(0, Math.min(super.getMaxStackSize(stack), remaining));
             }
 
             @Override
@@ -151,7 +161,13 @@ public class GemCaseMenu extends BlockEntityMenu<GemCaseTile> implements IButton
 
     @Override
     public boolean stillValid(Player player) {
-        return player.distanceToSqr(this.pos.getX(), this.pos.getY(), this.pos.getZ()) < 16 * 16 && this.tile != null && !this.tile.isRemoved();
+        if (this.tile == null || this.tile.isRemoved() || this.level == null || player.level() != this.level) {
+            return false;
+        }
+        if (this.level.getBlockEntity(this.pos) != this.tile || !this.tile.getType().isValid(this.level.getBlockState(this.pos))) {
+            return false;
+        }
+        return player.isWithinBlockInteractionRange(this.pos, 4.0);
     }
 
     public void setNotifier(Runnable r) {

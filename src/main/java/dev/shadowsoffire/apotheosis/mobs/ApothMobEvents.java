@@ -63,6 +63,9 @@ public class ApothMobEvents {
      * false if the mob spawn was consumed/cancelled (e.g. replaced by an Invader).
      */
     public static boolean onFinalizeSpawn(Mob mob, ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason reason, SpawnGroupData spawnData) {
+        if (!dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().enableAdventure) {
+            return true;
+        }
         Player player = level.getNearestPlayer(mob.getX(), mob.getY(), mob.getZ(), -1, false);
         if (player == null) {
             return true;

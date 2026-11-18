@@ -93,9 +93,34 @@ public record EnchantmentTableStats(float eterna, float quanta, float arcana, in
      */
     public static EnchantmentTableStats gatherStats(LevelReader level, BlockPos pos) {
         EnchantmentTableStats.Builder builder = new EnchantmentTableStats.Builder();
-        for (BlockPos offset : EnchantingTableBlock.BOOKSHELF_OFFSETS) {
-            if (canReadStatsFrom(level, pos, offset)) {
-                gatherStats(builder, level, pos.offset(offset));
+        int range = Math.clamp(dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getServer().maxBookshelfRange, 1, 5);
+        if (range == 1) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx == 0 && dz == 0) continue;
+                    for (int dy = 0; dy <= 1; dy++) {
+                        gatherStats(builder, level, pos.offset(dx, dy, dz));
+                    }
+                }
+            }
+        } else {
+            for (BlockPos offset : EnchantingTableBlock.BOOKSHELF_OFFSETS) {
+                if (canReadStatsFrom(level, pos, offset)) {
+                    gatherStats(builder, level, pos.offset(offset));
+                }
+            }
+            for (int r = 3; r <= range; r++) {
+                for (int dx = -r; dx <= r; dx++) {
+                    for (int dz = -r; dz <= r; dz++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                        for (int dy = 0; dy <= 1; dy++) {
+                            BlockPos offset = new BlockPos(dx, dy, dz);
+                            if (canReadStatsFrom(level, pos, offset)) {
+                                gatherStats(builder, level, pos.offset(offset));
+                            }
+                        }
+                    }
+                }
             }
         }
         return builder.build();

@@ -68,10 +68,10 @@ public class SalvagingMenu extends BlockEntityMenu<SalvagingTableTile> {
 
     @Override
     public boolean stillValid(Player player) {
-        if (this.tile == null || this.tile.isRemoved()) {
+        if (this.tile == null || this.tile.isRemoved() || this.level == null || player.level() != this.level) {
             return false;
         }
-        if (!this.level.getBlockState(this.pos).is(Blocks.SALVAGING_TABLE)) {
+        if (this.level.getBlockEntity(this.pos) != this.tile || !this.level.getBlockState(this.pos).is(Blocks.SALVAGING_TABLE)) {
             return false;
         }
         return player.isWithinBlockInteractionRange(this.pos, 4.0);

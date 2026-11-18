@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:brewing",
+  "input": {
+    "item": "minecraft:potion",
+    "potion_contents": {
+      "potions": "minecraft:slow_falling"
+    }
+  },
+  "output": {
+    "id": "minecraft:potion",
+    "components": {
+      "minecraft:potion_contents": {
+        "potion": "apothic_attributes:levitation"
+      }
+    }
+  },
+  "reagent": {
+    "item": "minecraft:fermented_spider_eye"
+  }
+}

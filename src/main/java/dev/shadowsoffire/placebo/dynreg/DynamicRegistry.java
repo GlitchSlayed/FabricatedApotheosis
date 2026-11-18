@@ -61,6 +61,7 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
     // Client-side staged map during network sync
     protected final Map<Identifier, R> clientStaged = new ConcurrentHashMap<>();
     protected final Set<Identifier> dependencies = new java.util.concurrent.CopyOnWriteArraySet<>();
+    protected volatile int prepareParseErrors = 0;
 
     public DynamicRegistry(Logger logger, Identifier id, RegistrySerializer<R> serializer) {
         this(logger, id, id.getPath(), serializer);
@@ -112,6 +113,8 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
         ALL_REGISTRIES.put(reg.getId(), reg);
         try {
             net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.server.packs.PackType.SERVER_DATA).registerReloadListener(reg);
+            net.fabricmc.fabric.api.resource.v1.ResourceLoader.get(net.minecraft.server.packs.PackType.SERVER_DATA)
+                .addListenerOrdering(reg.getId(), dev.shadowsoffire.placebo.dynreg.tag.DynamicTagManager.ID);
             reg.logger.info("Registered dynamic registry '{}' as server data reload listener", reg.getId());
         } catch (Throwable t) {
             reg.logger.error("Failed to register reload listener for dynamic registry '{}'", reg.getId(), t);
@@ -239,6 +242,7 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
 
     @Override
     protected Map<Identifier, JsonElement> prepare(ResourceManager manager, ProfilerFiller profiler) {
+        this.prepareParseErrors = 0;
         Map<Identifier, JsonElement> prepared = new HashMap<>();
         Set<String> searchPaths = new java.util.LinkedHashSet<>();
         searchPaths.add(this.id.getNamespace() + "/" + this.id.getPath());
@@ -265,6 +269,7 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
                     JsonElement json = JsonParser.parseReader(reader);
                     prepared.put(resourceId, json);
                 } catch (Exception e) {
+                    this.prepareParseErrors++;
                     this.logger.error("Failed to parse JSON file '{}' for dynamic registry '{}': {}", fullPath, this.id, e.getMessage(), e);
                 }
             }
@@ -364,14 +369,21 @@ public abstract class DynamicRegistry<R> extends SimplePreparableReloadListener<
             this.logger.error(errorMsg, e);
         }
 
+        int parseErrors = this.prepareParseErrors;
+        this.prepareParseErrors = 0;
+
         // Actionable validation error handling without partial corruption
-        if (!errors.isEmpty()) {
-            this.logger.error("Dynamic registry '{}' encountered {} validation error(s).", this.id, errors.size());
-            if (!generationValid && !this.registry.isEmpty()) {
-                this.logger.error("Preserving previous valid generation for registry '{}' ({} entries) due to critical validation errors.", this.id, this.registry.size());
+        if (!errors.isEmpty() || parseErrors > 0) {
+            this.logger.error("Dynamic registry '{}' encountered {} validation error(s) and {} parse error(s).", this.id, errors.size(), parseErrors);
+            if (!this.registry.isEmpty()) {
+                this.logger.error("Preserving previous valid generation for registry '{}' ({} entries) due to reload errors.", this.id, this.registry.size());
                 return;
             }
-            this.logger.warn("Dynamic registry '{}': applying {} valid entries and logging diagnostics.", this.id, staged.size());
+            if (!generationValid) {
+                this.logger.error("Initial load for registry '{}' failed whole-generation validation.", this.id);
+                return;
+            }
+            this.logger.warn("Dynamic registry '{}': applying {} valid entries during initial load and logging diagnostics.", this.id, staged.size());
         }
 
         // Commit atomically

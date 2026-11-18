@@ -88,6 +88,10 @@ public interface EnchantmentStatBlock {
      * @param offset The position of this shelf, relative to the table.
      */
     default void spawnTableParticle(BlockState state, Level level, RandomSource rand, BlockPos pos, BlockPos offset) {
+        if (state.getBlock() instanceof dev.shadowsoffire.apothic_enchanting.objects.TypedShelfBlock.SculkShelfBlock
+            && !dev.shadowsoffire.apotheosis.config.ApotheosisConfig.getClient().sculkShelfParticles) {
+            return;
+        }
         if (rand.nextInt(16) == 0) {
             if (EnchantingStatRegistry.getEterna(level.getBlockState(pos.offset(offset)), level, pos.offset(offset)) > 0) {
                 if (level.isEmptyBlock(pos.offset(offset.getX() / 2, 0, offset.getZ() / 2))) {

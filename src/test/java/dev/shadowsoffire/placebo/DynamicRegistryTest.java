@@ -102,8 +102,9 @@ public class DynamicRegistryTest {
         assertTrue(holder2.isBound(), "Holder 2 must now be bound");
         assertEquals("beta", holder2.get().name());
 
-        // 3. Invalid Reload: Supply malformed JSON for a new entry
-        // The registry must report the error and NOT corrupt existing valid state partially
+        // 3. Invalid Reload: Supply malformed JSON for a new entry while registry is non-empty
+        // The registry must atomically preserve its previous valid generation
+        cacheInvalidated.set(false);
         Map<Identifier, JsonElement> batch3 = new HashMap<>();
         JsonObject malformed = new JsonObject();
         malformed.addProperty("name", "broken");
@@ -112,12 +113,18 @@ public class DynamicRegistryTest {
 
         registry.applyDirect(batch3);
 
-        // The broken item should NOT be present in registry
+        // The broken item must NOT be present, previous valid entries must remain untouched, and cache callback must NOT fire
         assertNull(registry.get(Identifier.fromNamespaceAndPath("test", "broken_item")),
             "Malformed entry must not be loaded into active registry");
-        assertEquals(0, registry.getEntries().size(), "Only valid entries from new batch are staged");
+        assertEquals(2, registry.getEntries().size(), "Previous valid generation must be preserved on reload error");
+        assertTrue(holder1.isBound(), "Holder 1 must remain bound to previous generation");
+        assertEquals("alpha_updated", holder1.get().name());
+        assertTrue(holder2.isBound(), "Holder 2 must remain bound to previous generation");
+        assertFalse(cacheInvalidated.get(), "Callback must not fire on aborted reload");
 
-        // 4. Test holder unbinding when an entry is removed
+        // 4. Test holder unbinding when entries are cleanly removed via valid empty reload
+        registry.applyDirect(Map.of());
+        assertEquals(0, registry.getEntries().size(), "Valid empty reload clears entries");
         assertFalse(holder1.isBound(), "Holder 1 must become unbound when removed from data pack");
         assertThrows(IllegalStateException.class, holder1::get, "Getting an unbound holder must throw");
     }

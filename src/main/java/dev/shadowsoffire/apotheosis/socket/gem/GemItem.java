@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 import dev.shadowsoffire.apotheosis.Apoth.Components;
+import dev.shadowsoffire.apotheosis.socket.SocketHelper;
 import dev.shadowsoffire.apotheosis.util.ApothMiscUtil;
 import dev.shadowsoffire.placebo.dynreg.DynamicHolder;
 import dev.shadowsoffire.placebo.tabs.ITabFiller;
@@ -14,8 +15,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.SlotAccess;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -60,6 +64,26 @@ public class GemItem extends Item implements ITabFiller {
             return super.getDescriptionId();
         }
         return super.getDescriptionId() + "." + gem.getId();
+    }
+
+    @Override
+    public boolean overrideOtherStackedOnMe(ItemStack stackedOn, ItemStack carried, Slot slot, ClickAction action, Player player, SlotAccess access) {
+        return super.overrideOtherStackedOnMe(stackedOn, carried, slot, action, player, access);
+    }
+
+    @Override
+    public boolean overrideStackedOnOther(ItemStack gemStack, Slot slot, ClickAction action, Player player) {
+        if (action == ClickAction.SECONDARY && slot.allowModification(player) && slot.hasItem()) {
+            ItemStack target = slot.getItem();
+            ItemStack socketed = SocketHelper.socketGemInItem(target, gemStack);
+            if (!socketed.isEmpty()) {
+                slot.set(socketed);
+                gemStack.shrink(1);
+                player.playSound(SoundEvents.AMETHYST_BLOCK_BREAK, 1, 1.5F + 0.35F * (1 - 2 * player.getRandom().nextFloat()));
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

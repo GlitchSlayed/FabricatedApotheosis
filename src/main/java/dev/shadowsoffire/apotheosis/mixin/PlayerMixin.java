@@ -1,5 +1,7 @@
 package dev.shadowsoffire.apotheosis.mixin;
 
+import java.util.Optional;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -7,17 +9,22 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
+import dev.shadowsoffire.apotheosis.affix.effect.OmneticAffix;
 import dev.shadowsoffire.apotheosis.attributes.api.ALObjects;
 import dev.shadowsoffire.apotheosis.attributes.api.AttributesUtil;
+import dev.shadowsoffire.apotheosis.socket.gem.bonus.special.OmneticBonus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @Mixin(Player.class)
 public abstract class PlayerMixin {
@@ -80,6 +87,31 @@ public abstract class PlayerMixin {
                     self.getAbilities().flying = false;
                     self.onUpdateAbilities();
                 }
+            }
+        }
+    }
+
+    @Inject(method = "getDestroySpeed", at = @At("RETURN"), cancellable = true)
+    private void apoth_omneticDestroySpeed(BlockState state, CallbackInfoReturnable<Float> cir) {
+        Player self = (Player) (Object) this;
+        float speed = cir.getReturnValueF();
+        PlayerEvent.BreakSpeed event = new PlayerEvent.BreakSpeed(self, state, speed, Optional.empty());
+        OmneticAffix.speed(event);
+        OmneticBonus.speed(event);
+        if (event.getNewSpeed() != speed) {
+            cir.setReturnValue(event.getNewSpeed());
+        }
+    }
+
+    @Inject(method = "hasCorrectToolForDrops", at = @At("RETURN"), cancellable = true)
+    private void apoth_omneticHarvestCheck(BlockState state, CallbackInfoReturnable<Boolean> cir) {
+        if (!cir.getReturnValueZ()) {
+            Player self = (Player) (Object) this;
+            PlayerEvent.HarvestCheck event = new PlayerEvent.HarvestCheck(self, state, false);
+            OmneticAffix.harvest(event);
+            OmneticBonus.harvest(event);
+            if (event.canHarvest()) {
+                cir.setReturnValue(true);
             }
         }
     }

@@ -75,15 +75,16 @@ public class RarityRegistry extends TieredDynamicRegistry<LootRarity> {
     protected synchronized void commitReload(Map<Identifier, LootRarity> newEntries, ReloadType reloadType) {
         BiMap<Item, DynamicHolder<LootRarity>> nextMaterialMap = HashBiMap.create();
         List<LootRarity> nextSorted = new ArrayList<>();
-        for (LootRarity r : newEntries.values()) {
-            nextMaterialMap.put(r.getMaterial(), this.holder(r));
+        for (Map.Entry<Identifier, LootRarity> entry : newEntries.entrySet()) {
+            LootRarity r = entry.getValue();
+            nextMaterialMap.put(r.getMaterial(), this.holder(entry.getKey()));
             nextSorted.add(r);
         }
         nextSorted.sort(Comparator.comparing(LootRarity::sortIndex));
 
-        super.commitReload(newEntries, reloadType);
         this.materialMap = nextMaterialMap;
         this.sorted = nextSorted;
+        super.commitReload(newEntries, reloadType);
     }
 
     @Override

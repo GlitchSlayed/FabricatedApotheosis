@@ -1,7 +1,11 @@
 package dev.shadowsoffire.apotheosis.mixin;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 import org.apache.commons.lang3.function.TriConsumer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,8 +25,11 @@ import dev.shadowsoffire.apothic_attributes.modifiers.EquipmentSlotCompat;
 import dev.shadowsoffire.apothic_attributes.modifiers.StackAttributeModifiers;
 import dev.shadowsoffire.apothic_attributes.modifiers.StackAttributeModifiersEvent;
 import dev.shadowsoffire.placebo.dynreg.DynamicHolder;
+import dev.shadowsoffire.placebo.util.CachedObject;
+import dev.shadowsoffire.placebo.util.CachedObject.CachedObjectSource;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
@@ -37,10 +44,32 @@ import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(ItemStack.class)
-public abstract class ItemStackMixin implements IFestiveMarker {
+public abstract class ItemStackMixin implements IFestiveMarker, CachedObjectSource {
 
     @Unique
     private boolean apoth$festiveMarked = false;
+
+    @Unique
+    private volatile Map<Identifier, CachedObject<?>> apoth$cachedObjects = null;
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T getOrCreate(Identifier id, Function<ItemStack, T> deserializer, ToIntFunction<ItemStack> hasher) {
+        CachedObject<?> cachedObj = this.apoth$getOrCreateCache().computeIfAbsent(id, key -> new CachedObject<>(key, deserializer, hasher));
+        return (T) cachedObj.get((ItemStack) (Object) this);
+    }
+
+    @Unique
+    private Map<Identifier, CachedObject<?>> apoth$getOrCreateCache() {
+        if (this.apoth$cachedObjects == null) {
+            synchronized (this) {
+                if (this.apoth$cachedObjects == null) {
+                    this.apoth$cachedObjects = new ConcurrentHashMap<>();
+                }
+            }
+        }
+        return this.apoth$cachedObjects;
+    }
 
     @Override
     public boolean isMarked() {

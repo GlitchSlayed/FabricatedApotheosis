@@ -198,6 +198,10 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
         for (EquipmentSlot slot : EquipmentSlot.VALUES) {
             ItemStack s = self.getItemBySlot(slot);
             if (!s.isEmpty()) {
+                var apothSlot = dev.shadowsoffire.apothic_attributes.modifiers.EquipmentSlotCompat.fromVanilla(slot);
+                if (apothSlot != null && !dev.shadowsoffire.apotheosis.loot.LootCategory.forItem(s).getSlots().test(apothSlot)) {
+                    continue;
+                }
                 amount = dev.shadowsoffire.apotheosis.socket.SocketHelper.getGems(s).onHurt(damageSource, self, amount);
                 var affixes = dev.shadowsoffire.apotheosis.affix.AffixHelper.getAffixes(s);
                 for (dev.shadowsoffire.apotheosis.affix.AffixInstance inst : affixes.values()) {
@@ -239,7 +243,12 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
 
     @Inject(method = "actuallyHurt(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)V", at = @At("TAIL"))
     private void apoth_applyLifeStealOverheal(ServerLevel level, DamageSource damageSource, float amount, CallbackInfo ci) {
+        LivingEntity self = (LivingEntity) (Object) this;
         float healthDamage = Math.min(this.preDamageHealth, Math.max(0.0F, this.preDamageHealth - this.getHealth()));
+        if (healthDamage > 0.001F && damageSource.is(ALObjects.DamageTypes.COLD_DAMAGE)) {
+            Float prevCold = dev.shadowsoffire.apotheosis.util.ModAttachments.getData(self, dev.shadowsoffire.apotheosis.Apoth.Attachments.COLD_DAMAGE_TAKEN);
+            dev.shadowsoffire.apotheosis.util.ModAttachments.setData(self, dev.shadowsoffire.apotheosis.Apoth.Attachments.COLD_DAMAGE_TAKEN, (prevCold != null ? prevCold : 0.0F) + healthDamage);
+        }
         if (healthDamage > 0.001F && damageSource.getDirectEntity() instanceof LivingEntity attacker && AttributesUtil.isPhysicalDamage(damageSource)) {
             float lifesteal = (float) attacker.getAttributeValue(ALObjects.Attributes.LIFE_STEAL);
             if (lifesteal > 0.001F) {
@@ -253,6 +262,18 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
                     float gain = Math.min(cap - current, healthDamage * overheal);
                     AttributesUtil.setOverhealAbsorption(attacker, AttributesUtil.getOverhealAbsorption(attacker) + gain);
                     ((LEInvoker) attacker).apoth_setInternalAbsorption(current + gain);
+                }
+            }
+        }
+    }
+
+    @Inject(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At("HEAD"))
+    private void apoth_removeEliteCloudsOnDeath(DamageSource source, CallbackInfo ci) {
+        LivingEntity self = (LivingEntity) (Object) this;
+        if (!self.level().isClientSide() && AttributesUtil.getPersistentData(self).getBooleanOr(dev.shadowsoffire.apotheosis.mobs.types.Elite.MINIBOSS_KEY, false)) {
+            for (Entity passenger : self.getPassengers()) {
+                if (passenger instanceof net.minecraft.world.entity.AreaEffectCloud cloud) {
+                    cloud.discard();
                 }
             }
         }
@@ -321,8 +342,9 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
     @WrapMethod(method = "dropAllDeathLoot(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)V")
     private void apoth$wrapDropAllDeathLoot(ServerLevel level, DamageSource damageSource, Operation<Void> original) {
         LivingEntity self = (LivingEntity) (Object) this;
-        EntityMixin.DropCaptureContext ctx = new EntityMixin.DropCaptureContext(self);
-        EntityMixin.apoth$pushCaptureContext(ctx);
+        dev.shadowsoffire.apotheosis.util.EntityDropCapture.DropCaptureContext ctx =
+            new dev.shadowsoffire.apotheosis.util.EntityDropCapture.DropCaptureContext(self);
+        dev.shadowsoffire.apotheosis.util.EntityDropCapture.pushCaptureContext(ctx);
         dev.shadowsoffire.apotheosis.affix.effect.FestiveAffix.markEquipment(
             new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(self, damageSource));
         boolean succeeded = false;
@@ -330,7 +352,7 @@ public abstract class LivingEntityMixin extends Entity implements LEInvoker {
             original.call(level, damageSource);
             succeeded = true;
         } finally {
-            EntityMixin.apoth$popCaptureContext();
+            dev.shadowsoffire.apotheosis.util.EntityDropCapture.popCaptureContext();
             net.neoforged.neoforge.event.entity.living.LivingDropsEvent dropsEvent =
                 new net.neoforged.neoforge.event.entity.living.LivingDropsEvent(self, damageSource, ctx.drops);
             try {

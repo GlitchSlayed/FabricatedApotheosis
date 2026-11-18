@@ -10,7 +10,6 @@ import dev.shadowsoffire.apotheosis.config.ApotheosisConfig;
 import dev.shadowsoffire.apothic_enchanting.event.AnvilUpdateEvent;
 import dev.shadowsoffire.apothic_enchanting.library.EnchLibraryTile;
 import dev.shadowsoffire.apothic_enchanting.library.EnchLibraryTile.BasicLibraryTile;
-import dev.shadowsoffire.apothic_enchanting.mixin.AnvilMenuMixin;
 import dev.shadowsoffire.apothic_enchanting.table.ApothEnchantmentHelper;
 import dev.shadowsoffire.apothic_enchanting.table.Arcana;
 import dev.shadowsoffire.apothic_enchanting.table.EnchantmentTableStats;
@@ -286,16 +285,30 @@ public class EnchantingTests {
 
     @Test
     @DisplayName("Anvil Overhaul: Level 40 cap removal injection validation")
-    void testAnvilLevel40CapRemoval() {
-        AnvilMenuMixin mixin = new AnvilMenuMixin();
+    void testAnvilLevel40CapRemoval() throws Exception {
+        java.lang.reflect.Field unsafeField = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+        unsafeField.setAccessible(true);
+        sun.misc.Unsafe unsafe = (sun.misc.Unsafe) unsafeField.get(null);
+        net.minecraft.world.inventory.AnvilMenu menu =
+            (net.minecraft.world.inventory.AnvilMenu) unsafe.allocateInstance(net.minecraft.world.inventory.AnvilMenu.class);
+
+        java.lang.reflect.Method capMethod = null;
+        for (java.lang.reflect.Method m : net.minecraft.world.inventory.AnvilMenu.class.getDeclaredMethods()) {
+            if (m.getName().contains("apoth_removeLevelCap") && m.getParameterCount() == 1 && m.getParameterTypes()[0] == int.class) {
+                capMethod = m;
+                break;
+            }
+        }
+        assertNotNull(capMethod, "AnvilMenuMixin must transform AnvilMenu with apoth_removeLevelCap");
+        capMethod.setAccessible(true);
 
         // When enableEnchanting is true (default), cap is removed (Integer.MAX_VALUE)
         ApotheosisConfig.getServer().enableEnchanting = true;
-        assertEquals(Integer.MAX_VALUE, mixin.apoth_removeLevelCap(40));
+        assertEquals(Integer.MAX_VALUE, capMethod.invoke(menu, 40));
 
         // When enableEnchanting is disabled, vanilla behavior is strictly preserved (returns old cap 40)
         ApotheosisConfig.getServer().enableEnchanting = false;
-        assertEquals(40, mixin.apoth_removeLevelCap(40));
+        assertEquals(40, capMethod.invoke(menu, 40));
 
         // Reset
         ApotheosisConfig.getServer().enableEnchanting = true;

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:brewing",
+  "input": {
+    "item": "minecraft:lingering_potion",
+    "potion_contents": {
+      "potions": "apothic_attributes:strong_haste"
+    }
+  },
+  "output": {
+    "id": "minecraft:lingering_potion",
+    "components": {
+      "minecraft:potion_contents": {
+        "potion": "apothic_attributes:strong_fatigue"
+      }
+    }
+  },
+  "reagent": {
+    "item": "minecraft:fermented_spider_eye"
+  }
+}

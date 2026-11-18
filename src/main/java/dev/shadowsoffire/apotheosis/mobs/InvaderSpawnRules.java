@@ -86,6 +86,11 @@ public record InvaderSpawnRules(Map<WorldTier, Float> spawnChances, SurfaceType 
         RULES.put(dimensionId, rules);
     }
 
+    public static synchronized void replaceRules(Map<Identifier, InvaderSpawnRules> newRules) {
+        RULES.clear();
+        RULES.putAll(newRules);
+    }
+
     public static InvaderSpawnRules getRules(ResourceKey<DimensionType> dimKey) {
         if (dimKey == null) {
             return null;

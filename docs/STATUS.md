@@ -359,8 +359,19 @@
     - Removed duplicate slot callback in `GemCuttingMenu`.
   - [x] **Automated Verification**: Total test suite expanded to **88 tests passing 100% cleanly** (0 failures, 0 errors, 0 skipped). `./gradlew build` verified.
 
+### Post-Milestone 12 Final Port Completion: Mixin Verification, Reload Ordering & Stabilization
+- **Status**: **COMPLETE** (2026-11-18)
+- **Scope**: Completed remaining upstream feature parity wiring, 26.3 datapack/brewing resource completeness, atomic reload hardening, module config sync/gating, menu/tile safety, and live Mixin-transformed test verification via `fabric-loader-junit`.
+- **Key Changes**:
+  - [x] **Common & Enchanting Mixins**: Added `DamageSourceMixin` (`DamageSourceExtension`), `AttributeInstanceMixin` (`AttributeInstanceExt`), `SmithingMenuMixin`, `AnvilBlockMixin` (gem crushing), `AbstractSkeletonMixin` (crossbow skeletons), `EnderDragonFightMixin`, `WitherSkullBlockMixin`, `MHFMixinLivingEntity`, `WandererSpawnerMixin`, `ItemStackMixin` (`CachedObjectSource`), and `EnchantmentMixin` (trident enchantments); extracted `EntityDropCapture` outside `@Mixin(Entity.class)` so Mixin transforms cleanly.
+  - [x] **Client Mixins & Rendering**: Added `ItemStackRenderStateMixin`, `GuiGraphicsExtractorMixin`, `GuiRendererMixin`, `AbstractSkeletonRendererMixin`, `EntityRendererMixin`, `HudMixin`, `MultiPlayerGameModeMixin`, `LevelRendererMixin`, and `KeyMappingAccessor`; wired `AdventureModuleClient` boss beams, socketable tooltips, and equipment comparison, plus `RadialProgressTracker` outlines/crumbling.
+  - [x] **Compat (Jade & JEI)**: Added Jade boss inspection (`AdventureServerDataProvider` / `AdventureClientProvider`) and JEI `StoneformingCategory` + crafting/infusion extensions (`AddSocketsExtension`, `MaliceExtension`, `SupremacyExtension`, `UnnamingExtension`, `WithdrawalExtension`, `PotionCharmExtension`, `SizedUpgradeRecipeExtension`, `CharmInfusionExtension`).
+  - [x] **Data, Brewing & Reload Fixes**: Generated 173 26.3 `minecraft:brewing` recipes; added `ApothDataMapsLoader` + `LootCategoryOverridesPayload`; restored missing tags, loot tables, paintings, trades, and lang files; fixed `RarityRegistry.commitReload` holder lookup order (`this.holder(entry.getKey())`); fixed `DynamicTagManager` load ordering via `ResourceLoader.addListenerOrdering`; updated `gem_entity_drops*.json` to 26.3 `"type"` + direct `apotheosis:is_monster` predicate format.
+  - [x] **Config Sync, Module Gating & Hardening**: Made module `init()` unconditional in `Apotheosis.java` with active event gating on `enableAttributes`/`enableEnchanting`/`enableSpawners`/`enableAdventure`; wired `ApotheosisConfig.syncModuleConfigs()` and consumers (`negativeArmorFactor`, `knowledgeMultiplier`, `maxBookshelfRange`, `sculkShelfParticles`, `detailedSpawnerTooltips`, `minSpawnDelayLimit`/`maxSpawnDelayLimit`, `displayAttributeDeltas`); added atomic reload rollback in `DynamicRegistry` and `EnchantmentInfoLoader`; hardened `stillValid`, `GemCaseMenu` input slot capacity/validity, `EnchLibraryTile` unresolved enchantment preservation, `EnchantmentHelperMixin` slot filtering, and `try/finally` guards in `SocketedGems` and `CleavingAffix`.
+  - [x] **Verified Testing & Server Boot**: Enabled `fabric-loader-junit` in `build.gradle`; **92/92 JUnit tests pass** under live Mixin transformation, `./gradlew build` succeeds cleanly, and `./gradlew runServer --args="--nogui"` boots to `Done (0.241s)!` with 0 datapack/tag/loot-modifier/mixin errors.
+
 ---
 
 ## 2. Milestone Summary
 
-All 12 project milestones are now **COMPLETE**. The codebase is updated to Release Candidate (`1.0.0-alpha.3`+) with all discovered in-game failures repaired and verified. Releases will not be published without explicit user authorization.
+All 12 project milestones and final port stabilization checks are **COMPLETE** (`1.0.0-alpha.4`). Live client launch, OpenGL/Vulkan rendering, and multiplayer interactive sessions remain outside automated headless verification and require manual client testing. Releases will not be published without explicit user authorization.

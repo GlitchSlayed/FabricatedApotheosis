@@ -178,13 +178,17 @@ public final class LootCategory {
         OVERRIDES.put(item, category);
     }
 
+    public static synchronized void replaceOverrides(Map<Item, LootCategory> overrides) {
+        OVERRIDES.clear();
+        OVERRIDES.putAll(overrides);
+    }
+
+    public static Map<Item, LootCategory> getOverrides() {
+        return Collections.unmodifiableMap(OVERRIDES);
+    }
+
     @Nullable
     public static LootCategory getOverride(Item item) {
-        if (OVERRIDES.isEmpty()) {
-            // Defaults from data_maps/item/loot_category_overrides.json
-            OVERRIDES.put(net.minecraft.world.item.Items.IRON_SWORD, LootCategories.MELEE_WEAPON);
-            OVERRIDES.put(net.minecraft.world.item.Items.SHULKER_SHELL, LootCategories.NONE);
-        }
         return OVERRIDES.get(item);
     }
 
