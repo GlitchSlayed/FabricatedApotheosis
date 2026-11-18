@@ -1,9 +1,9 @@
-# Handoff Report — Final Port Completion, Mixin Verification & Stabilization
+# Handoff Report — `1.0.0-alpha.5` Port Completion, Client & Mixin Verification
 
 - **Date**: 2026-11-18
 - **Target Version**: Minecraft 26.3 Fabric (Loom 1.17.21, Loader 0.19.5+, YACL 3.9.6, JEI 31.17.0.108, Jade 26.3.5+fabric)
-- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.4.jar`
-- **Status**: **All 92/92 Mixin-Transformed Tests Passing; Clean Dedicated Server Boot; Full Build Green.**
+- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar`
+- **Status**: **All 92/92 Mixin-Transformed Tests Passing; Server & Client World-Join Verified (`1.0.0-alpha.5`).**
 
 ---
 
@@ -206,7 +206,7 @@ FabricatedApotheosis/
 
 ---
 
-## 5. Final Port Completion, Runtime Mixin & Datapack Verification (`1.0.0-alpha.4`)
+## 5. Final Port Completion, Runtime Mixin & Datapack Verification (`1.0.0-alpha.5`)
 
 ### 5.1 Completed Mixins, Gameplay Hooks & Client Polish
 - **Common Mixins & Duck Interfaces**: Added `DamageSourceMixin` (`DamageSourceExtension`), `AttributeInstanceMixin` (`AttributeInstanceExt`), `SmithingMenuMixin`, `AnvilBlockMixin`, `AbstractSkeletonMixin` (crossbow skeletons), `EnderDragonFightMixin`, `WitherSkullBlockMixin`, `MHFMixinLivingEntity`, `WandererSpawnerMixin`, `EnchantmentMixin` (trident Sharpness/Looting/Piercing), and `CachedObjectSource` on `ItemStackMixin`; extracted `EntityDropCapture` outside `EntityMixin` so Mixin classloading rules are strictly satisfied.
@@ -221,8 +221,11 @@ FabricatedApotheosis/
 
 ### 5.3 Observed Verification Results (Post-Final Edit)
 - **Automated Tests (`./gradlew test --rerun-tasks`)**: Added `net.fabricmc:fabric-loader-junit:0.19.5` so tests execute under transformed Knot/Mixin classloading; **92/92 tests passed** across all 17 suites (`0 failures, 0 errors, 0 skipped`).
-- **Build & Artifact Check (`./gradlew build`)**: Succeeded cleanly (`verifyNoDuplicateClasses` and `validateAccessWidener` passed; `fabricated-apotheosis-1.0.0-alpha.4.jar` and `-sources.jar` contain zero reference or upstream leakage).
+- **Build & Artifact Check (`./gradlew build`)**: Succeeded cleanly (`verifyNoDuplicateClasses` and `validateAccessWidener` passed; `fabricated-apotheosis-1.0.0-alpha.5.jar` and `-sources.jar` contain zero reference or upstream leakage).
 - **Dedicated Server Smoke Check (`./gradlew runServer --args="--nogui"`)**: Booted Minecraft 26.3 server to `Done (0.241s)!` with 0 Mixin errors, 13/13 dynamic registries loaded (`5` rarities, `50` affix loot entries, `99` affixes, `1` augment, `4` elites, `23` invaders, `30` gear sets, `21` gems, `1` purity weights, `1` rarity override, `9` rogue spawners, `27` tier augments, `26` enchanting stats), `10` `placebo:gear_sets` tags loaded with 0 missing references, `6` enchantment info overrides, `6` global loot modifiers, `4` invader spawn rules, `2` loot category overrides, `342` biome modifications, and clean `stop` exit (`0`).
-- **Remaining Unverified Areas**: Live client launch, OpenGL/Vulkan graphical rendering inspection (RenderPearl pipelines, boss beams, radial overlays, screens), JEI/Jade in-game overlays, and multi-client multiplayer sessions were not executed in this headless verification run and require manual in-game testing.
+- **Automated Client World-Join Verification**:
+  - **Dev Client (`./gradlew --no-daemon runClient --args="--quickPlaySingleplayer AutoTestWorld"`)**: Launched OpenGL 4.6 (`Mesa 26.2.6`), loaded all client Mixins and dynamic registries, integrated-synced client state, logged player into world (`JOINED=True`, `CRASH_SEEN=False`), and ticked world/chunks live without Mixin or render crashes.
+  - **Prism Launcher (`26.3 testing`)**: Replaced `alpha.3` with `fabricated-apotheosis-1.0.0-alpha.5.jar` and launched alongside `sodium 0.9.3-beta.5+mc26.3`, `immediatelyfast 1.17.1+26.3`, `jade 26.3.5+fabric`, `lithium`, `c2me`, `ferritecore`, `entityculling`, `modmenu`, and `enchdesc`; loaded `ApotheosisJadePlugin`, joined singleplayer test world as `DevTester` (`PRISM_JOINED=True`, `CRASH_SEEN=False`), loaded terrain & entities cleanly.
+- **Remaining Unverified Areas**: Interactive in-game feature walkthroughs (boss beams, radial overlays, JEI screens), Vulkan backend execution, and multi-client multiplayer sessions remain unverified here (`OpenGL` client launch and singleplayer join were tested; `Vulkan` was not).
 
-The codebase build (`1.0.0-alpha.4`) is verified clean for automated tests, packaging, and dedicated server startup. **Do NOT publish releases without explicit user instruction.**
+Release **`1.0.0-alpha.5`** is built, verified, and tagged upon explicit user instruction.

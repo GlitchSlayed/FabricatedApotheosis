@@ -1,9 +1,9 @@
-# Release Readiness Report — `1.0.0-alpha.4`
+# Release Readiness Report — `1.0.0-alpha.5`
 
-- **Candidate Identity**: Fabricated Apotheosis `1.0.0-alpha.4`
+- **Candidate Identity**: Fabricated Apotheosis `1.0.0-alpha.5`
 - **Target Platform**: Minecraft 26.3 Fabric (Loom 1.17.21, Fabric Loader 0.19.5, Fabric API 0.161.0+26.3, Java 25)
-- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.4.jar`
-- **Release Status**: **Headless Build, Mixin-Transformed Tests & Server Startup Verified (Client UI/Rendering Requires Manual Test; DO NOT PUBLISH)**
+- **Primary Artifact**: `build/libs/fabricated-apotheosis-1.0.0-alpha.5.jar`
+- **Release Status**: **Pre-release `1.0.0-alpha.5` Verified (Tests, Build, Server Boot, Dev & Prism OpenGL Client Join)**
 - **Date**: 2026-11-18
 
 ---
@@ -92,9 +92,12 @@ Every feature across all ecosystem subsystems has been reconciled against actual
   - Result: Booted in `0.241s`, loaded 1910 advancements, loaded all 13 dynamic registries, 10 `placebo:gear_sets` tags with 0 errors, 6 global loot modifiers, 6 enchantment info overrides, 6 data-map entries, and applied 342 biome modifications across 57 biomes, then saved and stopped cleanly (`exit 0`).
 - **Artifact Build**:
   - Command: `./gradlew build`
-  - Result: **BUILD SUCCESSFUL** (`fabricated-apotheosis-1.0.0-alpha.4.jar` and `-sources.jar`, clean of reference/upstream trees).
+  - Result: **BUILD SUCCESSFUL** (`fabricated-apotheosis-1.0.0-alpha.5.jar` and `-sources.jar`, clean of reference/upstream trees).
+- **Automated Client World Join (OpenGL 4.6 Mesa 26.2.6)**:
+  - **Dev Client (`./gradlew --no-daemon runClient --args="--quickPlaySingleplayer AutoTestWorld"`)**: Booted cleanly, initialized OpenGL backend, loaded all client Mixins and dynamic registries, and joined singleplayer world without crash or Mixin errors.
+  - **Prism Launcher `"26.3 testing"` (`prismlauncher -l "26.3 testing" -w "AutoTestWorld" -o "DevTester"`)**: Booted `1.0.0-alpha.5` alongside Sodium `0.9.3-beta.5+mc26.3`, ImmediatelyFast `1.17.1+26.3`, Jade `26.3.5+fabric`, Lithium, C2ME, ModMenu, and EnchDesc; loaded `ApotheosisJadePlugin` and joined singleplayer world cleanly with zero Mixin/mod conflicts.
 - **Explicit Unverified Cases**:
-  - Interactive client launch, live OpenGL/Vulkan rendering (RenderPearl/GUI/boss beams/radial overlays), in-game JEI/Jade UIs, and multiplayer client sessions were not executed in this headless verification environment.
+  - Interactive UI/rendering inspection (boss beams, radial overlays, JEI screens), Vulkan backend execution, and live multiplayer sessions were not tested here (`OpenGL` client launch passed; `Vulkan` was not tested).
 
 ---
 
